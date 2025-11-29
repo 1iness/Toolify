@@ -20,7 +20,7 @@ Toolify - это интернет-магазин хозяйственных то
 - Изменение количества товаров.
 ## Технологии
 **Frontend: <img src="https://skillicons.dev/icons?i=html" width="20">HTML,<img src="https://skillicons.dev/icons?i=css" width="20">CSS**  
-**Backend: <img src="https://skillicons.dev/icons?i=cs" width="20"> C#,  <img src="https://skillicons.dev/icons?i=dotnet" width="20"> ASP.NET Core Web App (MVS), Entity Framework**  
+**Backend: <img src="https://skillicons.dev/icons?i=cs" width="20"> C#, <img src="https://skillicons.dev/icons?i=js" width="20"> JS  <img src="https://skillicons.dev/icons?i=dotnet" width="20"> ASP.NET Core Web App (MVS), Entity Framework**  
 **DataBase: <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Sql_data_base_with_logo.png" width="30"> SQL Server 2022**  
 **Tools: <img src="https://skillicons.dev/icons?i=visualstudio" width="20"> Visual Stuido, <img src="https://skillicons.dev/icons?i=github" width="20"> Git, <img src="image/ssms.png" width="20">
  SQL Server Management Studio 21**
