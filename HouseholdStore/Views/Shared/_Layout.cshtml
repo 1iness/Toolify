@@ -1,0 +1,280 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;900&display=swap" rel="stylesheet">
+
+</head>
+<body>
+    <!-- ХЕДЕР -->
+    <header class="header">
+        <div class="header-left">
+            <img src="~/image/logo.jpg" alt="Лого" class="logo-img" />
+            <span class="site-name">Toolify</span>
+        </div>
+
+        <nav class="menu">
+            <a asp-controller="About" asp-action="About">О Нас</a>
+            <a asp-controller="Home" asp-action="Home">Главная</a>
+            <a asp-controller="Catalog" asp-action="About">Каталог</a>
+        </nav>
+
+        <div class="header-icons">
+            <img src="~/image/inst.png" class="icon" />
+            <img src="~/image/tg.png" class="icon" />
+        </div>
+    </header>
+
+    <!-- БЛОК ПОД ХЕДЕРОМ-->
+    <div class="sub-header">
+        <button class="catalog-btn">
+            Каталог товаров
+            <img src="~/image/menu.png" />
+        </button>
+
+
+        <div class="search-block">
+            <input type="text" placeholder="Искачать на Toolify"></input>
+            <button class="search-btn">
+                <img src="~/image/search.png" />
+            </button>
+        </div>
+
+        <div class="auth-block">
+            <img src="~/image/user.png" alt="user" />
+            <a asp-controller="Account" asp-action="Login">Вход и<br>регистрация</a>
+        </div>
+
+        <div class="cart-block">
+            <img src="~/image/cart.png" alt="cart" />
+            <a asp-controller="Cart" asp-action="Index">Корзина</a>
+        </div>
+    </div>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <!-- БАННЕР ДО КАТЕГОРИЙ -->
+    <div class="banner-container scroll-animate">
+        <div class="banner">
+            <img src="~/image/baner1.png" />
+        </div>
+    </div>
+
+    <!-- КАТЕГОРИ -->
+    <div class="categories-container scroll-animate">
+        <div class="categories-grid">
+            <div class="category-item">
+                <div class="category-title">Для дома</div>
+                <div class="category-icon">
+                    <img src="~/image/home-icon.png" alt="Для дома" />
+                </div>
+            </div>
+
+            <div class="category-item">
+                <div class="category-title">Косметика</div>
+                <div class="category-icon">
+                    <img src="~/image/cosmetics-icon.png" alt="Косметика" />
+                </div>
+            </div>
+
+            <div class="category-item">
+                <div class="category-title">Для авто</div>
+                <div class="category-icon">
+                    <img src="~/image/car-icon.png" alt="Для авто" />
+                </div>
+            </div>
+
+            <div class="category-item">
+                <div class="category-title">Для уборки</div>
+                <div class="category-icon">
+                    <img src="~/image/cleaning-icon.png" alt="Для уборки" />
+                </div>
+            </div>
+
+            <div class="category-item">
+                <div class="category-title">Техника</div>
+                <div class="category-icon">
+                    <img src="~/image/tech-icon.png" alt="Техника" />
+                </div>
+            </div>
+
+            <div class="category-item sale">
+                <div class="category-title">
+                    SALE!!!<br>
+                    SALE!!!<br>
+                    SALE!!!
+                </div>
+                <div class="category-icon">
+                    <img src="~/image/sale-coupon.png" alt="50% OFF" style="transform: rotate(-15deg); margin-bottom: 15px;" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- БЛОК ТОВАРОВ -->
+    <div class="products-section scroll-animate">
+        <div class="products-container">
+            <div class="products-placeholder">
+                <h2>Блок товаров</h2>
+                <p>Здесь будут отображаться товары, добавленные администратором</p>
+                <div class="placeholder-info">
+                    <div class="info-item">
+                        <span></span>
+                        <span>Картинка товара</span>
+                    </div>
+                    <div class="info-item">
+                        <span></span>
+                        <span>Описание товара</span>
+                    </div>
+                    <div class="info-item">
+                        <span></span>
+                        <span>Цена и кнопки</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- НАЧАЛО НОВОГО БАННЕРА -->
+    <div class="delivery-banner-container scroll-animate">
+        <div class="delivery-banner">
+            <div class="delivery-text">
+                <h2>Бесплатная доставка<br>до дверей</h2>
+                <div class="delivery-subtext">
+                    при заказе от <span class="price-pill">300</span> рублей
+                    <br>скидка 10%
+                </div>
+            </div>
+            <img src="~/image/raccoon.png" class="banner-layer raccoon-img raccoon-animate" alt="Енот на скутере" />
+            <img src="~/image/leaf1.png" class="banner-layer leaf-img leaf-right leaf-animate leaf leaf1" alt="Лист" />
+            <img src="~/image/leaf2.png" class="banner-layer leaf-img leaf-bottom leaf-animate leaf leaf2" alt="Лист" />
+
+            <div class="banner-logo-block">
+                <img src="~/image/logo-circle.png" alt="logo" />
+                <span>Toolify</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- БЛОК ТОВАРОВ 2 -->
+    <div class="hit-products-section scroll-animate">
+        <div class="hit-products-container">
+            <div class="products-placeholder">
+                <h2>Блок товаров</h2>
+                <p>Здесь будут отображаться товары, добавленные администратором</p>
+                <div class="placeholder-info">
+                    <div class="info-item">
+                        <span></span>
+                        <span>Картинка товара</span>
+                    </div>
+                    <div class="info-item">
+                        <span></span>
+                        <span>Описание товара</span>
+                    </div>
+                    <div class="info-item">
+                        <span></span>
+                        <span>Цена и кнопки</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- БЛОК КАРТОЧЕК С ИНФОРМАЦИЕЙ -->
+    <div class="cards-section scroll-animate">
+        <div class="cards-container">
+            <div class="info-card card-blue">
+                <div class="card-content">
+                    <h3 class="card-title">Мы на связи</h3>
+                    <div class="phone-block">
+                        <div class="phone-number">8 (033) 777-33-23</div>
+                        <div class="work-hours">ПН-ПТ с 8:30 до 22:00</div>
+                    </div>
+                </div>
+                <img src="~/image/raccoon-phone.png" alt="Енот с телефоном" class="card-image img-raccoon-left">
+            </div>
+
+            <div class="info-card card-orange">
+                <div class="card-content">
+                    <h3 class="card-title">Полный<br>ассортимент</h3>
+                    <div class="card-subtitle">продукции</div>
+                </div>
+                <img src="~/image/products-box.png" alt="Коробка товаров" class="card-image img-products">
+            </div>
+
+            <div class="info-card card-green">
+                <div class="card-content">
+                    <h3 class="card-title">Оригинальная<br>продукция</h3>
+                    <div class="card-subtitle">напрямую со склада<br>производителя</div>
+                </div>
+                <img src="~/image/raccoon-medal.png" alt="Енот с медалью" class="card-image img-raccoon-right">
+            </div>
+        </div>
+    </div>
+
+    <!-- ОСТАВЬТЕ ТОЛЬКО ЭТОТ ФУТЕР -->
+    <footer class="main-footer scroll-animate">
+        <div class="footer-content-top">
+            <div class="footer-col contacts-col">
+                <h3 class="footer-title">Контакты</h3>
+                <ul class="footer-links">
+                    <li><a href="tel:80337773323">8 (033) 777-33-23</a></li>
+                    <li><a href="tel:80336663323">8 (033) 666-33-23</a></li>
+                    <li><a href="tel:80335553323">8 (033) 555-33-23</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col sections-col">
+                <h3 class="footer-title">Разделы</h3>
+                <ul class="footer-links">
+                    <li><a href="#">О нас</a></li>
+                    <li><a href="#">Главная</a></li>
+                    <li><a href="#">Каталог</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col spacer-col"></div>
+
+            <div class="footer-col social-col">
+                <h3 class="footer-title">Мы тут</h3>
+                <div class="social-icons">
+                    <img src="~/image/inst-logo.png" class="social-icon icon-instagram">
+                    <img src="~/image/tg-logo.png" class="social-icon icon-telegram">
+                </div>
+
+                <div class="work-hours-text">ПН-ПТ с 8:30 до 22:00</div>
+
+                <h4 class="email-heading">Отправить предложения</h4>
+                <div class="email-links">
+                    <a href="mailto:toolify@gmail.com">toolify@gmail.com</a>
+                    <a href="mailto:toolify@mail.ru">toolify@mail.ru</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="disclaimer-text">
+                Предложение не является публичной офертой. <br>
+                Окончательная стоимость с учетом бонусов и скидок, а также наличие товара подтверждается продавцом перед оплатой товара.
+            </div>
+            <div class="copyright-block">
+                <div class="copyright-text">
+                    &copy; 2025 Toolify <br>
+                    Все права защищены. <br>
+                    Popularike Meea
+                </div>
+                <img src="~/image/logo.png" alt="Логотип" class="footer-logo">
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
