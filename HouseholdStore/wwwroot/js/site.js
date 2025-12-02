@@ -1,0 +1,171 @@
+﻿document.addEventListener("DOMContentLoaded", function () {
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
+    //ФУНКЦИЯ ДЛЯ АНИМАЦИЙ ===
+    function initScrollAnimations() {
+        console.log("Инициализация анимаций...");
+
+        const blocksToAnimate = [
+            '.banner-container',
+            '.categories-container',
+            '.delivery-banner-container',
+            '.cards-section',
+            '.products-section',
+            '.hit-products-section',
+            '.main-footer'
+        ];
+
+        blocksToAnimate.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.classList.add('scroll-animate');
+            }
+        });
+
+        const observerOptions = {
+            threshold: 0.15,
+            rootMargin: "0px 0px -50px 0px" 
+        };
+
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    console.log("Показываем элемент:", entry.target.className);
+                    entry.target.classList.add('visible');
+                    obs.unobserve(entry.target); 
+                }
+            });
+        }, observerOptions);
+
+        blocksToAnimate.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) {
+                observer.observe(element);
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+                document.querySelectorAll('.scroll-animate:not(.visible)').forEach(el => {
+                    el.classList.add('visible');
+                });
+            }
+        });
+        initCategoriesAnimation();
+    }
+
+    //АНИМАЦИЯ ДЛЯ КАТЕГОРИЙ
+    function initCategoriesAnimation() {
+        const categoriesContainer = document.querySelector('.categories-container');
+        if (!categoriesContainer) return;
+
+        const items = categoriesContainer.querySelectorAll('.category-item');
+        if (!items.length) return;
+        categoriesContainer.classList.add('scroll-animate');
+
+        items.forEach((item, index) => {
+            item.style.transitionDelay = `${(index + 1) * 0.1}s`;
+        });
+    }
+
+    // запуск аним
+    initScrollAnimations();
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+
+
+// наклон карточки
+function initTiltCards(selector = '.category-item, .info-card') {
+    const cards = Array.from(document.querySelectorAll(selector));
+    if (!cards.length) return;
+
+    const maxRotate = 12; 
+    const scaleOnHover = 1.06;
+    const rAFs = new WeakMap();
+
+    function handleMove(e, card) {
+        const clientX = e.clientX ?? (e.touches && e.touches[0]?.clientX);
+        const clientY = e.clientY ?? (e.touches && e.touches[0]?.clientY);
+        if (clientX == null || clientY == null) return;
+
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        const dx = (clientX - cx) / (rect.width / 2);
+        const dy = (clientY - cy) / (rect.height / 2);
+
+        const clampedX = Math.max(-1, Math.min(1, dx));
+        const clampedY = Math.max(-1, Math.min(1, dy));
+
+        const rotateY = clampedX * maxRotate;      
+        const rotateX = -clampedY * maxRotate;     
+
+        if (rAFs.get(card)) cancelAnimationFrame(rAFs.get(card));
+        const id = requestAnimationFrame(() => {
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scaleOnHover})`;
+            card.style.boxShadow = `0 ${Math.abs(rotateX) + 12}px ${20 + Math.abs(rotateY)}px rgba(0,0,0,0.14)`;
+            rAFs.delete(card);
+        });
+        rAFs.set(card, id);
+    }
+
+    function handleLeave(card) {
+        if (rAFs.get(card)) cancelAnimationFrame(rAFs.get(card));
+        card.style.transform = 'translateZ(0) scale(1)';
+        card.style.boxShadow = '';
+    }
+
+    cards.forEach(card => {
+        if (window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+            return;
+        }
+
+        const onMove = (e) => handleMove(e, card);
+        const onEnter = (e) => { card.style.transition = 'transform 180ms cubic-bezier(.2,.8,.2,1), box-shadow 200ms ease'; onMove(e); };
+        const onLeave = () => { card.style.transition = 'transform 400ms cubic-bezier(.2,.8,.2,1), box-shadow 300ms ease'; handleLeave(card); };
+
+        card.addEventListener('mouseenter', onEnter);
+        card.addEventListener('mousemove', onMove);
+        card.addEventListener('mouseleave', onLeave);
+
+    });
+}
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => initTiltCards());
+    } else {
+        initTiltCards();
+    }
+
+    //ДЛЯ ЛИСТЬЕВ
+window.addEventListener('load', () => {
+    const leaf1 = document.querySelector('.leaf1');
+    const leaf2 = document.querySelector('.leaf2');
+
+    leaf1.addEventListener('animationend', () => {
+        leaf1.classList.add('float1');
+    });
+
+    leaf2.addEventListener('animationend', () => {
+        leaf2.classList.add('float2');
+    });
+});
