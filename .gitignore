@@ -1,2 +1,33 @@
-obj/
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build artifacts
 bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.vsidx
+
+# ASP.NET Core
+*.db
+*.db-shm
+*.db-wal
+
+# NuGet
+*.nupkg
+packages/
+
+# Rider / JetBrains
+.idea/
+
+# Temp
+*.log
+*.tmp
+*.temp
+
+# Others
+*.DS_Store
