@@ -1,19 +1,106 @@
-﻿@{
-    Layout = "_AuthLayout";
+﻿@model HouseholdStore.Models.RegisterViewModel
+@{
     ViewData["Title"] = "Регистрация";
+    Layout = null; 
 }
 
-<h2>Регистрация</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/register.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<form method="post">
-    <label>Логин:</label><br />
-    <input type="text" name="login" /><br /><br />
+</head>
 
-    <label>Email:</label><br />
-    <input type="email" name="email" /><br /><br />
+<body>
 
-    <label>Пароль:</label><br />
-    <input type="password" name="password" /><br /><br />
+    <div class="auth-page-container">
+        <div class="auth-form-wrapper">
+            <div class="auth-header">
+                <h1 class="auth-title">Создать аккаунт</h1>
+                <p class="auth-subtitle">Присоединяйтесь к сообществу HouseholdStore</p>
+            </div>
 
-    <button type="submit" style="padding:10px 20px;">Зарегистрироваться</button>
-</form>
+            <form method="post" asp-action="Register" asp-controller="Account" class="auth-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="FirstName">Имя</label>
+                        <input asp-for="FirstName" id="firstName" placeholder="Иван" />
+                        <span asp-validation-for="FirstName" style="color:red; font-size:12px;"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="LastName">Фамилия</label>
+                        <input asp-for="LastName" id="lastName" placeholder="Иванов" />
+                        <span asp-validation-for="LastName" style="color:red; font-size:12px;"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email">Электронная почта</label>
+                    <div class="input-with-icon">
+                        <input asp-for="Email" type="email" id="email" placeholder="example@mail.com" />
+                        <img src="~/image/email-icon.png" alt="Почта" class="input-icon" />
+                    </div>
+                    <span asp-validation-for="Email" style="color:red; font-size:12px;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Phone">Телефон</label>
+                    <div class="input-with-icon">
+                        <input asp-for="Phone" type="tel" id="phone"
+                               placeholder="+375 (XX) XXX-XX-XX"
+                               pattern="\+375\s?\(\d{2}\)\s?\d{3}[-]?\d{2}[-]?\d{2}"
+                               title="Формат: +375 (XX) XXX-XX-XX" />
+                        <img src="~/image/phone-icon.png" alt="Телефон" class="input-icon" />
+                    </div>
+                    <span asp-validation-for="Phone" style="color:red; font-size:12px;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password">Пароль</label>
+                    <div class="input-with-icon">
+                        <input asp-for="Password" type="password" id="password" placeholder="Минимум 8 символов" />
+                        <button type="button" class="toggle-password" aria-label="Показать пароль">
+                            <img src="~/image/eye-icon.png" alt="Показать" />
+                        </button>
+                    </div>
+                    <span asp-validation-for="Password" style="color:red; font-size:12px;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword">Подтвердите пароль</label>
+                    <div class="input-with-icon">
+                        <input asp-for="ConfirmPassword" type="password" id="confirmPassword" placeholder="Повторите пароль" />
+                        <button type="button" class="toggle-password" aria-label="Показать пароль">
+                            <img src="~/image/eye-icon.png" alt="Показать" />
+                        </button>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" style="color:red; font-size:12px;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="terms" required />
+                        <span>Я соглашаюсь с <a href="#" class="terms-link">условиями использования</a> и <a href="#" class="terms-link">политикой конфиденциальности</a></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="auth-btn primary-btn">Создать аккаунт</button>
+
+                <div class="login-redirect">
+                    <span>Уже есть аккаунт?</span>
+                    <a asp-controller="Account" asp-action="Login" class="login-link">Войти</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/register.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>
+

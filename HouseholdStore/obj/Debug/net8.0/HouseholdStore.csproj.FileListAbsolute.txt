@@ -31,3 +31,37 @@ D:\Проекты C#\HouseholdStore\HouseholdStore\obj\Debug\net8.0\refint\House
 D:\Проекты C#\HouseholdStore\HouseholdStore\obj\Debug\net8.0\HouseholdStore.pdb
 D:\Проекты C#\HouseholdStore\HouseholdStore\obj\Debug\net8.0\HouseholdStore.genruntimeconfig.cache
 D:\Проекты C#\HouseholdStore\HouseholdStore\obj\Debug\net8.0\ref\HouseholdStore.dll
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.AssemblyInfoInputs.cache
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.AssemblyInfo.cs
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.csproj.CoreCompileInputs.cache
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.RazorAssemblyInfo.cache
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.RazorAssemblyInfo.cs
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.sourcelink.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.dll
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\refint\HouseholdStore.dll
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.pdb
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\appsettings.Development.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\appsettings.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\HouseholdStore.staticwebassets.runtime.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\HouseholdStore.staticwebassets.endpoints.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\HouseholdStore.exe
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\HouseholdStore.deps.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\HouseholdStore.runtimeconfig.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\HouseholdStore.dll
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\bin\Debug\net8.0\HouseholdStore.pdb
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\rjimswa.dswa.cache.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\scopedcss\bundle\HouseholdStore.styles.css
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\scopedcss\projectbundle\HouseholdStore.bundle.scp.css
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\staticwebassets.build.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\staticwebassets.build.json.cache
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\staticwebassets.development.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\HouseholdStore.genruntimeconfig.cache
+C:\Users\Илья\Desktop\Toolify\HouseholdStore\obj\Debug\net8.0\ref\HouseholdStore.dll
