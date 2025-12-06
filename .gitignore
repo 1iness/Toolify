@@ -1,33 +1,67 @@
-# Visual Studio
+# Visual Studio 
+
 .vs/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+.idea/
 
-# Build artifacts
 bin/
 obj/
+Debug/
+Release/
 *.dll
 *.exe
 *.pdb
+*.app
+*.apk
+*.vsix
+*.nupkg
+*.msi
+*.log
 *.cache
-*.vsidx
-
-# ASP.NET Core
 *.db
+
+wwwroot/lib/
+*.staticwebassets.*
+project.lock.json
+project.fragment.lock.json
+artifacts/
 *.db-shm
 *.db-wal
+*.db-journal
 
-# NuGet
+
 *.nupkg
+*.snupkg
 packages/
+project.nuget.cache
+*.nuget.props
+*.nuget.targets
 
-# Rider / JetBrains
 .idea/
+*.iml
+*.ipr
+*.iws
 
-# Temp
 *.log
 *.tmp
 *.temp
-
-# Others
+*.swp
 *.DS_Store
+Thumbs.db
+ehthumbs.db
+
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+*.vsidx
+*.userprefs
+*.dotCover
+*.resharper
+*.suo
+*.DotSettings
