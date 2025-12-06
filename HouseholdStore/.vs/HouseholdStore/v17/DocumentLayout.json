@@ -1,0 +1,264 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\views\\account\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:views\\account\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\wwwroot\\js\\register.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:wwwroot\\js\\register.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\wwwroot\\css\\login.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:wwwroot\\css\\login.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\views\\account\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:views\\account\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\wwwroot\\css\\register.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:wwwroot\\css\\register.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\wwwroot\\css\\site.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:wwwroot\\css\\site.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\models\\loginviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:models\\loginviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\wwwroot\\js\\login.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:wwwroot\\js\\login.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\models\\registerviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:models\\registerviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\wwwroot\\js\\site.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:wwwroot\\js\\site.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|c:\\users\\\u0438\u043B\u044C\u044F\\desktop\\toolify\\householdstore\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{08C622D5-BF96-090C-8945-E7E2DB94AD49}|HouseholdStore.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 11,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "register.css",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\css\\register.css",
+              "RelativeDocumentMoniker": "wwwroot\\css\\register.css",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\css\\register.css",
+              "RelativeToolTip": "wwwroot\\css\\register.css",
+              "ViewState": "AgIAAPkAAAAAAAAAAAAAAEwAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2025-12-05T10:39:26.839Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Register.cshtml",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Views\\Account\\Register.cshtml",
+              "RelativeDocumentMoniker": "Views\\Account\\Register.cshtml",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Views\\Account\\Register.cshtml",
+              "RelativeToolTip": "Views\\Account\\Register.cshtml",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAAAMAAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-12-04T15:36:10.18Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Login.cshtml",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Views\\Account\\Login.cshtml",
+              "RelativeDocumentMoniker": "Views\\Account\\Login.cshtml",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Views\\Account\\Login.cshtml",
+              "RelativeToolTip": "Views\\Account\\Login.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-12-03T13:32:42.999Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "login.css",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\css\\login.css",
+              "RelativeDocumentMoniker": "wwwroot\\css\\login.css",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\css\\login.css",
+              "RelativeToolTip": "wwwroot\\css\\login.css",
+              "ViewState": "AgIAANIAAAAAAAAAAAAAAFEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2025-12-03T13:56:20.034Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "register.js",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\js\\register.js",
+              "RelativeDocumentMoniker": "wwwroot\\js\\register.js",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\js\\register.js",
+              "RelativeToolTip": "wwwroot\\js\\register.js",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-12-04T15:41:01.48Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "site.js",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\js\\site.js",
+              "RelativeDocumentMoniker": "wwwroot\\js\\site.js",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\js\\site.js",
+              "RelativeToolTip": "wwwroot\\js\\site.js",
+              "ViewState": "AgIAAE8AAAAAAAAAAAAgwAYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-12-03T21:30:33.676Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AccountController.cs",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Controllers\\AccountController.cs",
+              "RelativeDocumentMoniker": "Controllers\\AccountController.cs",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Controllers\\AccountController.cs",
+              "RelativeToolTip": "Controllers\\AccountController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-03T13:36:06.892Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "RegisterViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Models\\RegisterViewModel.cs",
+              "RelativeDocumentMoniker": "Models\\RegisterViewModel.cs",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Models\\RegisterViewModel.cs",
+              "RelativeToolTip": "Models\\RegisterViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAzAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-04T15:37:20.764Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "login.js",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\js\\login.js",
+              "RelativeDocumentMoniker": "wwwroot\\js\\login.js",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\js\\login.js",
+              "RelativeToolTip": "wwwroot\\js\\login.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-12-03T13:56:48.022Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "HomeController.cs",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Controllers\\HomeController.cs",
+              "RelativeDocumentMoniker": "Controllers\\HomeController.cs",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Controllers\\HomeController.cs",
+              "RelativeToolTip": "Controllers\\HomeController.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-04T15:45:03.683Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "LoginViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Models\\LoginViewModel.cs",
+              "RelativeDocumentMoniker": "Models\\LoginViewModel.cs",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Models\\LoginViewModel.cs",
+              "RelativeToolTip": "Models\\LoginViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-03T14:02:55.806Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "site.css",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\css\\site.css",
+              "RelativeDocumentMoniker": "wwwroot\\css\\site.css",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\wwwroot\\css\\site.css",
+              "RelativeToolTip": "wwwroot\\css\\site.css",
+              "ViewState": "AgIAANgAAAAAAAAAAAAAAA0AAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2025-12-03T13:21:01.814Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Views\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "Views\\Shared\\_Layout.cshtml",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Views\\Shared\\_Layout.cshtml",
+              "RelativeToolTip": "Views\\Shared\\_Layout.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-12-03T13:20:54.658Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\\u0418\u043B\u044C\u044F\\Desktop\\Toolify\\HouseholdStore\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-03T14:05:30.834Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

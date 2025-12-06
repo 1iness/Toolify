@@ -97,7 +97,7 @@ function initTiltCards(selector = '.category-item, .info-card') {
     const cards = Array.from(document.querySelectorAll(selector));
     if (!cards.length) return;
 
-    const maxRotate = 12; 
+    const maxRotate = 3; 
     const scaleOnHover = 1.06;
     const rAFs = new WeakMap();
 
