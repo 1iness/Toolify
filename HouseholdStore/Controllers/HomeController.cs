@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using HouseholdStore.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HouseholdStore.Controllers
@@ -28,5 +29,11 @@ namespace HouseholdStore.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+        [Authorize]
+        public IActionResult Secret()
+        {
+            return View();
+        }
+
     }
 }

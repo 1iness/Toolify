@@ -1,53 +1,70 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using HouseholdStore.Models;
+﻿using HouseholdStore.Models;
+using HouseholdStore.Services;
+using Microsoft.AspNetCore.Authentication;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HouseholdStore.Controllers
 {
     public class AccountController : Controller
     {
-        [HttpGet]
-        public IActionResult Login()
+        private readonly AuthApiService _auth;
+
+        public AccountController(AuthApiService auth)
         {
-            return View();
+            _auth = auth;
+        }
+
+        [HttpGet]
+        public IActionResult Login() => View();
+
+        [HttpGet]
+        public IActionResult Register() => View();
+
+        [HttpPost]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var result = await _auth.Register(model);
+            if (!result)
+            {
+                ModelState.AddModelError("", "Registration error");
+                return View(model);
+            }
+
+            return RedirectToAction("Login");
         }
 
         [HttpPost]
-        public IActionResult Login(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (ModelState.IsValid)
-            {
-                if (model.Email == "admin@mail.com" && model.Password == "12345")
-                {
-                    return RedirectToAction("Index", "Home");
-                }
-                ModelState.AddModelError("", "Неверный логин или пароль");
-            }
-            return View(model);
-        }
-        [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
+            var token = await _auth.Login(model);
 
-        [HttpPost]
-        public IActionResult Register(RegisterViewModel model)
-        {
-            if (ModelState.IsValid)
+            if (token == null)
             {
-                try
-                {
-                    //проверки + сейв в бд
-
-                    TempData["SuccessMessage"] = "Регистрация прошла успешно! Теперь вы можете войти.";
-                    return RedirectToAction("Login");
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", $"Произошла ошибка: {ex.Message}");
-                }
+                ModelState.AddModelError("", "Invalid login or password");
+                return View(model);
             }
-            return View(model);
+
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var claims = jwtToken.Claims
+                .Select(c => new System.Security.Claims.Claim(c.Type, c.Value))
+                .ToList();
+
+            var identity = new System.Security.Claims.ClaimsIdentity(claims, "Cookies");
+            var principal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync("Cookies", principal);
+
+            Response.Cookies.Append("jwt", token);
+
+            return RedirectToAction("Index", "Home");
+
         }
     }
 }
