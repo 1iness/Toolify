@@ -14,17 +14,14 @@ namespace HouseholdStore
             builder.Services.AddHttpClient();
             builder.Services.AddScoped<AuthApiService>();
 
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = "Cookies";
-                options.DefaultChallengeScheme = "Cookies";
-            })
-            .AddCookie("Cookies", options =>
-            {
-                options.LoginPath = "/Account/Login";
-                options.AccessDeniedPath = "/Account/Login";
-            });
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.AccessDeniedPath = "/Account/Login";
+                });
 
+            builder.Services.AddAuthorization();
             var app = builder.Build();
 
             if (!app.Environment.IsDevelopment())

@@ -39,6 +39,7 @@ public class AuthController : ControllerBase
             Email = request.Email,
             Phone = request.Phone,
             Password = PasswordHasher.Hash(request.Password),
+            Role = "User"
         };
 
         _repo.CreateUser(user);
@@ -71,6 +72,7 @@ public class AuthController : ControllerBase
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Email),
             new Claim("id", user.Id.ToString()),
+            new Claim(ClaimTypes.Role, user.Role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

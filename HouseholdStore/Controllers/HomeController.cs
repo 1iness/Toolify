@@ -35,5 +35,11 @@ namespace HouseholdStore.Controllers
             return View();
         }
 
+        [Authorize(Roles = "Admin")]
+        public IActionResult AdminOnly()
+        {
+            return Content("админ ура ура админ!");
+        }
+
     }
 }

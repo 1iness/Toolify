@@ -49,8 +49,8 @@ public class UserRepository
         con.Open();
 
         var cmd = new SqlCommand(@"
-            SELECT * FROM Users 
-            WHERE Email=@em AND PasswordHash=@pw", con);
+        SELECT * FROM Users 
+        WHERE Email=@em AND PasswordHash=@pw", con);
 
         cmd.Parameters.AddWithValue("@em", email);
         cmd.Parameters.AddWithValue("@pw", password);
@@ -65,7 +65,11 @@ public class UserRepository
             Id = (int)reader["Id"],
             FirstName = reader["FirstName"].ToString()!,
             LastName = reader["LastName"].ToString()!,
-            Email = reader["Email"].ToString()!
+            Email = reader["Email"].ToString()!,
+            Phone = reader["Phone"].ToString()!,
+            Password = reader["PasswordHash"].ToString()!,
+            Role = reader["Role"].ToString()!
         };
     }
+
 }

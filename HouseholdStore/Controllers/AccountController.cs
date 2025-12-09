@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace HouseholdStore.Controllers
 {
@@ -49,20 +51,21 @@ namespace HouseholdStore.Controllers
                 return View(model);
             }
 
-            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(token);
 
-            var claims = jwtToken.Claims
-                .Select(c => new System.Security.Claims.Claim(c.Type, c.Value))
-                .ToList();
+            var identity = new ClaimsIdentity(
+                jwt.Claims,
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
 
-            var identity = new System.Security.Claims.ClaimsIdentity(claims, "Cookies");
-            var principal = new System.Security.Claims.ClaimsPrincipal(identity);
-
-            await HttpContext.SignInAsync("Cookies", principal);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity)
+            );
 
             Response.Cookies.Append("jwt", token);
-
+            Console.WriteLine(token);
             return RedirectToAction("Index", "Home");
 
         }
