@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdStore", "Household
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toolify.AuthService", "..\Toolify.AuthService\Toolify.AuthService.csproj", "{5CAB4D8D-0A82-475C-A2FE-4F10B1B7886B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toolify.ProductService", "..\Toolify.ProductService\Toolify.ProductService.csproj", "{9E5C6AFE-102D-4E5F-ADD1-2987CBE2C45E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{5CAB4D8D-0A82-475C-A2FE-4F10B1B7886B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CAB4D8D-0A82-475C-A2FE-4F10B1B7886B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CAB4D8D-0A82-475C-A2FE-4F10B1B7886B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E5C6AFE-102D-4E5F-ADD1-2987CBE2C45E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E5C6AFE-102D-4E5F-ADD1-2987CBE2C45E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E5C6AFE-102D-4E5F-ADD1-2987CBE2C45E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E5C6AFE-102D-4E5F-ADD1-2987CBE2C45E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
