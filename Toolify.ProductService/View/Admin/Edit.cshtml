@@ -1,0 +1,31 @@
+﻿@model Toolify.ProductService.Models.Product
+@{
+    ViewData["Title"] = "Редактировать товар";
+}
+
+<h1>Редактировать товар</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="Id" value="@Model.Id" />
+
+    <p>Название:</p>
+    <input type="text" name="Name" value="@Model.Name" required />
+
+    <p>Описание:</p>
+    <textarea name="FullDescription">@Model.FullDescription</textarea>
+
+    <p>Цена:</p>
+    <input type="number" name="Price" value="@Model.Price" required />
+
+    <p>Изображение:</p>
+    @if (!string.IsNullOrEmpty(Model.ImagePath))
+    {
+        <img src="/@Model.ImagePath" width="100" />
+    
+        <br />
+    }
+    <input type="file" name="image" />
+
+    <br /><br />
+    <button type="submit">Сохранить</button>
+</form>
