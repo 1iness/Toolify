@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace HouseholdStore.Models
+namespace HouseholdStore
 {
     public class LoginResponse 
     {

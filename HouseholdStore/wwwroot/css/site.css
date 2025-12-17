@@ -279,57 +279,17 @@ body {
     }
 
     .category-item.sale .sale-image {
-        position: relative; /* Меняем на relative */
+        position: relative; 
     bottom: auto;
     left: auto;
     width: 100%;
-    max-width: 160px; /* Ограничиваем максимальную ширину */
+    max-width: 160px; 
     height: auto;
-    transform: rotate(-5deg); /* Легкий поворот для эффекта */
-    order: 2; /* Для flexbox порядка */
+    transform: rotate(-5deg); 
+    order: 2; 
     margin-top: 5px;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
     }
-
-/* Блок товаров */
-.products-section {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 20px;
-}
-
-.products-container {
-    background: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    border-radius: 15px;
-    padding: 40px;
-    text-align: center;
-}
-
-.products-placeholder h2 {
-    color: #6c757d;
-    margin-bottom: 15px;
-}
-
-.products-placeholder p {
-    color: #868e96;
-    margin-bottom: 25px;
-}
-
-.placeholder-info {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-}
-
-.info-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    color: #6c757d;
-}
 
 /* Баннер доставки */
 .delivery-banner-container {

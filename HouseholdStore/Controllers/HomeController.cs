@@ -1,24 +1,26 @@
-using System.Diagnostics;
 using HouseholdStore.Models;
+using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace HouseholdStore.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ProductApiService _productApi;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ProductApiService productApi)
         {
             _logger = logger;
+            _productApi = productApi;
         }
-
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var products = await _productApi.GetAllAsync();
+            return View(products);
         }
-
         public IActionResult Privacy()
         {
             return View();

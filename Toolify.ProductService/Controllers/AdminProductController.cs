@@ -7,7 +7,6 @@ namespace Toolify.ProductService.Controllers
 {
     [ApiController]
     [Route("api/admin/products")]
-    [Authorize(Roles = "Admin")]
     public class AdminProductController : ControllerBase
     {
         private readonly ProductManager _service;
@@ -90,35 +89,33 @@ namespace Toolify.ProductService.Controllers
         [HttpPost("{id}/upload-image")]
         public async Task<IActionResult> UploadImage(int id, IFormFile file)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { message = "Файл не найден" });
+            if (file == null || file.Length == 0) return BadRequest("Файл не найден");
 
             var product = await _service.GetByIdAsync(id);
-            if (product == null)
-                return NotFound(new { message = "Товар не найден" });
+            if (product == null) return NotFound();
 
-            string folder = Path.Combine(_env.WebRootPath, "images", "products");
-            Directory.CreateDirectory(folder);
-
-            string extension = Path.GetExtension(file.FileName);
-            string fileName = $"product_{id}_{Guid.NewGuid()}{extension}";
-            string filePath = Path.Combine(folder, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-                await file.CopyToAsync(stream);
-
-            // удаляем старую
-            if (!string.IsNullOrEmpty(product.ImagePath))
+            var rootPath = _env.WebRootPath;
+            if (string.IsNullOrEmpty(rootPath))
             {
-                string oldPath = Path.Combine(_env.WebRootPath, product.ImagePath);
-                if (System.IO.File.Exists(oldPath))
-                    System.IO.File.Delete(oldPath);
+                rootPath = Path.Combine(_env.ContentRootPath, "wwwroot");
+            }
+            var folder = Path.Combine(rootPath, "images", "products");
+
+            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var fullPath = Path.Combine(folder, fileName);
+
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
             }
 
-            product.ImagePath = $"images/products/{fileName}";
+            product.ImagePath = "/images/products/" + fileName;
             await _service.UpdateAsync(product);
 
-            return Ok(new { message = "Изображение загружено", path = product.ImagePath });
+            return Ok(new { path = product.ImagePath });
         }
+
     }
 }

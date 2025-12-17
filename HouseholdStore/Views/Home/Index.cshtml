@@ -1,5 +1,28 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<Toolify.ProductService.Models.Product>
+
+@{
+    ViewData["Title"] = "Главная";
 }
 
+<section class="products-section">
+    <h2 class="section-title">Каталог товаров</h2>
 
+    <div class="products-grid">
+        @foreach (var product in Model)
+        {
+            <div class="product-card">
+                <img src="https://localhost:7188@(product.ImagePath)"
+                     alt="@product.Name"
+                     style="width:100px; height:auto; border: 1px solid #ddd; border-radius: 4px;"
+                     onerror="this.onerror=null; this.src='/images/no-image.png';" />
+                <h3>@product.Name</h3>
+
+                <p class="desc">@product.FullDescription</p>
+
+                <div class="price">@product.Price ₽</div>
+
+                <button class="btn-buy">Купить</button>
+            </div>
+        }
+    </div>
+</section>

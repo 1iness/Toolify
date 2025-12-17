@@ -30,6 +30,26 @@ namespace Toolify.ProductService.Data
 
             return products;
         }
+        public async Task<List<Category>> GetAllCategoriesAsync()
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            using var command = new SqlCommand("SELECT Id, Name FROM Categories", connection);
+            var categories = new List<Category>();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                categories.Add(new Category
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Name = reader.GetString(reader.GetOrdinal("Name"))
+                });
+            }
+
+            return categories;
+        }
 
         public async Task<Product?> GetByIdAsync(int id)
         {

@@ -1,6 +1,7 @@
 
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Database;
+using Toolify.ProductService.Services;
 
 namespace Toolify.ProductService
 {
@@ -16,8 +17,16 @@ namespace Toolify.ProductService
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddSingleton<SqlConnectionFactory>();
+
+            builder.Services.AddSingleton<SqlConnectionFactory>(sp =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
+                return new SqlConnectionFactory(config);
+            });
+
             builder.Services.AddScoped<ProductRepository>();
+            builder.Services.AddScoped<ProductManager>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -26,9 +35,9 @@ namespace Toolify.ProductService
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+           
             app.UseHttpsRedirection();
-
+            app.UseStaticFiles();
             app.UseAuthorization();
 
 
