@@ -13,6 +13,8 @@ namespace HouseholdStore
 
             builder.Services.AddHttpClient();
             builder.Services.AddScoped<AuthApiService>();
+            builder.Services.AddHttpClient<ProductApiService>();
+            builder.Services.AddScoped<ProductApiService>();
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
@@ -43,6 +45,7 @@ namespace HouseholdStore
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
+
         }
     }
 }

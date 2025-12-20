@@ -24,7 +24,10 @@ namespace Toolify.ProductService.Services
 
             return await _repository.GetByIdAsync(id);
         }
-
+        public async Task<List<Category>> GetAllCategoriesAsync()
+        {
+            return await _repository.GetAllCategoriesAsync();
+        }
         public async Task<int> AddAsync(Product product)
         {
             ValidateProduct(product, isNew: true);

@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@model IEnumerable<Toolify.ProductService.Models.Product>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -7,7 +9,7 @@
 
     <link rel="stylesheet" href="~/css/site.css" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;900&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="~/css/product.css"/>
 </head>
 <body>
     <!-- ХЕДЕР -->
@@ -56,7 +58,6 @@
     </div>
 
     <main>
-        @RenderBody()
         @RenderSection("Styles", required: false) 
     </main>
 
@@ -118,29 +119,7 @@
         </div>
     </div>
 
-    <!-- БЛОК ТОВАРОВ -->
-    <div class="products-section scroll-animate">
-        <div class="products-container">
-            <div class="products-placeholder">
-                <h2>Блок товаров</h2>
-                <p>Здесь будут отображаться товары, добавленные администратором</p>
-                <div class="placeholder-info">
-                    <div class="info-item">
-                        <span></span>
-                        <span>Картинка товара</span>
-                    </div>
-                    <div class="info-item">
-                        <span></span>
-                        <span>Описание товара</span>
-                    </div>
-                    <div class="info-item">
-                        <span></span>
-                        <span>Цена и кнопки</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    @RenderBody()
 
     <!-- НАЧАЛО НОВОГО БАННЕРА -->
     <div class="delivery-banner-container scroll-animate">

@@ -1,0 +1,47 @@
+﻿@model Toolify.ProductService.Models.Product
+
+@{
+    ViewData["Title"] = "Добавить товар";
+    Layout = null; 
+}
+
+<link rel="stylesheet" href="~/css/site.css" />
+
+<div style="padding: 20px;">
+    <h1>Добавить товар</h1>
+
+    <div asp-validation-summary="All" style="color:red"></div>
+
+    <form method="post" enctype="multipart/form-data" asp-action="Create">
+
+        <p>Категория:</p>
+        <select name="CategoryId" asp-items="ViewBag.Categories" required style="width: 200px; padding: 5px;">
+            <option value="">-- Выберите категорию --</option>
+        </select>
+
+        <p>Название:</p>
+        <input type="text" name="Name" value="@Model?.Name" required />
+
+        <p>Описание (краткое):</p>
+        <input type="text" name="ShortDescription" value="@Model?.ShortDescription" />
+
+        <p>Описание (полное):</p>
+        <textarea name="FullDescription" rows="4" cols="50">@Model?.FullDescription</textarea>
+
+        <p>Цена:</p>
+        <input type="number" name="Price" value="@Model?.Price" step="0.01" required />
+
+        <p>Количество на складе:</p>
+        <input type="number" name="StockQuantity" value="@(Model?.StockQuantity ?? 0)" min="0" required />
+
+        <p>Изображение:</p>
+        <input type="file" name="image" />
+
+        <p>Скидка (%):</p>
+        <input type="number" name="Discount" value="@(Model?.Discount ?? 0)" min="0" max="100" />
+
+        <br /><br />
+        <button type="submit">Добавить</button>
+        <a href="/Admin/Index">Отмена</a>
+    </form>
+</div>

@@ -1,0 +1,138 @@
+﻿* {
+    font-family: 'Montserrat', sans-serif;
+}
+/* общий блок */
+.products-section {
+    max-width: 1200px;
+    margin: 50px auto 60px;
+    padding: 0 20px;
+}
+
+/* сетка */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+/* карточки */
+.product-card {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* для скидок фон */
+.card-top {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 2; 
+}
+
+.badge {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+}
+
+    .badge.discount {
+        background: #ff4d4f;
+    }
+
+/* картинка товара */
+.product-card img {
+    width: 100%;
+    height: 170px;
+    object-fit: contain;
+    margin-bottom: 10px;
+}
+
+/* рейтинг */
+.rating {
+    font-size: 14px;
+    color: #ffc107;
+    margin-bottom: 6px;
+}
+
+/* цена */
+.price-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 30px; 
+}
+
+.price {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.price-old {
+    font-size: 14px;
+    color: #999;
+    text-decoration: line-through;
+}
+
+/* нейм */
+.title {
+    font-size: 14px;
+    line-height: 1.3;
+    margin: 8px 0;
+    height: 38px; 
+    overflow: hidden;
+}
+
+/* наличие/нет в наличии */
+.stock {
+    display: inline-block;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    margin: 8px 0 12px;
+    font-weight: 600;
+    width: fit-content; 
+}
+
+    .stock.in {
+        background: #e8f8ee;
+        color: #2ecc71;
+    }
+
+    .stock.out {
+        background: #ffe6e6;
+        color: #ff4d4f;
+    }
+
+/* кнопка */
+.btn-buy {
+    width: 100%;
+    padding: 10px;
+    background: #2CDD00;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .btn-buy:hover {
+        background: #e66f00;
+    }
+
+    /* кнопка off */
+    .btn-buy:disabled {
+        background-color: #e0e0e0;
+        color: #999;
+        cursor: not-allowed;
+    }

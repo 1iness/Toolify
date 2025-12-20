@@ -1,0 +1,66 @@
+﻿@model IEnumerable<Toolify.ProductService.Models.Product>
+
+@{
+    ViewData["Title"] = "Список товаров";
+    Layout = null;
+}
+
+<link rel="stylesheet" href="~/css/site.css" />
+
+<div style="padding: 20px;">
+    <h1>Список товаров</h1>
+    <p><a href="/Admin/Create" class="btn btn-primary">Добавить новый товар</a></p>
+
+    <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th>Id</th>
+                <th>Фото</th>
+                <th>Название</th>
+                <th>Цена</th>
+                <th>Скидка</th>
+                <th>Кол-во</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="https://localhost:7188@(item.ImagePath)"
+                                 width="80"
+                                 style="border-radius: 4px;"
+                                 onerror="this.src='/images/no-image.png'" />
+                        }
+                        else
+                        {
+                            <span>Нет фото</span>
+                        }
+                    </td>
+                    <td>@item.Name</td>
+                    <td>@item.Price.ToString("C")</td>
+                    <td style="text-align: center;">
+                        @if (item.Discount > 0)
+                        {
+                            <span style="color: red; font-weight: bold;">-@item.Discount%</span>
+                        }
+                        else
+                        {
+                            <span style="color: gray;">Нет</span>
+                        }
+                    </td>
+
+                    <td>@item.StockQuantity шт.</td>
+                    <td>
+                        <a href="/Admin/Edit/@item.Id">Редактировать</a> |
+                        <a href="/Admin/Delete/@item.Id" onclick="return confirm('Удалить товар?');">Удалить</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

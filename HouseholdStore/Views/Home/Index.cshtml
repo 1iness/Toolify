@@ -1,5 +1,59 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<Toolify.ProductService.Models.Product>
+
+@{
+    ViewData["Title"] = "Главная";
 }
 
+<section class="products-section">
+    <div class="products-grid">
+        @foreach (var product in Model)
+        {
+            bool hasDiscount = product.Discount > 0;
+            bool isOutOfStock = product.StockQuantity <= 0;
 
+            decimal finalPrice = product.Price;
+            if (hasDiscount)
+            {
+                finalPrice = product.Price - (product.Price * product.Discount / 100);
+            }
+
+            <div class="product-card">
+
+                @if (hasDiscount)
+                {
+                    <div class="card-top">
+                        <span class="badge discount">-@product.Discount%</span>
+                    </div>
+                }
+
+                <img src="https://localhost:7188@(product.ImagePath)"
+                     alt="@product.Name"
+                     onerror="this.onerror=null; this.src='/images/no-image.png';" />
+
+                <div class="rating">★★★★☆</div>
+
+                <div class="price-block">
+                    <span class="price">@finalPrice.ToString("N0") руб</span>
+
+                    @if (hasDiscount)
+                    {
+                        <span class="price-old">@product.Price.ToString("N0") руб</span>
+                    }
+                </div>
+
+                <h3 class="title">@product.Name</h3>
+
+                @if (isOutOfStock)
+                {
+                    <div class="stock out">Нет в наличии</div>
+                    <button class="btn-buy" disabled>Скоро будет</button>
+                }
+                else
+                {
+                    <div class="stock in">В наличии: @product.StockQuantity шт.</div>
+                    <button class="btn-buy">В корзину</button>
+                }
+            </div>
+        }
+    </div>
+</section>
