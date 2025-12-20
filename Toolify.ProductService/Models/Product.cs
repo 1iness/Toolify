@@ -9,5 +9,7 @@
         public string? FullDescription { get; set; }
         public decimal Price { get; set; }
         public string? ImagePath { get; set; }
+        public int StockQuantity { get; set; }
+        public int Discount { get; set; }
     }
 }

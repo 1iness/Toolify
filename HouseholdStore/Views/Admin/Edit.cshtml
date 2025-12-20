@@ -1,32 +1,65 @@
-﻿
+﻿@model Toolify.ProductService.Models.Product
+
 @{
     ViewData["Title"] = "Редактировать товар";
     Layout = null;
 }
 
-<h1>Редактировать товар</h1>
+<link rel="stylesheet" href="~/css/site.css" />
 
-<form method="post" enctype="multipart/form-data">
-    <input type="hidden" name="Id" value="@Model.Id" />
+<div style="padding: 20px;">
+    <h1>Редактировать товар</h1>
 
-    <p>Название:</p>
-    <input type="text" name="Name" value="@Model.Name" required />
+    <form method="post" enctype="multipart/form-data" asp-action="Edit">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ImagePath" />
 
-    <p>Описание:</p>
-    <textarea name="FullDescription">@Model.FullDescription</textarea>
+        <p><b>Категория:</b></p>
+        <select asp-for="CategoryId" asp-items="ViewBag.Categories" required style="padding: 5px; width: 200px;">
+            <option value="">-- Выберите категорию --</option>
+        </select>
 
-    <p>Цена:</p>
-    <input type="number" name="Price" value="@Model.Price" required />
+        <p><b>Название:</b></p>
+        <input type="text" asp-for="Name" required style="width: 300px;" />
 
-    <p>Изображение:</p>
-    @if (!string.IsNullOrEmpty(Model.ImagePath))
-    {
-        <img src="/@Model.ImagePath" width="100" />
-    
-        <br />
-    }
-    <input type="file" name="image" />
+        <p><b>Краткое описание:</b></p>
+        <input type="text" asp-for="ShortDescription" style="width: 300px;" />
 
-    <br /><br />
-    <button type="submit">Сохранить</button>
-</form>
+        <p><b>Полное описание:</b></p>
+        <textarea asp-for="FullDescription" rows="4" cols="50"></textarea>
+
+        <div style="display: flex; gap: 20px;">
+            <div>
+                <p><b>Цена (₽):</b></p>
+                <input type="number" asp-for="Price" step="0.01" required />
+            </div>
+
+            <div>
+                <p><b>Скидка (%):</b></p>
+                <input type="number" asp-for="Discount" min="0" max="100" />
+                <br />
+                <small style="color: gray;">Укажите 0, чтобы убрать скидку</small>
+            </div>
+        </div>
+
+        <p><b>Количество на складе:</b></p>
+        <input type="number" asp-for="StockQuantity" required />
+
+        <p><b>Текущее изображение:</b></p>
+        @if (!string.IsNullOrEmpty(Model.ImagePath))
+        {
+            <img src="https://localhost:7188@(Model.ImagePath)" width="150" style="margin-bottom: 10px;" />
+        }
+        else
+        {
+            <p>Нет изображения</p>
+        }
+
+        <p><b>Загрузить новое (если нужно заменить):</b></p>
+        <input type="file" name="image" />
+
+        <br /><br />
+        <button type="submit" style="padding: 10px 20px; cursor: pointer;">Сохранить изменения</button>
+        <a href="/Admin/Index" style="margin-left: 20px;">Отмена</a>
+    </form>
+</div>

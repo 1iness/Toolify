@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Toolify.ProductService.Models;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace HouseholdStore.Controllers
 {
@@ -36,13 +37,22 @@ namespace HouseholdStore.Controllers
             var product = await _api.GetByIdAsync(id);
             if (product == null) return NotFound();
 
+            var categories = await _api.GetCategoriesAsync();
+            ViewBag.Categories = new SelectList(categories, "Id", "Name", product.CategoryId);
+
             return View(product);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(Product product)
+        public async Task<IActionResult> Edit(Product product, IFormFile? image)
         {
             await _api.UpdateAsync(product);
+
+            if (image != null && image.Length > 0)
+            {
+                await _api.UploadImageAsync(product.Id, image);
+            }
+
             return RedirectToAction("Index");
         }
 

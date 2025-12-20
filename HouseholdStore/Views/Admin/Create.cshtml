@@ -31,8 +31,14 @@
         <p>Цена:</p>
         <input type="number" name="Price" value="@Model?.Price" step="0.01" required />
 
+        <p>Количество на складе:</p>
+        <input type="number" name="StockQuantity" value="@(Model?.StockQuantity ?? 0)" min="0" required />
+
         <p>Изображение:</p>
         <input type="file" name="image" />
+
+        <p>Скидка (%):</p>
+        <input type="number" name="Discount" value="@(Model?.Discount ?? 0)" min="0" max="100" />
 
         <br /><br />
         <button type="submit">Добавить</button>
