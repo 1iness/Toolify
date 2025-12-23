@@ -15,6 +15,23 @@ namespace Toolify.ProductService.Controllers
             _repo = repo;
         }
 
+        [HttpGet("categories")]
+        public async Task<IActionResult> GetCategories()
+        {
+            var categories = await _repo.GetAllCategoriesAsync();
+            return Ok(categories);
+        }
+
+        [HttpPost("categories")]
+        public async Task<IActionResult> CreateCategory([FromBody] Category category)
+        {
+            if (string.IsNullOrWhiteSpace(category.Name))
+                return BadRequest("Имя категории не может быть пустым");
+
+            var newCategory = await _repo.AddCategoryAsync(category);
+            return Ok(newCategory);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {

@@ -88,17 +88,19 @@
                          onerror="this.onerror=null; this.src='/images/no-image.png';" />
                 </a>
                     <div class="price-block" style="margin-top: 10px; margin-bottom: 5px;">
-                        <span class="price" style="font-size: 18px; font-weight: bold;">@finalPrice.ToString("N0") ₽</span>
+                        <span class="price" style="font-size: 18px; font-weight: bold;">@finalPrice.ToString("N0") Руб</span>
                         @if (hasDiscount)
                         {
-                            <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">@product.Price.ToString("N0") ₽</span>
+                            <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">@product.Price.ToString("N0") Руб</span>
                         }
                     </div>
 
                     <div class="rating" style="color: #ffc107; font-size: 20px; margin-bottom: 5px;">★★★★☆</div>
 
                     <h3 class="title" style="font-weight: 400; font-size: 16px; margin-bottom: 10px;">@product.Name</h3>
-
+                <span style="font-weight: normal; font-size: 0.85em; color: #777; margin-left: 8px;">
+                    арт. @product.ArticleNumber
+                </span>
                     @if (isOutOfStock)
                     {
                         <div class="stock out">Нет в наличии</div>

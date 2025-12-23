@@ -97,10 +97,16 @@ namespace HouseholdStore.Services
         }
         public async Task<List<Category>> GetCategoriesAsync()
         {
-            var response = await _http.GetAsync("/api/categories");
+            var response = await _http.GetAsync("api/Product/categories");
             response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<List<Category>>(jsonOptions);
+        }
 
-            return await response.Content.ReadFromJsonAsync<List<Category>>();
+        public async Task<Category> CreateCategoryAsync(Category category)
+        {
+            var response = await _http.PostAsJsonAsync("api/Product/categories", category);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<Category>(jsonOptions);
         }
     }
 }

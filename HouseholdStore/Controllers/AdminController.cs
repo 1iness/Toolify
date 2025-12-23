@@ -65,11 +65,22 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Product product, IFormFile? image)
+        public async Task<IActionResult> Create(Product product, IFormFile? image, string? NewCategoryName)
         {
-            if (product.CategoryId <= 0)
+            var rnd = new Random();
+            product.ArticleNumber = rnd.Next(10000, 99999).ToString();
+
+            if (!string.IsNullOrWhiteSpace(NewCategoryName))
             {
-                ModelState.AddModelError("CategoryId", "Выберите категорию!");
+                var newCat = new Category { Name = NewCategoryName };
+                var createdCat = await _api.CreateCategoryAsync(newCat);
+                product.CategoryId = createdCat.Id;
+
+                ModelState.Remove("CategoryId");
+            }
+            else if (product.CategoryId <= 0)
+            {
+                ModelState.AddModelError("CategoryId", "Выберите категорию или создайте новую!");
             }
 
             if (ModelState.IsValid)
@@ -80,13 +91,10 @@ namespace HouseholdStore.Controllers
                 {
                     await _api.UploadImageAsync(newProductId.Value, image);
                 }
-
                 return RedirectToAction("Index");
             }
-
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
-
             return View(product);
         }
 

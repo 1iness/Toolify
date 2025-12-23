@@ -11,5 +11,6 @@
         public string? ImagePath { get; set; }
         public int StockQuantity { get; set; }
         public int Discount { get; set; }
+        public string? ArticleNumber { get; set; }
     }
 }
