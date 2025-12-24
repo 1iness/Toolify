@@ -19,6 +19,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Index()
         {
             var products = await _productApi.GetAllAsync();
+
             return View(products);
         }
         public IActionResult Privacy()
@@ -35,6 +36,26 @@ namespace HouseholdStore.Controllers
         public IActionResult Secret()
         {
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchJson(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+                return Json(new List<object>()); 
+
+            var products = await _productApi.SearchProductsAsync(query);
+            return Json(products);
+        }
+
+        public async Task<IActionResult> Details(int id)
+        {
+            var product = await _productApi.GetByIdAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+            return View(product);
         }
 
         [Authorize(Roles = "Admin")]

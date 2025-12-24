@@ -4,56 +4,192 @@
     ViewData["Title"] = "Главная";
 }
 
-<section class="products-section">
+<!-- БАННЕР ДО КАТЕГОРИЙ -->
+<div class="banner-container scroll-animate">
+    <div class="banner">
+        <img src="~/image/baner1.png" />
+    </div>
+</div>
+
+<!-- КАТЕГОРИ -->
+<div class="categories-container scroll-animate">
+    <div class="categories-grid">
+        <div class="category-item">
+            <div class="category-title">Для дома</div>
+            <div class="category-icon">
+                <img src="~/image/home-icon.png" alt="Для дома" />
+            </div>
+        </div>
+
+        <div class="category-item">
+            <div class="category-title">Косметика</div>
+            <div class="category-icon">
+                <img src="~/image/cosmetics-icon.png" alt="Косметика" />
+            </div>
+        </div>
+
+        <div class="category-item">
+            <div class="category-title">Для авто</div>
+            <div class="category-icon">
+                <img src="~/image/car-icon.png" alt="Для авто" />
+            </div>
+        </div>
+
+        <div class="category-item">
+            <div class="category-title">Для уборки</div>
+            <div class="category-icon">
+                <img src="~/image/cleaning-icon.png" alt="Для уборки" />
+            </div>
+        </div>
+
+        <div class="category-item">
+            <div class="category-title">Техника</div>
+            <div class="category-icon">
+                <img src="~/image/tech-icon.png" alt="Техника" />
+            </div>
+        </div>
+
+        <div class="category-item sale">
+            <div class="category-title">
+                SALE!!!<br>
+                SALE!!!<br>
+                SALE!!!
+            </div>
+            <div class="category-icon">
+                <img src="~/image/sale-coupon.png" alt="50% OFF" style="transform: rotate(-15deg); margin-bottom: 15px;" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="products-section scroll-animate">
+    <h2 style="text-align:center; margin-bottom: 20px;">Товары</h2>
+
     <div class="products-grid">
         @foreach (var product in Model)
         {
             bool hasDiscount = product.Discount > 0;
             bool isOutOfStock = product.StockQuantity <= 0;
-
             decimal finalPrice = product.Price;
             if (hasDiscount)
             {
-                finalPrice = product.Price - (product.Price * product.Discount / 100);
+                finalPrice = product.Price - (product.Price * product.Discount / 100m);
             }
-
-            <div class="product-card">
-
-                @if (hasDiscount)
-                {
+                <div class="product-card">
                     <div class="card-top">
-                        <span class="badge discount">-@product.Discount%</span>
+                        @if (hasDiscount)
+                        {
+                            <span class="badge discount">-@product.Discount%</span>
+                        }
                     </div>
-                }
+                <a href="/Home/Details/@product.Id" style="text-decoration: none; color: inherit;">
+                    <img src="https://localhost:7188@(product.ImagePath)"
+                         alt="@product.Name"
+                         onerror="this.onerror=null; this.src='/images/no-image.png';" />
+                </a>
+                    <div class="price-block" style="margin-top: 10px; margin-bottom: 5px;">
+                        <span class="price" style="font-size: 18px; font-weight: bold;">@finalPrice.ToString("N0") Руб</span>
+                        @if (hasDiscount)
+                        {
+                            <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">@product.Price.ToString("N0") Руб</span>
+                        }
+                    </div>
 
-                <img src="https://localhost:7188@(product.ImagePath)"
-                     alt="@product.Name"
-                     onerror="this.onerror=null; this.src='/images/no-image.png';" />
+                    <div class="rating" style="color: #ffc107; font-size: 20px; margin-bottom: 5px;">★★★★☆</div>
 
-                <div class="rating">★★★★☆</div>
-
-                <div class="price-block">
-                    <span class="price">@finalPrice.ToString("N0") руб</span>
-
-                    @if (hasDiscount)
+                    <h3 class="title" style="font-weight: 400; font-size: 16px; margin-bottom: 10px;">@product.Name</h3>
+                <span style="font-weight: normal; font-size: 0.85em; color: #777; margin-left: 8px;">
+                    арт. @product.ArticleNumber
+                </span>
+                    @if (isOutOfStock)
                     {
-                        <span class="price-old">@product.Price.ToString("N0") руб</span>
+                        <div class="stock out">Нет в наличии</div>
+                        <button class="btn-buy" disabled>Скоро будет</button>
+                    }
+                    else
+                    {
+                        <div class="stock in">В наличии: @product.StockQuantity шт.</div>
+                        <button class="btn-buy">В корзину</button>
                     }
                 </div>
-
-                <h3 class="title">@product.Name</h3>
-
-                @if (isOutOfStock)
-                {
-                    <div class="stock out">Нет в наличии</div>
-                    <button class="btn-buy" disabled>Скоро будет</button>
-                }
-                else
-                {
-                    <div class="stock in">В наличии: @product.StockQuantity шт.</div>
-                    <button class="btn-buy">В корзину</button>
-                }
-            </div>
+            
         }
     </div>
 </section>
+
+<!-- НАЧАЛО НОВОГО БАННЕРА -->
+<div class="delivery-banner-container scroll-animate">
+    <div class="delivery-banner">
+        <div class="delivery-text">
+            <h2>Бесплатная доставка<br>до дверей</h2>
+            <div class="delivery-subtext">
+                при заказе от <span class="price-pill">300</span> рублей
+                <br>скидка 10%
+            </div>
+        </div>
+        <img src="~/image/raccoon.png" class="banner-layer raccoon-img raccoon-animate" alt="Енот на скутере" />
+        <img src="~/image/leaf1.png" class="banner-layer leaf-img leaf-right leaf-animate leaf leaf1" alt="Лист" />
+        <img src="~/image/leaf2.png" class="banner-layer leaf-img leaf-bottom leaf-animate leaf leaf2" alt="Лист" />
+
+        <div class="banner-logo-block">
+            <img src="~/image/logo-circle.png" alt="logo" />
+            <span>Toolify</span>
+        </div>
+    </div>
+</div>
+
+<!-- БЛОК ТОВАРОВ 2 -->
+<div class="hit-products-section scroll-animate">
+    <div class="hit-products-container">
+        <div class="products-placeholder">
+            <h2>Блок товаров</h2>
+            <p>Здесь будут отображаться товары, добавленные администратором</p>
+            <div class="placeholder-info">
+                <div class="info-item">
+                    <span></span>
+                    <span>Картинка товара</span>
+                </div>
+                <div class="info-item">
+                    <span></span>
+                    <span>Описание товара</span>
+                </div>
+                <div class="info-item">
+                    <span></span>
+                    <span>Цена и кнопки</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- БЛОК КАРТОЧЕК С ИНФОРМАЦИЕЙ -->
+<div class="cards-section scroll-animate">
+    <div class="cards-container">
+        <div class="info-card card-blue">
+            <div class="card-content">
+                <h3 class="card-title">Мы на связи</h3>
+                <div class="phone-block">
+                    <div class="phone-number">8 (033) 777-33-23</div>
+                    <div class="work-hours">ПН-ПТ с 8:30 до 22:00</div>
+                </div>
+            </div>
+            <img src="~/image/raccoon-phone.png" alt="Енот с телефоном" class="card-image img-raccoon-left">
+        </div>
+
+        <div class="info-card card-orange">
+            <div class="card-content">
+                <h3 class="card-title">Полный<br>ассортимент</h3>
+                <div class="card-subtitle">продукции</div>
+            </div>
+            <img src="~/image/products-box.png" alt="Коробка товаров" class="card-image img-products">
+        </div>
+
+        <div class="info-card card-green">
+            <div class="card-content">
+                <h3 class="card-title">Оригинальная<br>продукция</h3>
+                <div class="card-subtitle">напрямую со склада<br>производителя</div>
+            </div>
+            <img src="~/image/raccoon-medal.png" alt="Енот с медалью" class="card-image img-raccoon-right">
+        </div>
+    </div>
+</div>

@@ -30,6 +30,29 @@ namespace Toolify.ProductService.Data
 
             return products;
         }
+        
+        public async Task<List<Product>> SearchAsync(string term)
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            string sql = @"
+                SELECT * FROM Products 
+                WHERE Name LIKE @Term OR ArticleNumber LIKE @Term
+            ";
+
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@Term", $"%{term}%");
+
+            var products = new List<Product>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                products.Add(MapProduct(reader));
+            }
+            return products;
+        }
+
         public async Task<List<Category>> GetAllCategoriesAsync()
         {
             using var connection = _factory.CreateConnection();
@@ -47,8 +70,21 @@ namespace Toolify.ProductService.Data
                     Name = reader.GetString(reader.GetOrdinal("Name"))
                 });
             }
-
             return categories;
+        }
+
+        public async Task<Category> AddCategoryAsync(Category category)
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            string sql = "INSERT INTO Categories (Name) VALUES (@Name); SELECT SCOPE_IDENTITY();";
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@Name", category.Name);
+
+            var id = await command.ExecuteScalarAsync();
+            category.Id = Convert.ToInt32(id);
+            return category;
         }
 
         public async Task<Product?> GetByIdAsync(int id)
@@ -74,8 +110,8 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
 
             string sql = @"
-                INSERT INTO Products (CategoryId, Name, ShortDescription, FullDescription, Price, ImagePath, StockQuantity, Discount)
-                VALUES (@CategoryId, @Name, @ShortDescription, @FullDescription, @Price, @ImagePath, @StockQuantity, @Discount);
+                INSERT INTO Products (CategoryId, Name, ShortDescription, FullDescription, Price, ImagePath, StockQuantity, Discount, ArticleNumber)
+                VALUES (@CategoryId, @Name, @ShortDescription, @FullDescription, @Price, @ImagePath, @StockQuantity, @Discount, @ArticleNumber);
                 SELECT SCOPE_IDENTITY();
             ";
 
@@ -87,7 +123,8 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@Price", product.Price);
             command.Parameters.AddWithValue("@ImagePath", (object?)product.ImagePath ?? DBNull.Value);
             command.Parameters.AddWithValue("@StockQuantity", product.StockQuantity);
-            command.Parameters.AddWithValue("@Discount", product.Discount); 
+            command.Parameters.AddWithValue("@Discount", product.Discount);
+            command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
 
             var result = await command.ExecuteScalarAsync();
             return Convert.ToInt32(result);
@@ -107,6 +144,7 @@ namespace Toolify.ProductService.Data
                     ImagePath = @ImagePath,
                     StockQuantity = @StockQuantity,
                     Discount = @Discount,
+                    ArticleNumber = @ArticleNumber,
                     UpdatedAt = GETDATE()
                 WHERE Id = @Id
             ";
@@ -121,6 +159,8 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@ImagePath", (object?)product.ImagePath ?? DBNull.Value);
             command.Parameters.AddWithValue("@StockQuantity", product.StockQuantity);
             command.Parameters.AddWithValue("@Discount", product.Discount);
+            command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
+
 
             int rows = await command.ExecuteNonQueryAsync();
             return rows > 0;
@@ -150,7 +190,8 @@ namespace Toolify.ProductService.Data
                 Price = reader.GetDecimal(reader.GetOrdinal("Price")),
                 ImagePath = reader.IsDBNull(reader.GetOrdinal("ImagePath")) ? null : reader.GetString(reader.GetOrdinal("ImagePath")),
                 StockQuantity = reader.GetInt32(reader.GetOrdinal("StockQuantity")),
-                Discount = reader.GetInt32(reader.GetOrdinal("Discount"))
+                Discount = reader.GetInt32(reader.GetOrdinal("Discount")),
+                ArticleNumber = reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber"))
             };
         }
     }

@@ -1,0 +1,81 @@
+﻿@model Toolify.ProductService.Models.Product
+
+@{
+    ViewData["Title"] = Model.Name;
+
+    bool hasDiscount = Model.Discount > 0;
+    bool isOutOfStock = Model.StockQuantity <= 0;
+    decimal finalPrice = Model.Price;
+    if (hasDiscount)
+    {
+        finalPrice = Model.Price - (Model.Price * Model.Discount / 100);
+    }
+}
+
+<div class="product-details-container">
+
+    <div class="detail-image">
+        <img src="https://localhost:7188@(Model.ImagePath)"
+             alt="@Model.Name"
+             onerror="this.onerror=null; this.src='/images/no-image.png';" />
+    </div>
+
+    <div class="detail-info">
+        <h1 class="detail-title">@Model.Name</h1>
+
+        <div class="detail-rating-row">
+            <span class="stars">★</span>
+            <span class="rating-value">0.0</span>
+            <span class="reviews-count">0 отзывов</span>
+            <span style="margin-left: 20px; color: #666; font-size: 0.9em;">
+                Артикул: @Model.ArticleNumber
+            </span>
+        </div>
+
+        <div class="action-buttons-row">
+            <button class="btn-text-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                В избранное
+            </button>
+
+            <button class="btn-text-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Сравнить
+            </button>
+        </div>
+
+        <div class="detail-description">
+            <h3>Описание</h3>
+            <p>@Model.FullDescription</p>
+        </div>
+    </div>
+
+    <div class="detail-buy-block">
+        <div class="price-wrap">
+            <span class="main-price">@finalPrice.ToString("N0") Руб</span>
+            @if (hasDiscount)
+            {
+                <span class="old-price">@Model.Price.ToString("N0") Руб</span>
+                <span class="badge discount">-@Model.Discount%</span>
+            }
+        </div>
+
+        @if (isOutOfStock)
+        {
+            <div class="stock out">Нет в наличии</div>
+            <button class="btn-add-cart disabled" disabled>Нет в наличии</button>
+        }
+        else
+        {
+            <div class="stock in">В наличии</div>
+            <button class="btn-add-cart">Добавить в корзину</button>
+        }
+    </div>
+
+</div>

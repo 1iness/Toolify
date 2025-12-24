@@ -15,6 +15,33 @@ namespace Toolify.ProductService.Controllers
             _repo = repo;
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return Ok(new List<Product>());
+
+            var products = await _repo.SearchAsync(query);
+            return Ok(products);
+        }
+
+        [HttpGet("categories")]
+        public async Task<IActionResult> GetCategories()
+        {
+            var categories = await _repo.GetAllCategoriesAsync();
+            return Ok(categories);
+        }
+
+        [HttpPost("categories")]
+        public async Task<IActionResult> CreateCategory([FromBody] Category category)
+        {
+            if (string.IsNullOrWhiteSpace(category.Name))
+                return BadRequest("Имя категории не может быть пустым");
+
+            var newCategory = await _repo.AddCategoryAsync(category);
+            return Ok(newCategory);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {

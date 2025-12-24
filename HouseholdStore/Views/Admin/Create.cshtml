@@ -14,10 +14,16 @@
 
     <form method="post" enctype="multipart/form-data" asp-action="Create">
 
-        <p>Категория:</p>
-        <select name="CategoryId" asp-items="ViewBag.Categories" required style="width: 200px; padding: 5px;">
-            <option value="">-- Выберите категорию --</option>
-        </select>
+        <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+            <p><strong>Категория:</strong></p>
+            <select name="CategoryId" asp-items="ViewBag.Categories" style="width: 200px; padding: 5px;">
+                <option value="">-- Выберите из списка --</option>
+            </select>
+
+            <p style="margin: 5px 0;"><em>--- ИЛИ создайте новую ---</em></p>
+
+            <input type="text" name="NewCategoryName" placeholder="Название новой категории" style="width: 200px;" />
+        </div>
 
         <p>Название:</p>
         <input type="text" name="Name" value="@Model?.Name" required />

@@ -169,3 +169,99 @@ window.addEventListener('load', () => {
         leaf2.classList.add('float2');
     });
 });
+
+
+// ДЛЯ ПОИСКА
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("searchInput");
+        const resultsBox = document.getElementById("searchResults");
+        let debounceTimer;
+
+        searchInput.addEventListener("input", function () {
+            const query = this.value.trim();
+
+            clearTimeout(debounceTimer);
+
+            if (query.length < 2) {
+                resultsBox.style.display = "none";
+                resultsBox.innerHTML = "";
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetchProducts(query);
+            }, 300);
+        });
+
+        async function fetchProducts(query) {
+            try {
+                const response = await fetch(`/Home/SearchJson?query=${encodeURIComponent(query)}`);
+                if (!response.ok) return;
+
+                const products = await response.json();
+                renderResults(products);
+            } catch (error) {
+                console.error("Ошибка поиска:", error);
+            }
+        }
+
+        function renderResults(products) {
+            resultsBox.innerHTML = "";
+
+            if (products.length === 0) {
+                resultsBox.innerHTML = '<div style="padding:15px; color:#777; text-align:center;">Ничего не найдено</div>';
+                resultsBox.style.display = "block";
+                return;
+            }
+
+            products.forEach(p => {
+                let priceHtml = '';
+                
+                if (p.discount > 0) {
+                    let discountedPrice = p.price * (1 - p.discount / 100);
+                    
+                    priceHtml = `
+                        <div class="price-block">
+                            <span class="current-price" style="color: #e74c3c;">${formatMoney(discountedPrice)}</span>
+                            <span class="old-price">${formatMoney(p.price)}</span>
+                        </div>
+                    `;
+                } else {
+                    priceHtml = `
+                        <div class="price-block">
+                            <span class="current-price">${formatMoney(p.price)}</span>
+                        </div>
+                    `;
+                }
+
+                const apiBaseUrl = "https://localhost:7188";
+                const imgPath = p.imagePath ? (apiBaseUrl + p.imagePath) : '/images/no-image.png';
+
+                const itemHtml = `
+                    <a href="/Home/Details/${p.id}" class="search-item">
+                        <img src="${imgPath}" alt="${p.name}" onerror="this.src='/images/no-image.png'">
+        
+                        <div class="info">
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-art">Арт: ${p.articleNumber || '---'}</div>
+                        </div>
+        
+                        ${priceHtml}
+                    </a>
+                `;
+                resultsBox.innerHTML += itemHtml;
+            });
+
+            resultsBox.style.display = "block";
+        }
+
+        function formatMoney(amount) {
+            return amount.toLocaleString('by-BY', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 });
+        }
+
+        document.addEventListener("click", function (e) {
+            if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+                resultsBox.style.display = "none";
+            }
+        });
+    });
