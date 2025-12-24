@@ -39,11 +39,15 @@
         </button>
 
 
-        <div class="search-block">
-            <input type="text" placeholder="Искачать на Toolify"></input>
-            <button class="search-btn">
-                <img src="~/image/search.png" />
-            </button>
+        <div class="search-wrapper">
+            <div class="search-block">
+                <input type="text" id="searchInput" placeholder="Искать на Toolify" autocomplete="off" />
+                <button class="search-btn">
+                    <img src="~/image/search.png" alt="Search" />
+                </button>
+            </div>
+
+            <div id="searchResults" class="search-results-dropdown"></div>
         </div>
 
         <div class="auth-block">

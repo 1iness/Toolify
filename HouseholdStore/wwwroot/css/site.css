@@ -100,6 +100,12 @@ body {
     flex-shrink: 0;
 }
 
+/* оболочка */
+.search-wrapper {
+    position: relative; 
+    flex: 1; 
+    margin: 0 20px;
+}
 /* Блок с поиском */
 .search-block {
     display: flex;
@@ -107,8 +113,8 @@ body {
     height: 49px;
     background: #E8E8E8;
     border-radius: 13px;
-    overflow: hidden;
     flex: 1;
+    position: relative;
     transition: box-shadow 0.3s ease-out, background 0.3s ease-out;
 }
 
@@ -125,6 +131,8 @@ body {
         outline: none;
         font-size: 15px;
         font-weight: normal;
+        border-top-left-radius: 13px;
+        border-bottom-left-radius: 13px;
     }
 
 .search-btn {
@@ -132,7 +140,96 @@ body {
     background: transparent;
     padding: 12px 16px;
     cursor: pointer;
+    border-top-right-radius: 13px;
+    border-bottom-right-radius: 13px;
+
 }
+/* выпадающий блок */
+.search-results-dropdown {
+    display: none;
+    position: absolute; 
+    top: 55px; 
+    left: 0;
+    width: 100%; 
+    background: #FFFFFF;
+    border-radius: 13px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    z-index: 9999; 
+    max-height: 450px;
+    overflow-y: auto; 
+    border: 1px solid #ddd;
+}
+/* Элемент в списке */
+.search-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f4f4f4;
+    cursor: pointer;
+    text-decoration: none;
+    color: #333;
+    transition: background 0.2s;
+}
+
+    .search-item:hover {
+        background-color: #f7f7f7;
+    }
+
+    .search-item:last-child {
+        border-bottom: none;
+    }
+
+    /* Картинка товара */
+    .search-item img {
+        width: 100px;
+        height: 100px;
+        object-fit: contain; 
+        border-radius: 3px;
+        margin-right: 20px;
+        background: #fff;
+        border: 1px solid #eee;
+        flex-shrink:0;
+    }
+
+    /* Текстовая информация */
+    .search-item .info {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .search-item .product-name {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+
+    .search-item .product-art {
+        font-size: 12px;
+        color: #888;
+    }
+
+    /* Блок цен справа */
+    .search-item .price-block {
+        text-align: right;
+        min-width: 80px;
+    }
+
+    .search-item .current-price {
+        display: block;
+        font-weight: bold;
+        font-size: 15px;
+        color: #333;
+    }
+
+    /* Старая цена (зачеркнутая) */
+    .search-item .old-price {
+        display: block;
+        font-size: 12px;
+        color: #999;
+        text-decoration: line-through;
+        margin-top: 2px;
+    }
 
 /* Вход / регистрация */
 .auth-block, .cart-block {

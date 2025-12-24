@@ -15,6 +15,16 @@ namespace Toolify.ProductService.Controllers
             _repo = repo;
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return Ok(new List<Product>());
+
+            var products = await _repo.SearchAsync(query);
+            return Ok(products);
+        }
+
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategories()
         {

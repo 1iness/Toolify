@@ -30,6 +30,29 @@ namespace Toolify.ProductService.Data
 
             return products;
         }
+        
+        public async Task<List<Product>> SearchAsync(string term)
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            string sql = @"
+                SELECT * FROM Products 
+                WHERE Name LIKE @Term OR ArticleNumber LIKE @Term
+            ";
+
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@Term", $"%{term}%");
+
+            var products = new List<Product>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                products.Add(MapProduct(reader));
+            }
+            return products;
+        }
+
         public async Task<List<Category>> GetAllCategoriesAsync()
         {
             using var connection = _factory.CreateConnection();

@@ -38,6 +38,16 @@ namespace HouseholdStore.Controllers
             return View();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SearchJson(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+                return Json(new List<object>()); 
+
+            var products = await _productApi.SearchProductsAsync(query);
+            return Json(products);
+        }
+
         public async Task<IActionResult> Details(int id)
         {
             var product = await _productApi.GetByIdAsync(id);

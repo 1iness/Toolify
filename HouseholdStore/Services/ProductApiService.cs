@@ -108,5 +108,12 @@ namespace HouseholdStore.Services
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<Category>(jsonOptions);
         }
+        public async Task<List<Product>> SearchProductsAsync(string query)
+        {
+            var response = await _http.GetAsync($"api/Product/search?query={query}");
+            if (!response.IsSuccessStatusCode) return new List<Product>();
+
+            return await response.Content.ReadFromJsonAsync<List<Product>>(jsonOptions);
+        }
     }
 }
