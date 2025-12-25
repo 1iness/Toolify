@@ -56,6 +56,8 @@
         </div>
     </div>
 
+   
+
     <div class="detail-buy-block">
         <div class="price-wrap">
             <span class="main-price">@finalPrice.ToString("N0") Руб</span>
@@ -76,6 +78,85 @@
             <div class="stock in">В наличии</div>
             <button class="btn-add-cart">Добавить в корзину</button>
         }
+    </div>
+</div>
+
+<div class="reviews-container">
+
+    <div class="reviews-left-column">
+        <h2 class="reviews-title">Отзывы о товаре</h2>
+
+        <div class="reviews-filters">
+            <span class="filter-sort">Сортировать по: <a href="#" class="active">Дате</a> <a href="#">Рейтингу</a></span>
+            <div class="filter-tags">
+                <span>5 звезд</span>
+                <span>4 звезды</span>
+                <span>3 звезды</span>
+                <span>2 звезды</span>
+                <span>1 звезда</span>
+            </div>
+        </div>
+
+        <div class="review-list">
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="user-avatar"></div>
+                    <span class="user-name">Аноним</span>
+                    <div class="stars-green">★★★★★</div>
+                </div>
+                <div class="review-body">
+                    <span class="comment-label">Комментарий</span>
+                    <p>все ок</p>
+                </div>
+                <div class="shop-response">
+                    <span class="shop-name">Интернет-магазин <i class="check-icon">✔</i></span>
+                    <p>Добрый день, спасибо за высокую оценку.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="reviews-right-column">
+        <div class="rating-card">
+            <h3 class="rating-title">Отзывы покупателей (44)</h3>
+
+            <div class="rating-main-row">
+                <div class="stars-green big">★★★★★</div>
+                <div class="rating-score">4.7 <span>/ 5</span></div>
+            </div>
+
+            <div class="rating-bars">
+                <div class="bar-row">
+                    <span class="star-label">5 звезд</span>
+                    <div class="progress-track"><div class="progress-fill" style="width: 90.9%;"></div></div>
+                    <span class="percent-label">90.9%</span>
+                </div>
+                <div class="bar-row">
+                    <span class="star-label">4 звезды</span>
+                    <div class="progress-track"><div class="progress-fill" style="width: 0%;"></div></div>
+                    <span class="percent-label">1%</span>
+                </div>
+                <div class="bar-row">
+                    <span class="star-label">3 звезды</span>
+                    <div class="progress-track"><div class="progress-fill" style="width: 2.3%;"></div></div>
+                    <span class="percent-label">2.3%</span>
+                </div>
+                <div class="bar-row">
+                    <span class="star-label">2 звезды</span>
+                    <div class="progress-track"><div class="progress-fill" style="width: 4.5%;"></div></div>
+                    <span class="percent-label">4.5%</span>
+                </div>
+                <div class="bar-row">
+                    <span class="star-label">1 звезда</span>
+                    <div class="progress-track"><div class="progress-fill" style="width: 2.3%;"></div></div>
+                    <span class="percent-label">2.3%</span>
+                </div>
+            </div>
+
+            <button class="btn-leave-review">
+                Оставить свой отзыв
+            </button>
+        </div>
     </div>
 
 </div>

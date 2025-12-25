@@ -273,3 +273,226 @@
         cursor: not-allowed;
     }
 
+/* ОТЗЫВЫ */
+.reviews-container {
+    max-width: 1200px; 
+    margin: 50px auto;
+    display: flex;
+    justify-content: space-between; 
+    gap: 40px; 
+    padding: 0 15px;
+}
+
+/* левый блок под картинкой где будут отзывы пользователей */
+.reviews-left-column {
+    flex: 1; 
+    max-width: 750px; 
+}
+
+/* правый блок где общий рейтиг */
+.reviews-right-column {
+    width: 380px;
+    flex-shrink: 0; 
+}
+
+/* заголовки */
+.reviews-title {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+.rating-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+/* Фильтры */
+.reviews-filters {
+    margin-bottom: 30px;
+    font-size: 14px;
+    color: #666;
+}
+
+    .reviews-filters a {
+        text-decoration: none;
+        color: #999;
+        margin-left: 5px;
+        border-bottom: 1px dotted;
+    }
+
+        .reviews-filters a.active {
+            color: #333;
+            border: none;
+        }
+
+.filter-tags {
+    margin-top: 15px;
+    display: flex;
+    gap: 15px;
+    font-size: 13px;
+    color: #777;
+}
+
+/* Карточка отзыва (временно)*/
+.review-item {
+    padding-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 30px;
+}
+
+.review-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    background: #ddd;
+    border-radius: 50%;
+}
+
+.user-name {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.stars-green {
+    color: #28a745;
+    letter-spacing: 2px;
+}
+
+.comment-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.review-body p {
+    color: #555;
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Ответ магазина, временно*/
+.shop-response {
+    margin-top: 15px;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.shop-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.check-icon {
+    color: #28a745;
+    font-style: normal;
+}
+
+.shop-response p {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #666;
+}
+
+/* правая карточка с рейтингом */
+.rating-card {
+    background: #fdfdfd; 
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    padding: 25px;
+}
+
+.rating-main-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stars-green.big {
+    font-size: 24px;
+}
+
+.rating-score {
+    font-size: 32px;
+    font-weight: 800;
+}
+
+    .rating-score span {
+        font-size: 16px;
+        color: #999;
+        font-weight: 400;
+    }
+
+/* Полоски прогресса */
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #777;
+}
+
+.star-label {
+    width: 70px; 
+    white-space: nowrap; 
+}
+
+.percent-label {
+    width: 45px;
+    text-align: right;
+    font-weight: 700;
+    color: #333;
+}
+
+.progress-track {
+    flex: 1;
+    height: 10px;
+    background: #eee;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #28a745;
+    border-radius: 5px;
+}
+
+/* Кнопка */
+.btn-leave-review {
+    width: 100%;
+    margin-top: 25px;
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .btn-leave-review:hover {
+        background: #218838;
+    }
+
+
+
