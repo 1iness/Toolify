@@ -1,0 +1,80 @@
+﻿@model HouseholdStore.Models.UserProfileViewModel
+@{
+    ViewData["Title"] = "Личный кабинет";
+}
+
+<link rel="stylesheet" href="~/css/profile.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;900&display=swap" rel="stylesheet">
+
+<div class="profile-container">
+
+    <aside class="profile-sidebar">
+        <div class="user-brief">
+            <div class="user-avatar-large"></div>
+            <div class="brief-name">@Model.FirstName @Model.LastName</div>
+            <div class="brief-email">@Model.Email</div>
+        </div>
+
+        <ul class="profile-menu">
+            <li class="menu-item active" data-tab="personal">
+                <span class="menu-icon"></span> Личные данные
+            </li>
+            <li class="menu-item" data-tab="orders">
+                <span class="menu-icon"></span> Текущие заказы
+            </li>
+            <li class="menu-item" data-tab="history">
+                <span class="menu-icon"></span> История заказов
+            </li>
+        </ul>
+
+        <form asp-action="Logout" method="post">
+            <button type="submit" class="logout-btn">Выйти из аккаунта</button>
+        </form>
+    </aside>
+
+    <main class="profile-content">
+
+        <section id="tab-personal" class="profile-section">
+            <h2 class="section-title">Личные данные</h2>
+            <div class="data-grid">
+                <div class="form-group">
+                    <label>Имя</label>
+                    <input type="text" class="form-input" value="@Model.FirstName" readonly />
+                </div>
+                <div class="form-group">
+                    <label>Фамилия</label>
+                    <input type="text" class="form-input" value="@Model.LastName" readonly />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-input" value="@Model.Email" readonly />
+                </div>
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="tel" class="form-input" value="@Model.Phone" readonly />
+                </div>
+            </div>
+            <button class="save-changes-btn">Сохранить изменения</button>
+        </section>
+
+        <section id="tab-orders" class="profile-section" style="display: none;">
+            <h2 class="section-title">Текущие заказы</h2>
+            <div class="orders-empty-state">
+                <p>У вас пока нет активных заказов</p>
+                <a asp-controller="Home" asp-action="Index" class="go-to-catalog">Перейти в каталог</a>
+            </div>
+        </section>
+
+        <section id="tab-history" class="profile-section" style="display: none;">
+            <h2 class="section-title">История заказов</h2>
+            <div class="orders-empty-state">
+                <p>История заказов пуста</p>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+@section Scripts {
+    <script src="~/js/profile.js"></script>
+}

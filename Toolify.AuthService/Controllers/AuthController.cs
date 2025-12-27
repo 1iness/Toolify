@@ -94,5 +94,22 @@ public class AuthController : ControllerBase
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+    [HttpGet("user")]
+    public IActionResult GetUser(string email)
+    {
+        var user = _repo.GetUserByEmail(email);
+
+        if (user == null)
+            return NotFound("User not found");
+
+        return Ok(new
+        {
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Phone
+        });
+    }
 }
 

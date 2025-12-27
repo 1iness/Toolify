@@ -9,6 +9,7 @@ namespace HouseholdStore
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddControllersWithViews();
 
             builder.Services.AddHttpClient();
@@ -37,8 +38,8 @@ namespace HouseholdStore
 
             app.UseRouting();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+            app.UseAuthentication(); 
+            app.UseAuthorization(); 
 
             app.MapControllerRoute(
                 name: "default",

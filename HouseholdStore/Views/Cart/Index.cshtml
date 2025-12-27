@@ -1,0 +1,28 @@
+﻿@{
+    ViewData["Title"] = "Моя корзина";
+}
+
+<link rel="stylesheet" href="~/css/cart.css" />
+
+<div class="cart-container">
+    <h1 class="cart-title">Моя корзина</h1>
+
+    <div class="empty-cart-state">
+        <div class="empty-cart-content">
+            <img src="~/image/cart-enot.png" alt="Корзина пуста" class="empty-cart-image"
+                 onerror="this.style.display='none'" />
+
+            <div class="empty-cart-text-content">
+                <h2 class="empty-state-header">В корзине пока нет товаров</h2>
+                <p class="empty-state-text">
+                    <a asp-controller="Home" asp-action="Index" class="catalog-link">Перейдите в каталог</a>,
+                    посмотрите скидки или воспользуйтесь поиском, чтобы найти нужный товар.
+                </p>
+
+                <a asp-controller="Home" asp-action="Index" class="start-shopping-btn">
+                    Начать покупки
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
