@@ -25,6 +25,16 @@ namespace HouseholdStore
                 });
 
             builder.Services.AddAuthorization();
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30); 
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
+
+
             var app = builder.Build();
 
             if (!app.Environment.IsDevelopment())
@@ -39,7 +49,9 @@ namespace HouseholdStore
             app.UseRouting();
 
             app.UseAuthentication(); 
-            app.UseAuthorization(); 
+            app.UseAuthorization();
+
+            app.UseSession();
 
             app.MapControllerRoute(
                 name: "default",

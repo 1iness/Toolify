@@ -114,29 +114,44 @@
 
 /* кнопка */
 .btn-buy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    padding: 10px;
-    background: #2CDD00;
-    color: #fff;
+    background-color: #28a745;
+    color: white;
     border: none;
-    border-radius: 10px;
-    font-size: 14px;
+    padding: 10px 15px;
+    border-radius: 8px;
     font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    gap: 8px;
 }
 
     .btn-buy:hover {
-        background: #e66f00;
+        background-color: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+        color: white;
     }
 
-    /* кнопка off */
-    .btn-buy:disabled {
-        background-color: #e0e0e0;
-        color: #999;
+    .btn-buy i {
+        font-size: 1.1em;
+    }
+
+    .btn-buy.disabled {
+        background-color: #ccc;
         cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
 
+.price-currency {
+    font-size: 0.8em;
+    margin-left: 3px;
+}
 
 
     
