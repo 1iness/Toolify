@@ -1,0 +1,115 @@
+﻿@model List<Toolify.ProductService.Models.CartItem>
+@{
+    ViewData["Title"] = "Моя корзина";
+    bool isEmpty = !Model.Any();
+    decimal grandTotal = Model.Sum(x => x.TotalPrice);
+}
+
+<link rel="stylesheet" href="~/css/cart.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+<div class="cart-page-container">
+    <h1 class="page-title">Моя корзина</h1>
+
+    @if (isEmpty)
+    {
+        <div class="cart-empty-state">
+            <div class="empty-image-wrapper">
+                <img src="~/image/cart-enot.png" alt="Корзина пуста" class="empty-img" />
+            </div>
+            <div>
+                <h2 class="empty-title">В корзине пока нет товаров</h2>
+                <p class="empty-subtitle">
+                    Перейдите в каталог, посмотрите скидки или<br>
+                    воспользуйтесь поиском, чтобы найти нужный товар.
+                </p>
+                <a asp-controller="Home" asp-action="Index" class="start-shopping-btn">
+                    Начать покупки
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="cart-items-wrapper">
+            @foreach (var item in Model)
+            {
+                <div class="cart-item-card">
+                    <div class="item-left">
+                        <img src="https://localhost:7188@(item.ImageUrl)"
+                             alt="@item.ProductName" class="item-img"
+                             onerror="this.onerror=null; this.src='/images/no-image.png';" />
+
+                        <div class="item-info">
+                            <h3 class="item-name">@item.ProductName</h3>
+                            <div class="item-id">Артикул: @item.ProductId</div> <div class="price-single-mobile">
+                                <span class="price-val">@item.Price.ToString("N0") руб</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="item-right">
+
+                        <div class="col-price-per-item">
+                            @if (item.OldPrice.HasValue)
+                            {
+                                <div class="old-price-sm">@item.OldPrice.Value.ToString("N0") руб</div>
+                            }
+                            <div class="current-price-sm">@item.Price.ToString("N0") руб</div>
+                            <div class="price-label">цена за 1 шт</div>
+                        </div>
+
+                        <div class="col-quantity">
+                            <a asp-action="ChangeQuantity" asp-route-id="@item.ProductId" asp-route-change="-1"
+                               class="qty-btn @(item.Quantity == 1 ? "disabled" : "")">-</a>
+
+                            <span class="qty-val">@item.Quantity</span>
+
+                            <a asp-action="ChangeQuantity" asp-route-id="@item.ProductId" asp-route-change="1"
+                               class="qty-btn">+</a>
+                        </div>
+
+                        <div class="col-total">
+                            @if (item.TotalOldPrice.HasValue)
+                            {
+                                <div class="total-old">@item.TotalOldPrice.Value.ToString("N0") руб</div>
+                            }
+                            <div class="total-current">@item.TotalPrice.ToString("N0") руб</div>
+                            <div class="total-count">@item.Quantity шт</div>
+                        </div>
+
+                        <div class="col-delete">
+                            <a asp-action="Remove" asp-route-id="@item.ProductId" class="delete-btn">
+                                <i class="bi bi-trash3"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="cart-summary-grid">
+            <div class="summary-info-card">
+                <h3>Информация</h3>
+                <div class="summary-row">
+                    <span>Товаров в корзине</span>
+                    <span>@Model.Sum(x => x.Quantity) шт</span>
+                </div>
+                <div class="summary-row">
+                    <span>Сумма заказа</span>
+                    <span>@grandTotal.ToString("N0") руб</span>
+                </div>
+            </div>
+
+            <div class="summary-total-card">
+                <h3>Итого</h3>
+                <div class="total-block">
+                    <a href="/Order/Checkout" class="checkout-btn">Оформить заказ</a>
+                    <div class="final-price">
+                        @grandTotal.ToString("N0") руб
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

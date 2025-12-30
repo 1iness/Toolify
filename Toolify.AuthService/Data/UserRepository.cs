@@ -71,5 +71,32 @@ public class UserRepository
             Role = reader["Role"].ToString()!
         };
     }
+    public User? GetUserByEmail(string email)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand(@"
+        SELECT * FROM Users 
+        WHERE Email=@em", con);
+
+        cmd.Parameters.AddWithValue("@em", email);
+
+        using var reader = cmd.ExecuteReader();
+
+        if (!reader.Read())
+            return null;
+
+        return new User
+        {
+            Id = (int)reader["Id"],
+            FirstName = reader["FirstName"].ToString()!,
+            LastName = reader["LastName"].ToString()!,
+            Email = reader["Email"].ToString()!,
+            Phone = reader["Phone"].ToString()!,
+            Password = reader["PasswordHash"].ToString()!,
+            Role = reader["Role"].ToString()!
+        };
+    }
 
 }

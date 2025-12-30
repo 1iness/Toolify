@@ -1,5 +1,6 @@
 ﻿using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HouseholdStore
 {
@@ -9,12 +10,19 @@ namespace HouseholdStore
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddControllersWithViews();
 
             builder.Services.AddHttpClient();
             builder.Services.AddScoped<AuthApiService>();
             builder.Services.AddHttpClient<ProductApiService>();
             builder.Services.AddScoped<ProductApiService>();
+
+
+            builder.Services.AddSingleton<Toolify.ProductService.Database.SqlConnectionFactory>(sp =>
+                    new Toolify.ProductService.Database.SqlConnectionFactory(builder.Configuration));
+
+            builder.Services.AddScoped<Toolify.ProductService.Data.ProductRepository>();
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
@@ -24,6 +32,16 @@ namespace HouseholdStore
                 });
 
             builder.Services.AddAuthorization();
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30); 
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
+
+
             var app = builder.Build();
 
             if (!app.Environment.IsDevelopment())
@@ -37,8 +55,10 @@ namespace HouseholdStore
 
             app.UseRouting();
 
-            app.UseAuthentication();
+            app.UseAuthentication(); 
             app.UseAuthorization();
+
+            app.UseSession();
 
             app.MapControllerRoute(
                 name: "default",

@@ -71,48 +71,74 @@
             bool hasDiscount = product.Discount > 0;
             bool isOutOfStock = product.StockQuantity <= 0;
             decimal finalPrice = product.Price;
+
             if (hasDiscount)
             {
                 finalPrice = product.Price - (product.Price * product.Discount / 100m);
             }
-                <div class="product-card">
-                    <div class="card-top">
-                        @if (hasDiscount)
-                        {
-                            <span class="badge discount">-@product.Discount%</span>
-                        }
-                    </div>
+
+            <div class="product-card">
+                <div class="card-top">
+                    @if (hasDiscount)
+                    {
+                        <span class="badge discount">-@product.Discount%</span>
+                    }
+                </div>
+
                 <a href="/Home/Details/@product.Id" style="text-decoration: none; color: inherit;">
                     <img src="https://localhost:7188@(product.ImagePath)"
                          alt="@product.Name"
                          onerror="this.onerror=null; this.src='/images/no-image.png';" />
                 </a>
-                    <div class="price-block" style="margin-top: 10px; margin-bottom: 5px;">
-                        <span class="price" style="font-size: 18px; font-weight: bold;">@finalPrice.ToString("N0") Руб</span>
-                        @if (hasDiscount)
-                        {
-                            <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">@product.Price.ToString("N0") Руб</span>
-                        }
-                    </div>
 
-                    <div class="rating" style="color: #ffc107; font-size: 20px; margin-bottom: 5px;">★★★★☆</div>
+                <div class="price-block" style="margin-top: 10px; margin-bottom: 5px;">
+                    <span class="price" style="font-size: 18px; font-weight: bold; color: #333;">
+                        @finalPrice.ToString("N2") <span class="price-currency">руб.</span>
+                    </span>
 
-                    <h3 class="title" style="font-weight: 400; font-size: 16px; margin-bottom: 10px;">@product.Name</h3>
-                <span style="font-weight: normal; font-size: 0.85em; color: #777; margin-left: 8px;">
-                    арт. @product.ArticleNumber
-                </span>
-                    @if (isOutOfStock)
+                    @if (hasDiscount)
                     {
-                        <div class="stock out">Нет в наличии</div>
-                        <button class="btn-buy" disabled>Скоро будет</button>
-                    }
-                    else
-                    {
-                        <div class="stock in">В наличии: @product.StockQuantity шт.</div>
-                        <button class="btn-buy">В корзину</button>
+                        <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">
+                            @product.Price.ToString("N2") руб.
+                        </span>
                     }
                 </div>
-            
+
+                <div class="rating" style="color: #ffc107; font-size: 20px; margin-bottom: 5px;">★★★★☆</div>
+
+                <h3 class="title" style="font-weight: 600; font-size: 16px; margin-bottom: 10px; height: 40px; overflow: hidden;">
+                    @product.Name
+                </h3>
+
+                <span style="font-weight: normal; font-size: 0.85em; color: #777;">
+                    арт. @product.ArticleNumber
+                </span>
+
+                @if (isOutOfStock)
+                {
+                    <div class="stock out" style="color: #dc3545; font-size: 0.9rem; margin-top: 5px;">Нет в наличии</div>
+                    <button class="btn-buy disabled" disabled>
+                        Скоро будет
+                    </button>
+                }
+                else
+                {
+                    <div class="stock in" style="color: #28a745; font-size: 0.9rem; margin-top: 5px;">
+                        В наличии: @product.StockQuantity шт.
+                    </div>
+
+                    <a asp-controller="Cart"
+                       asp-action="AddToCart"
+                       asp-route-id="@product.Id"
+                       asp-route-name="@product.Name"
+                       asp-route-price="@finalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                       asp-route-img="@product.ImagePath"
+                       asp-route-oldPrice="@(hasDiscount? product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")"
+                       class="btn-buy">
+                        <i class="bi bi-cart-plus"></i> В корзину
+                    </a>
+                }
+            </div>
         }
     </div>
 </section>

@@ -1,5 +1,4 @@
 ﻿
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,7 +51,23 @@
 
         <div class="auth-block">
             <img src="~/image/user.png" alt="user" />
-            <a asp-controller="Account" asp-action="Login">Вход и<br>регистрация</a>
+
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <a asp-controller="Account" asp-action="Profile" style="line-height: 1.2;">
+                    <span style="font-size: 11px; color: #888;">Личный кабинет</span><br>
+                    <span style="font-weight: 700; color: #333;">
+                        @(
+                       !string.IsNullOrEmpty(User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value)
+                      ? User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value : User.Identity.Name
+                       ) @* На время потом уберу *@
+                    </span>
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login">Вход и<br>регистрация</a>
+            }
         </div>
 
         <div class="cart-block">
