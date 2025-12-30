@@ -1,0 +1,45 @@
+﻿@model List<Toolify.ProductService.Models.CartItem>
+
+<h2>Оформление заказа</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <h4>Ваши товары</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Кол-во</th>
+                    <th>Цена</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ProductName</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.TotalPrice.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" class="text-end"><strong>Итого:</strong></td>
+                    <td><strong>@Model.Sum(x => x.TotalPrice).ToString("C")</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="col-md-4">
+        <h4>Данные доставки</h4>
+        <form asp-action="Create" method="post">
+            <div class="mb-3">
+                <label class="form-label">Адрес доставки</label>
+                <textarea name="address" class="form-control" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Оформить заказ</button>
+        </form>
+    </div>
+</div>

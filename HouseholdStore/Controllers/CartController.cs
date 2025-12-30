@@ -1,69 +1,45 @@
 ﻿using HouseholdStore.Extensions;
 using HouseholdStore.Models;
 using Microsoft.AspNetCore.Mvc;
+using HouseholdStore.Helpers;
+using Toolify.ProductService.Data;
 
 namespace HouseholdStore.Controllers
 {
     public class CartController : Controller
     {
-        private const string CART_KEY = "MyCart";
+        private readonly ProductRepository _productRepo;
 
-        public IActionResult Index()
+        public CartController(ProductRepository productRepo)
         {
-            var cart = HttpContext.Session.Get<List<CartItem>>(CART_KEY) ?? new List<CartItem>();
-            return View(cart);
+            _productRepo = productRepo;
         }
 
-        public IActionResult AddToCart(int id, string name, decimal price, string img, decimal? oldPrice)
+        public async Task<IActionResult> Index()
         {
-            var cart = HttpContext.Session.Get<List<CartItem>>(CART_KEY) ?? new List<CartItem>();
-
-            var existingItem = cart.FirstOrDefault(x => x.ProductId == id);
-            if (existingItem != null)
-            {
-                existingItem.Quantity++;
-            }
-            else
-            {
-                cart.Add(new CartItem
-                {
-                    ProductId = id,
-                    ProductName = name,
-                    Price = price,
-                    OldPrice = oldPrice,
-                    ImageUrl = img,
-                    Quantity = 1
-                });
-            }
-
-            HttpContext.Session.Set(CART_KEY, cart);
-
-            return RedirectToAction("Index"); 
+            var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
+            var cartItems = await _productRepo.GetCartItemsAsync(userId, guestId);
+            return View(cartItems);
         }
 
-        public IActionResult Remove(int id)
+        public async Task<IActionResult> AddToCart(int id)
         {
-            var cart = HttpContext.Session.Get<List<CartItem>>(CART_KEY) ?? new List<CartItem>();
-            var item = cart.FirstOrDefault(x => x.ProductId == id);
-            if (item != null)
-            {
-                cart.Remove(item);
-                HttpContext.Session.Set(CART_KEY, cart);
-            }
+            var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
+            _productRepo.AddToCart(id, userId, guestId);
             return RedirectToAction("Index");
         }
 
-        public IActionResult ChangeQuantity(int id, int change)
+        public async Task<IActionResult> Remove(int id)
         {
-            var cart = HttpContext.Session.Get<List<CartItem>>(CART_KEY) ?? new List<CartItem>();
-            var item = cart.FirstOrDefault(x => x.ProductId == id);
+            var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
+            await _productRepo.RemoveFromCartAsync(id, userId, guestId);
+            return RedirectToAction("Index");
+        }
 
-            if (item != null)
-            {
-                item.Quantity += change;
-                if (item.Quantity < 1) item.Quantity = 1; 
-                HttpContext.Session.Set(CART_KEY, cart);
-            }
+        public async Task<IActionResult> ChangeQuantity(int id, int change)
+        {
+            var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
+            await _productRepo.UpdateQuantityAsync(id, userId, guestId, change);
             return RedirectToAction("Index");
         }
     }

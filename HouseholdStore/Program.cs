@@ -1,5 +1,6 @@
 ﻿using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HouseholdStore
 {
@@ -16,6 +17,12 @@ namespace HouseholdStore
             builder.Services.AddScoped<AuthApiService>();
             builder.Services.AddHttpClient<ProductApiService>();
             builder.Services.AddScoped<ProductApiService>();
+
+
+            builder.Services.AddSingleton<Toolify.ProductService.Database.SqlConnectionFactory>(sp =>
+                    new Toolify.ProductService.Database.SqlConnectionFactory(builder.Configuration));
+
+            builder.Services.AddScoped<Toolify.ProductService.Data.ProductRepository>();
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>

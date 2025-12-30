@@ -1,4 +1,4 @@
-﻿@model List<HouseholdStore.Models.CartItem>
+﻿@model List<Toolify.ProductService.Models.CartItem>
 @{
     ViewData["Title"] = "Моя корзина";
     bool isEmpty = !Model.Any();
@@ -104,7 +104,7 @@
             <div class="summary-total-card">
                 <h3>Итого</h3>
                 <div class="total-block">
-                    <button class="checkout-btn">Оформить заказ</button>
+                    <a href="/Order/Checkout" class="checkout-btn">Оформить заказ</a>
                     <div class="final-price">
                         @grandTotal.ToString("N0") руб
                     </div>
