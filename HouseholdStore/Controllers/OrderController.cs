@@ -1,19 +1,22 @@
 ﻿using HouseholdStore.Helpers;
+using HouseholdStore.Models;
+using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Toolify.ProductService.Data;
+using Toolify.ProductService.Models;
 
 namespace HouseholdStore.Controllers
 {
-    [Authorize]
     public class OrderController : Controller
     {
         private readonly ProductRepository _productRepo;
-
-        public OrderController(ProductRepository productRepo)
+        private readonly AuthApiService _authService;
+        public OrderController(ProductRepository productRepo, AuthApiService authService)
         {
             _productRepo = productRepo;
+            _authService = authService;
         }
 
         [HttpGet]
@@ -28,29 +31,54 @@ namespace HouseholdStore.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
-            return View(cartItems);
+            var model = new CheckoutViewModel
+            {
+                CartItems = cartItems
+            };
+
+            if (userId.HasValue && User.Identity.IsAuthenticated)
+            {
+                var email = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (!string.IsNullOrEmpty(email))
+                {
+                    var user = await _authService.GetUserByEmailAsync(email);
+                    if (user != null)
+                    {
+                        model.FirstName = user.FirstName;
+                        model.LastName = user.LastName;
+                        model.Email = user.Email;
+                        model.Phone = user.Phone; 
+                    }
+                }
+            }
+
+            return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(string address)
+        public async Task<IActionResult> Create(CheckoutViewModel model)
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                            ?? User.FindFirst("id")?.Value;
+            var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
 
-            if (int.TryParse(userIdString, out int userId))
+            if (!ModelState.IsValid)
             {
-                if (string.IsNullOrWhiteSpace(address))
-                {
-                    ModelState.AddModelError("", "Введите адрес доставки");
-                    return RedirectToAction("Checkout");
-                }
-
-                int orderId = await _productRepo.CreateOrderAsync(userId, address);
-
-                return RedirectToAction("Confirmed", new { id = orderId });
+                model.CartItems = await _productRepo.GetCartItemsAsync(userId, guestId);
+                return View("Checkout", model);
             }
 
-            return RedirectToAction("Login", "Account");
+            var order = new Order
+            {
+                UserId = userId, 
+                GuestFirstName = model.FirstName,
+                GuestLastName = model.LastName,
+                GuestEmail = model.Email,
+                GuestPhone = model.Phone,
+                Address = model.Address
+            };
+
+            int orderId = await _productRepo.CreateOrderAsync(order, guestId);
+
+            return RedirectToAction("Confirmed", new { id = orderId });
         }
 
         public IActionResult Confirmed(int id)

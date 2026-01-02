@@ -43,7 +43,7 @@
                         <div class="item-info">
                             <h3 class="item-name">@item.ProductName</h3>
                             <div class="item-id">Артикул: @item.ProductId</div> <div class="price-single-mobile">
-                                <span class="price-val">@item.Price.ToString("N0") руб</span>
+                                <span class="price-val">@item.Price.ToString("N2") руб</span>
                             </div>
                         </div>
                     </div>
@@ -53,9 +53,9 @@
                         <div class="col-price-per-item">
                             @if (item.OldPrice.HasValue)
                             {
-                                <div class="old-price-sm">@item.OldPrice.Value.ToString("N0") руб</div>
+                                <div class="old-price-sm">@item.OldPrice.Value.ToString("N2") руб</div>
                             }
-                            <div class="current-price-sm">@item.Price.ToString("N0") руб</div>
+                            <div class="current-price-sm">@item.Price.ToString("N2") руб</div>
                             <div class="price-label">цена за 1 шт</div>
                         </div>
 
@@ -72,9 +72,9 @@
                         <div class="col-total">
                             @if (item.TotalOldPrice.HasValue)
                             {
-                                <div class="total-old">@item.TotalOldPrice.Value.ToString("N0") руб</div>
+                                <div class="total-old">@item.TotalOldPrice.Value.ToString("N2") руб</div>
                             }
-                            <div class="total-current">@item.TotalPrice.ToString("N0") руб</div>
+                            <div class="total-current">@item.TotalPrice.ToString("N2") руб</div>
                             <div class="total-count">@item.Quantity шт</div>
                         </div>
 
@@ -97,7 +97,7 @@
                 </div>
                 <div class="summary-row">
                     <span>Сумма заказа</span>
-                    <span>@grandTotal.ToString("N0") руб</span>
+                    <span>@grandTotal.ToString("N2") руб</span>
                 </div>
             </div>
 
@@ -106,7 +106,7 @@
                 <div class="total-block">
                     <a href="/Order/Checkout" class="checkout-btn">Оформить заказ</a>
                     <div class="final-price">
-                        @grandTotal.ToString("N0") руб
+                        @grandTotal.ToString("N2") руб
                     </div>
                 </div>
             </div>

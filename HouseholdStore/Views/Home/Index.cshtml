@@ -131,9 +131,7 @@
                        asp-action="AddToCart"
                        asp-route-id="@product.Id"
                        asp-route-name="@product.Name"
-                       asp-route-price="@finalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                        asp-route-img="@product.ImagePath"
-                       asp-route-oldPrice="@(hasDiscount? product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")"
                        class="btn-buy">
                         <i class="bi bi-cart-plus"></i> В корзину
                     </a>
