@@ -265,3 +265,87 @@ window.addEventListener('load', () => {
             }
         });
     });
+
+    //Анимация товара для добавления в корзину
+function addToCartAnimated(event, productId, btnElement) {
+    event.preventDefault(); 
+
+    const card = btnElement.closest('.product-card');
+    const productImg = card.querySelector('img');
+
+    const cartIcon = document.getElementById('cart-target-img');
+
+    if (productImg && cartIcon) {
+        const flyImg = productImg.cloneNode();
+        flyImg.classList.add('flying-img'); 
+
+        const rect = productImg.getBoundingClientRect();
+        flyImg.style.left = rect.left + 'px';
+        flyImg.style.top = rect.top + 'px';
+        flyImg.style.width = productImg.offsetWidth + 'px';
+        flyImg.style.height = productImg.offsetHeight + 'px';
+
+        document.body.appendChild(flyImg);
+
+        const cartRect = cartIcon.getBoundingClientRect();
+
+        setTimeout(() => {
+            flyImg.style.left = (cartRect.left + cartRect.width / 2 - 10) + 'px';
+            flyImg.style.top = (cartRect.top + cartRect.height / 2 - 10) + 'px';
+
+            flyImg.style.width = '20px';
+            flyImg.style.height = '20px';
+            flyImg.style.opacity = '0';
+        }, 10);
+
+        setTimeout(() => {
+            flyImg.remove();
+
+            cartIcon.style.transform = "scale(1.2)";
+            cartIcon.style.transition = "transform 0.2s";
+            setTimeout(() => cartIcon.style.transform = "scale(1)", 200);
+
+        }, 1500); 
+    }
+
+
+    const originalContent = btnElement.innerHTML;
+    btnElement.style.pointerEvents = 'none';
+    btnElement.style.opacity = '0.7';
+
+    fetch('/Cart/AddToCartApi?id=' + productId, {
+        method: 'POST'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const badge = document.getElementById('cart-count');
+                if (badge) {
+                    badge.innerText = data.count;
+                    badge.style.display = 'inline-block';
+
+                    badge.style.transform = "scale(1.5)";
+                    badge.style.transition = "transform 0.2s";
+                    setTimeout(() => badge.style.transform = "scale(1)", 200);
+                }
+            }
+        })
+        .catch(error => console.error('Ошибка:', error))
+        .finally(() => {
+            btnElement.style.pointerEvents = 'auto';
+            btnElement.style.opacity = '1';
+        });
+}
+
+//Загрузка при открытии
+document.addEventListener("DOMContentLoaded", function () {
+    fetch('/Cart/GetCartCount') 
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('cart-count');
+            if (data.count > 0 && badge) {
+                badge.innerText = data.count;
+                badge.style.display = 'inline-block';
+            }
+        });
+});

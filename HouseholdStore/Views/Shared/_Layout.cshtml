@@ -60,7 +60,7 @@
                         @(
                        !string.IsNullOrEmpty(User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value)
                       ? User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value : User.Identity.Name
-                       ) @* На время потом уберу *@
+                       ) 
                     </span>
                 </a>
             }
@@ -71,8 +71,16 @@
         </div>
 
         <div class="cart-block">
-            <img src="~/image/cart.png" alt="cart" />
-            <a asp-controller="Cart" asp-action="Index">Корзина</a>
+            <a asp-controller="Cart" asp-action="Index" class="cart-link-wrapper">
+
+                <div class="cart-icon-wrapper">
+                    <img src="~/image/cart.png" alt="cart" id="cart-target-img" />
+
+                    <span id="cart-count" class="cart-badge" style="display: none;">0</span>
+                </div>
+
+                <span class="cart-text">Корзина</span>
+            </a>
         </div>
     </div>
 
