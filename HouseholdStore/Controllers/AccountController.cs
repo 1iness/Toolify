@@ -115,12 +115,21 @@ namespace HouseholdStore.Controllers
                 return RedirectToAction("Login");
             }
 
+            var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                        User.FindFirstValue("id") ??
+                        User.FindFirstValue("sub");
+
+            int.TryParse(idStr, out int userId);
+
+            var userOrders = await _productRepo.GetUserOrdersAsync(userId);
+
             var model = new UserProfileViewModel
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                Phone = user.Phone
+                Phone = user.Phone,
+                Orders = userOrders
             };
 
             return View(model);

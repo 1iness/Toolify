@@ -160,26 +160,78 @@
 </div>
 
 <script>
+    // подтверждения телефона 
     function confirmPhone() {
-        var phone = document.getElementById('phoneInput').value;
-        var btn = document.getElementById('btnConfirmPhone');
-        var status = document.getElementById('phoneStatus');
-        var submitBtn = document.getElementById('btnSubmitOrder');
+        const phoneInput = document.getElementById('phoneInput');
+        const submitBtn = document.getElementById('btnSubmitOrder');
+        const statusText = document.getElementById('phoneStatus');
 
-        if (phone.length < 9) {
-            alert("Введите корректный номер!");
-            return;
+        const val = phoneInput.value;
+
+        if (val.length === 19) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-secondary'); 
+            submitBtn.classList.add('btn-primary');    
+
+            statusText.textContent = "Номер подтвержден";
+            statusText.className = "d-block mt-1 text-success fw-bold";
+        } else {
+            submitBtn.disabled = true;
+            statusText.textContent = "Введите номер полностью!";
+            statusText.className = "d-block mt-1 text-danger fw-bold";
         }
+    }
 
-        btn.disabled = true;
-        btn.innerHTML = "✓";
-        btn.classList.remove("btn-outline-success");
-        btn.classList.add("btn-success");
+    // Маски ввода  
+    // тел
+    const phoneInput = document.getElementById('phoneInput');
+    const submitBtn = document.getElementById('btnSubmitOrder');
+    const statusText = document.getElementById('phoneStatus');
 
-        status.innerHTML = "Номер подтвержден";
-        status.style.color = "#28a745";
-        status.classList.remove("text-muted");
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function (e) {
+            if (!submitBtn.disabled) {
+                submitBtn.disabled = true;
+                statusText.textContent = "Подтвердите номер заново";
+                statusText.className = "d-block mt-1 text-warning";
+            }
 
-        submitBtn.disabled = false;
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+            if (!e.target.value.startsWith('+375')) {
+                e.target.value = '+375 ';
+                return;
+            }
+            e.target.value = !x[2] ? x[1] : '+375 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+        });
+    }
+
+    //карта
+    const expiryInput = document.getElementById('CardExpiry');
+    if (expiryInput) {
+        expiryInput.addEventListener('input', function(e) {
+            let input = e.target.value.replace(/\D/g, '');
+            if (input.length > 4) input = input.substring(0, 4);
+
+            if (input.length > 2) {
+                e.target.value = input.substring(0, 2) + '/' + input.substring(2);
+            } else {
+                e.target.value = input;
+            }
+        });
+    }
+
+    // номер карты
+    const cardInput = document.getElementById('CardNumber');
+    if (cardInput) {
+        cardInput.addEventListener('input', function (e) {
+            let input = e.target.value.replace(/\D/g, '');
+            input = input.substring(0, 16);
+            let sections = input.match(/.{1,4}/g);
+            if (sections) {
+                e.target.value = sections.join(' ');
+            } else {
+                e.target.value = input;
+            }
+        });
     }
 </script>

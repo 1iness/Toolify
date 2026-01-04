@@ -407,5 +407,52 @@ namespace Toolify.ProductService.Data
                 throw;
             }
         }
+
+        public async Task<List<OrderHistoryDto>> GetUserOrdersAsync(int userId)
+        {
+            var orders = new List<OrderHistoryDto>();
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            string sql = @"
+        SELECT o.Id, o.OrderDate, o.TotalAmount, o.Status,
+               oi.Quantity, oi.Price, p.Name, p.ImagePath
+        FROM Orders o
+        JOIN OrderItems oi ON o.Id = oi.OrderId
+        JOIN Products p ON oi.ProductId = p.Id
+        WHERE o.UserId = @uid
+        ORDER BY o.OrderDate DESC";
+
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@uid", userId);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                int orderId = reader.GetInt32(0);
+                var existingOrder = orders.FirstOrDefault(o => o.OrderId == orderId);
+
+                if (existingOrder == null)
+                {
+                    existingOrder = new OrderHistoryDto
+                    {
+                        OrderId = orderId,
+                        OrderDate = reader.GetDateTime(1),
+                        TotalAmount = reader.GetDecimal(2),
+                        Status = reader.GetString(3)
+                    };
+                    orders.Add(existingOrder);
+                }
+
+                existingOrder.Items.Add(new OrderItemDto
+                {
+                    Quantity = reader.GetInt32(4),
+                    Price = reader.GetDecimal(5),
+                    ProductName = reader.GetString(6),
+                    ImageUrl = reader.IsDBNull(7) ? "/images/no-image.png" : reader.GetString(7)
+                });
+            }
+            return orders;
+        }
     }
 }

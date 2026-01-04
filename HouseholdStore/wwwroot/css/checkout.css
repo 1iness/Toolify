@@ -176,10 +176,7 @@
             color: #00aaff !important;
         }
 
-/* поля карты пока убрал, не нужны */
-.checkout-card:nth-child(3) .row.g-3 {
-    display: none;
-}
+
 
 
 

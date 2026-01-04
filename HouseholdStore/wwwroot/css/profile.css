@@ -197,3 +197,26 @@
     text-decoration: none;
     font-weight: 700;
 }
+
+.order-card-item {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    padding: 20px;
+    transition: transform 0.2s;
+}
+
+    .order-card-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e0f7fa;
+    color: #00838f;
+}
