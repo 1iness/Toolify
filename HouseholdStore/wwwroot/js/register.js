@@ -13,54 +13,41 @@
                 : '/image/eye-closed-icon.png';
         });
     });
+});
 
+document.addEventListener('DOMContentLoaded', function () {
     const phoneInput = document.getElementById('phone');
+
     if (phoneInput) {
-        if (!phoneInput.value.trim()) {
-            phoneInput.value = '+375 (';
-        }
-
-        phoneInput.addEventListener('input', function () {
-            let value = this.value;
-
-            const cursorPos = this.selectionStart;
-            const digits = value.replace(/\D/g, '');
-
-            let formatted = '+375 (';
-            if (digits.length > 3) {
-                formatted += digits.substring(3, 5);
-
-                if (digits.length >= 5) {
-                    formatted += ') ' + digits.substring(5, 8);
-
-                    if (digits.length >= 8) {
-                        formatted += '-' + digits.substring(8, 10);
-
-                        if (digits.length >= 10) {
-                            formatted += '-' + digits.substring(10, 12);
-                        }
-                    }
-                }
-            } else if (digits.length > 3) {
-                formatted += digits.substring(3);
+        phoneInput.addEventListener('focus', function () {
+            if (!phoneInput.value) {
+                phoneInput.value = '+375 ';
             }
-
-            if (formatted.length > 19) {
-                formatted = formatted.substring(0, 19);
-            }
-
-            this.value = formatted;
-
-            setTimeout(() => {
-                this.setSelectionRange(formatted.length, formatted.length);
-            }, 0);
         });
+
+        phoneInput.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+
+            if (!e.target.value.startsWith('+375')) {
+                e.target.value = '+375 ';
+                return;
+            }
+
+            let x = value.match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+
+            if (!x[2]) {
+                e.target.value = '+375 ';
+            } else {
+                e.target.value = '+375 (' + x[2] +
+                    (x[3] ? ') ' + x[3] : '') +
+                    (x[4] ? '-' + x[4] : '') +
+                    (x[5] ? '-' + x[5] : '');
+            }
+        });
+
         phoneInput.addEventListener('keydown', function (e) {
-            if (this.selectionStart <= 6 && (e.key === 'Backspace' || e.key === 'Delete')) {
+            if (e.key === 'Backspace' && e.target.value.length <= 5) {
                 e.preventDefault();
-                setTimeout(() => {
-                    this.setSelectionRange(this.value.length, this.value.length);
-                }, 0);
             }
         });
     }

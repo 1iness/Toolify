@@ -50,10 +50,7 @@
                 <div class="form-group">
                     <label asp-for="Phone">Телефон</label>
                     <div class="input-with-icon">
-                        <input asp-for="Phone" type="tel" id="phone"
-                               placeholder="+375 (XX) XXX-XX-XX"
-                               pattern="\+375\s?\(\d{2}\)\s?\d{3}[-]?\d{2}[-]?\d{2}"
-                               title="Формат: +375 (XX) XXX-XX-XX" />
+                        <input asp-for="Phone" type="tel" id="phone" placeholder="+375 (XX) XXX-XX-XX"/>
                         <img src="~/image/phone-icon.png" alt="Телефон" class="input-icon" />
                     </div>
                     <span asp-validation-for="Phone" style="color:red; font-size:12px;"></span>
