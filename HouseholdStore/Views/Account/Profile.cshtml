@@ -4,8 +4,8 @@
 }
 
 <link rel="stylesheet" href="~/css/profile.css" />
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;900&display=swap" rel="stylesheet">
 
+<partial name="_Breadcrumbs" />
 <div class="profile-container">
 
     <aside class="profile-sidebar">
@@ -33,7 +33,6 @@
     </aside>
 
     <main class="profile-content">
-
         <section id="tab-personal" class="profile-section">
             <h2 class="section-title">Личные данные</h2>
             <div class="data-grid">
@@ -59,17 +58,78 @@
 
         <section id="tab-orders" class="profile-section" style="display: none;">
             <h2 class="section-title">Текущие заказы</h2>
-            <div class="orders-empty-state">
-                <p>У вас пока нет активных заказов</p>
-                <a asp-controller="Home" asp-action="Index" class="go-to-catalog">Перейти в каталог</a>
-            </div>
+
+            @if (Model.Orders != null && Model.Orders.Any(o => o.Status == "New" || o.Status == "Processing"))
+            {
+                <div class="orders-list">
+                    @foreach (var order in Model.Orders.Where(o => o.Status == "New" || o.Status == "Processing"))
+                    {
+                        <div class="order-card-item">
+                            <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                <div>
+                                    <span class="fw-bold">Заказ №@order.OrderId</span>
+                                    <span class="text-muted ms-2">от @order.OrderDate.ToString("dd.MM.yyyy")</span>
+                                </div>
+                                <span class="status-badge">@order.Status</span>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach (var item in order.Items)
+                                {
+                                    <div class="text-center" style="width: 80px;">
+                                        <img src="https://localhost:7188@(item.ImageUrl)"
+                                             class="rounded border"
+                                             style="width: 60px; height: 60px; object-fit: cover;"
+                                             onerror="this.src='/images/no-image.png'" />
+                                        <div class="text-truncate mt-1" style="font-size: 10px;">@item.ProductName</div>
+                                        <div class="fw-bold" style="font-size: 11px;">@item.Quantity шт.</div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="text-end mt-2">
+                                <span class="text-muted small">Итого: </span>
+                                <span class="fw-bold">@order.TotalAmount.ToString("N2") руб</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="orders-empty-state">
+                    <p>У вас пока нет активных заказов</p>
+                    <a asp-controller="Home" asp-action="Index" class="go-to-catalog">Перейти в каталог</a>
+                </div>
+            }
         </section>
 
         <section id="tab-history" class="profile-section" style="display: none;">
             <h2 class="section-title">История заказов</h2>
-            <div class="orders-empty-state">
-                <p>История заказов пуста</p>
-            </div>
+
+            @if (Model.Orders != null && Model.Orders.Any(o => o.Status != "New" && o.Status != "Processing"))
+            {
+                <div class="orders-list">
+                    @foreach (var order in Model.Orders.Where(o => o.Status != "New" && o.Status != "Processing"))
+                    {
+                        <div class="order-card-item" style="opacity: 0.8;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Заказ №@order.OrderId от @order.OrderDate.ToShortDateString()</span>
+                                <span class="badge bg-light text-dark">@order.Status</span>
+                            </div>
+                            <div class="text-muted small">
+                                Сумма: @order.TotalAmount.ToString("N2") руб
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="orders-empty-state">
+                    <p>История заказов пуста</p>
+                </div>
+            }
         </section>
 
     </main>

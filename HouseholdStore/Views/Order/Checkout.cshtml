@@ -1,45 +1,239 @@
-﻿@model List<Toolify.ProductService.Models.CartItem>
+﻿@model HouseholdStore.Models.CheckoutViewModel
 
-<h2>Оформление заказа</h2>
+@{
+    ViewData["Title"] = "Оформление заказа";
+    ViewData["ParentPage"] = "Моя корзина";
+    ViewData["ParentLink"] = Url.Action("Index", "Cart");
+}
 
-<div class="row">
-    <div class="col-md-8">
-        <h4>Ваши товары</h4>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Товар</th>
-                    <th>Кол-во</th>
-                    <th>Цена</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.ProductName</td>
-                        <td>@item.Quantity</td>
-                        <td>@item.TotalPrice.ToString("C")</td>
-                    </tr>
-                }
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="2" class="text-end"><strong>Итого:</strong></td>
-                    <td><strong>@Model.Sum(x => x.TotalPrice).ToString("C")</strong></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+<link rel="stylesheet" href="~/css/checkout.css" />
+<partial name="_Breadcrumbs" />
+<div class="checkout-container py-4">
+    <form asp-action="Create" method="post" id="checkoutForm">
+        <div class="row checkout-grid">
 
-    <div class="col-md-4">
-        <h4>Данные доставки</h4>
-        <form asp-action="Create" method="post">
-            <div class="mb-3">
-                <label class="form-label">Адрес доставки</label>
-                <textarea name="address" class="form-control" rows="3" required></textarea>
+            <div class="col-lg-8">
+
+                <div class="checkout-card">
+                    <h4>Заказ</h4>
+                    @foreach (var item in Model.CartItems)
+                    {
+                        <div class="order-item-row">
+                            <img src="https://localhost:7188@(item.ImageUrl)"
+                                 alt="@item.ProductName" class="item-img"
+                                 onerror="this.onerror=null; this.src='/images/no-image.png';" />
+
+                            <div class="item-details">
+                                <div class="item-name">@item.ProductName</div>
+                                <div class="item-meta">Арт. @item.ProductId &bull; @item.Quantity шт.</div>
+                            </div>
+
+                            <div class="item-price-block">
+                                <span class="current-price">@item.TotalPrice.ToString("N2") руб</span>
+                                @if (item.OldPrice.HasValue)
+                                {
+                                    <span class="old-price">@((item.OldPrice * item.Quantity)?.ToString("N2")) руб</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="checkout-card">
+                    <h4>Способ доставки</h4>
+                    <div class="mb-3">
+                        <label class="form-label">Адрес доставки</label>
+                        <textarea asp-for="Address" class="form-control" rows="2" placeholder="Город, улица, дом, квартира"></textarea>
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="checkout-card">
+                    <h4>Способ оплаты</h4>
+
+                    <div class="payment-method">
+                        Оплатить онлайн
+                    </div>
+
+                    <div class="payment-icons mb-3">
+                        <span class="badge bg-light text-dark border">VISA</span>
+                        <span class="badge bg-light text-dark border">MasterCard</span>
+                        <span class="badge bg-light text-dark border">Белкарт</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Номер карты</label>
+                            <input asp-for="CardNumber" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" />
+                            <span asp-validation-for="CardNumber" class="text-danger"></span>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Срок (ММ/ГГ)</label>
+                            <input asp-for="CardExpiry" class="form-control" placeholder="12/25" maxlength="5" />
+                            <span asp-validation-for="CardExpiry" class="text-danger"></span>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">CVC/CVV</label>
+                            <input asp-for="CardCvv" type="password" class="form-control" placeholder="•••" maxlength="3" />
+                            <span asp-validation-for="CardCvv" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-card">
+                    <h4>Комментарий</h4>
+                    <div class="mb-3">
+                        <label class="form-label">Ваш комментарий</label>
+                        <input type="text" class="form-control" placeholder="Не обязательно" name="Comment">
+                    </div>
+                </div>
+
+                <div class="checkout-card">
+                    <h4>Ваши данные</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Имя*</label>
+                            <input asp-for="FirstName" class="form-control" placeholder="Имя" />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Фамилия*</label>
+                            <input asp-for="LastName" class="form-control" placeholder="Фамилия" />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Телефон*</label>
+                            <div class="input-group">
+                                <input asp-for="Phone" id="phoneInput" class="form-control" placeholder="+375 (XX) XXX-XX-XX" />
+                                <button type="button" class="btn btn-outline-success" id="btnConfirmPhone" onclick="confirmPhone()">
+                                    OK
+                                </button>
+                            </div>
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                            <small id="phoneStatus" class="text-muted d-block mt-1" style="font-size: 0.8rem">Подтвердите номер для оплаты</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">E-Mail*</label>
+                            <input asp-for="Email" class="form-control" placeholder="Электронная почта" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <button type="submit" class="btn btn-success w-100">Оформить заказ</button>
-        </form>
-    </div>
+
+            <div class="col-lg-4">
+                <div class="checkout-card summary-card">
+                    <h4>В корзине</h4>
+
+                    <div class="summary-row">
+                        <span>Товары, @Model.CartItems.Sum(x => x.Quantity) шт.</span>
+                        <span>@Model.TotalAmount.ToString("N2") руб</span>
+                    </div>
+
+                    @if (Model.CartItems.Any(x => x.TotalOldPrice.HasValue))
+                    {
+                        <div class="summary-row text-danger" style="text-decoration: line-through;">
+                            <span>Без скидки</span>
+                            <span>@Model.CartItems.Sum(x => x.TotalOldPrice ?? x.TotalPrice).ToString("N2") руб</span>
+                        </div>
+                    }
+
+                    <div class="summary-row">
+                        <span>Оплата</span>
+                        <span class="text-success">Оплатить онлайн</span>
+                    </div>
+
+                    <div class="summary-total">
+                        <span>Итого:</span>
+                        <span class="total-price-large">@Model.TotalAmount.ToString("N2") руб</span>
+                    </div>
+
+                    <button type="submit" id="btnSubmitOrder" class="btn-pay" disabled>
+                        Оплатить заказ
+                    </button>
+
+                    
+                </div>
+            </div>
+
+        </div>
+    </form>
 </div>
+
+<script>
+    // подтверждения телефона 
+    function confirmPhone() {
+        const phoneInput = document.getElementById('phoneInput');
+        const submitBtn = document.getElementById('btnSubmitOrder');
+        const statusText = document.getElementById('phoneStatus');
+
+        const val = phoneInput.value;
+
+        if (val.length === 19) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-secondary'); 
+            submitBtn.classList.add('btn-primary');    
+
+            statusText.textContent = "Номер подтвержден";
+            statusText.className = "d-block mt-1 text-success fw-bold";
+        } else {
+            submitBtn.disabled = true;
+            statusText.textContent = "Введите номер полностью!";
+            statusText.className = "d-block mt-1 text-danger fw-bold";
+        }
+    }
+
+    // Маски ввода  
+    // тел
+    const phoneInput = document.getElementById('phoneInput');
+    const submitBtn = document.getElementById('btnSubmitOrder');
+    const statusText = document.getElementById('phoneStatus');
+
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function (e) {
+            if (!submitBtn.disabled) {
+                submitBtn.disabled = true;
+                statusText.textContent = "Подтвердите номер заново";
+                statusText.className = "d-block mt-1 text-warning";
+            }
+
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+            if (!e.target.value.startsWith('+375')) {
+                e.target.value = '+375 ';
+                return;
+            }
+            e.target.value = !x[2] ? x[1] : '+375 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+        });
+    }
+
+    //карта
+    const expiryInput = document.getElementById('CardExpiry');
+    if (expiryInput) {
+        expiryInput.addEventListener('input', function(e) {
+            let input = e.target.value.replace(/\D/g, '');
+            if (input.length > 4) input = input.substring(0, 4);
+
+            if (input.length > 2) {
+                e.target.value = input.substring(0, 2) + '/' + input.substring(2);
+            } else {
+                e.target.value = input;
+            }
+        });
+    }
+
+    // номер карты
+    const cardInput = document.getElementById('CardNumber');
+    if (cardInput) {
+        cardInput.addEventListener('input', function (e) {
+            let input = e.target.value.replace(/\D/g, '');
+            input = input.substring(0, 16);
+            let sections = input.match(/.{1,4}/g);
+            if (sections) {
+                e.target.value = sections.join(' ');
+            } else {
+                e.target.value = input;
+            }
+        });
+    }
+</script>

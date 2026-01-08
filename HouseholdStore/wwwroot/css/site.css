@@ -70,6 +70,82 @@ body {
     cursor: pointer;
 }
 
+/* Хлебные крошки + Кнопка Назад */
+.nav-sandwich-bar {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap:20px;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+/* Кнопка Назад */
+.btn-back-custom {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px; 
+    padding: 8px 24px;
+    color: #555;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+    cursor: pointer;
+    display: inline-block;
+}
+
+    .btn-back-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        color: #333;
+        background-color: #fff;
+    }
+
+/* Сами хлебные крошки */
+.breadcrumbs-list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif; 
+    font-size: 16px;
+}
+
+.breadcrumb-item {
+    color: #888;
+}
+
+    .breadcrumb-item a {
+        color: #888;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+        .breadcrumb-item a:hover {
+            color: #000;
+        }
+
+    /* Активный элемент */
+    .breadcrumb-item.active {
+        color: #333; 
+        font-weight: 500;
+    }
+
+/* Стрелочка разделитель */
+.breadcrumb-separator {
+    margin: 0 10px;
+    color: #28a745; 
+    font-weight: bold;
+}
+
+
+
 /* Вторая панель под хедером */
 .sub-header {
     width: 100%;
@@ -82,6 +158,49 @@ body {
     background-color: #fff;
     gap: 20px;
     box-sizing: border-box;
+}
+
+/* Летящая картинка */
+.flying-img {
+    position: fixed;
+    z-index: 9999;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+    opacity: 1;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    object-fit: cover;
+}
+
+/* корзина и текст */
+.cart-link-wrapper {
+    text-decoration: none;
+    color: black; 
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cart-icon-wrapper {
+    position: relative; 
+    display: inline-block;
+}
+
+/* количество в корзине */
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -8px;
+    background-color: #dc3545; 
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1;
+    border: 2px solid white; 
 }
 
 /* Кнопка Каталога */

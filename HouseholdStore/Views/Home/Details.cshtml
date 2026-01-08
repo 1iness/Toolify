@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = Model.Name;
+    ViewData["ParentPage"] = "Каталог";
+    ViewData["ParentLink"] = "/Home/Index";
 
     bool hasDiscount = Model.Discount > 0;
     bool isOutOfStock = Model.StockQuantity <= 0;
@@ -12,6 +14,7 @@
     }
 }
 
+<partial name="_Breadcrumbs" />
 <div class="product-details-container">
 
     <div class="detail-image">
@@ -58,12 +61,12 @@
 
    
 
-    <div class="detail-buy-block">
+    <div class="detail-buy-block product-card">
         <div class="price-wrap">
-            <span class="main-price">@finalPrice.ToString("N0") Руб</span>
+            <span class="main-price">@finalPrice.ToString("N2") Руб</span>
             @if (hasDiscount)
             {
-                <span class="old-price">@Model.Price.ToString("N0") Руб</span>
+                <span class="old-price">@Model.Price.ToString("N2") Руб</span>
                 <span class="badge discount">-@Model.Discount%</span>
             }
         </div>
@@ -76,7 +79,11 @@
         else
         {
             <div class="stock in">В наличии</div>
-            <button class="btn-add-cart">Добавить в корзину</button>
+            <button type="button"
+                    class="btn-add-cart"
+                    onclick="addToCartAnimated(event, @Model.Id, this)">
+                Добавить в корзину
+            </button>
         }
     </div>
 </div>

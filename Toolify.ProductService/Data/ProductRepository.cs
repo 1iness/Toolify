@@ -239,11 +239,11 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
 
             string sql = @"
-            SELECT c.ProductId, p.Name, p.Price, p.ImagePath, c.Quantity, p.Discount
-                FROM CartItems c
-                    JOIN Products p ON c.ProductId = p.Id
-                WHERE (@uid IS NOT NULL AND c.UserId = @uid) 
-            OR (@uid IS NULL AND @gid IS NOT NULL AND c.GuestId = @gid)";
+        SELECT c.ProductId, p.Name, p.Price, p.ImagePath, c.Quantity, p.Discount
+        FROM CartItems c
+        JOIN Products p ON c.ProductId = p.Id
+        WHERE (@uid IS NOT NULL AND c.UserId = @uid) 
+           OR (@uid IS NULL AND @gid IS NOT NULL AND c.GuestId = @gid)";
 
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@uid", (object?)userId ?? DBNull.Value);
@@ -253,16 +253,18 @@ namespace Toolify.ProductService.Data
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                var price = reader.GetDecimal(reader.GetOrdinal("Price"));
+                var basePrice = reader.GetDecimal(reader.GetOrdinal("Price"));
                 var discount = reader.GetInt32(reader.GetOrdinal("Discount"));
-                decimal? oldPrice = discount > 0 ? price / (1 - (decimal)discount / 100) : null;
+
+                decimal discountAmount = basePrice * (discount / 100m); 
+                decimal finalPrice = basePrice - discountAmount;
 
                 items.Add(new CartItem
                 {
                     ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
                     ProductName = reader.GetString(reader.GetOrdinal("Name")),
-                    Price = price,
-                    OldPrice = oldPrice,
+                    Price = finalPrice, 
+                    OldPrice = discount > 0 ? basePrice : null, 
                     ImageUrl = reader.IsDBNull(reader.GetOrdinal("ImagePath")) ? null : reader.GetString(reader.GetOrdinal("ImagePath")),
                     Quantity = reader.GetInt32(reader.GetOrdinal("Quantity"))
                 });
@@ -281,21 +283,67 @@ namespace Toolify.ProductService.Data
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task UpdateQuantityAsync(int productId, int? userId, string? guestId, int change)
+        public async Task<bool> UpdateQuantityAsync(int productId, int? userId, string? guestId, int change)
         {
             using var connection = _factory.CreateConnection();
             await connection.OpenAsync();
 
-            string sql = @"
-            UPDATE CartItems SET Quantity = CASE WHEN Quantity + @change < 1 THEN 1 ELSE Quantity + @change END
-            WHERE ProductId = @pid AND (@uid IS NOT NULL AND UserId = @uid OR GuestId = @gid)";
+            string sqlCheck = @"
+        SELECT c.Quantity, p.StockQuantity
+        FROM CartItems c
+        JOIN Products p ON c.ProductId = p.Id
+        WHERE c.ProductId = @pid 
+          AND (c.UserId = @uid OR (c.UserId IS NULL AND c.GuestId = @gid))";
 
-            using var cmd = new SqlCommand(sql, connection);
-            cmd.Parameters.AddWithValue("@pid", productId);
-            cmd.Parameters.AddWithValue("@change", change);
-            cmd.Parameters.AddWithValue("@uid", (object?)userId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@gid", (object?)guestId ?? DBNull.Value);
-            await cmd.ExecuteNonQueryAsync();
+            int currentCartQuantity = 0;
+            int stockQuantity = 0;
+
+            using (var cmdCheck = new SqlCommand(sqlCheck, connection))
+            {
+                cmdCheck.Parameters.AddWithValue("@pid", productId);
+                cmdCheck.Parameters.AddWithValue("@uid", (object?)userId ?? DBNull.Value);
+                cmdCheck.Parameters.AddWithValue("@gid", (object?)guestId ?? DBNull.Value);
+
+                using (var reader = await cmdCheck.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        currentCartQuantity = reader.GetInt32(0);
+                        stockQuantity = reader.GetInt32(1);
+                    }
+                    else
+                    {
+                        return false; 
+                    }
+                }
+            }
+
+            int newQuantity = currentCartQuantity + change;
+
+            if (newQuantity < 1) return false;
+
+            if (newQuantity > stockQuantity)
+            {
+                return false; 
+            }
+
+            string sqlUpdate = @"
+        UPDATE CartItems 
+        SET Quantity = @qty 
+        WHERE ProductId = @pid 
+          AND (UserId = @uid OR (UserId IS NULL AND GuestId = @gid))";
+
+            using (var cmdUpdate = new SqlCommand(sqlUpdate, connection))
+            {
+                cmdUpdate.Parameters.AddWithValue("@qty", newQuantity);
+                cmdUpdate.Parameters.AddWithValue("@pid", productId);
+                cmdUpdate.Parameters.AddWithValue("@uid", (object?)userId ?? DBNull.Value);
+                cmdUpdate.Parameters.AddWithValue("@gid", (object?)guestId ?? DBNull.Value);
+
+                await cmdUpdate.ExecuteNonQueryAsync();
+            }
+
+            return true;
         }
 
         public async Task MergeCartsAsync(string guestId, int userId)
@@ -317,72 +365,82 @@ namespace Toolify.ProductService.Data
         }
 
 
-        public async Task<int> CreateOrderAsync(int userId, string address)
+        public async Task<int> CreateOrderAsync(Order order, string guestId)
         {
             using var connection = _factory.CreateConnection();
             await connection.OpenAsync();
-
             using var transaction = connection.BeginTransaction();
 
             try
             {
-
                 var cartItems = new List<CartItem>();
                 string getCartSql = @"
-                SELECT c.ProductId, c.Quantity, p.Price 
-                    FROM CartItems c
-                        JOIN Products p ON c.ProductId = p.Id
-                WHERE c.UserId = @uid";
+            SELECT c.ProductId, c.Quantity, p.Price, p.Discount
+            FROM CartItems c
+            JOIN Products p ON c.ProductId = p.Id
+            WHERE (@uid IS NOT NULL AND c.UserId = @uid) 
+               OR (@uid IS NULL AND @gid IS NOT NULL AND c.GuestId = @gid)";
 
                 using (var cmd = new SqlCommand(getCartSql, connection, transaction))
                 {
-                    cmd.Parameters.AddWithValue("@uid", userId);
+                    cmd.Parameters.AddWithValue("@uid", (object?)order.UserId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@gid", (object?)guestId ?? DBNull.Value);
+
                     using var reader = await cmd.ExecuteReaderAsync();
                     while (await reader.ReadAsync())
                     {
+                        var basePrice = reader.GetDecimal(2);
+                        var discount = reader.GetInt32(3);
+                        decimal finalPrice = discount > 0 ? basePrice * (1 - (decimal)discount / 100) : basePrice;
+
                         cartItems.Add(new CartItem
                         {
                             ProductId = reader.GetInt32(0),
                             Quantity = reader.GetInt32(1),
-                            Price = reader.GetDecimal(2)
+                            Price = finalPrice
                         });
                     }
-                } 
+                }
 
-                if (cartItems.Count == 0) return 0; 
+                if (cartItems.Count == 0) return 0;
 
                 decimal totalAmount = cartItems.Sum(x => x.Price * x.Quantity);
 
-                int newOrderId = 0;
                 string createOrderSql = @"
-                INSERT INTO Orders (UserId, OrderDate, TotalAmount, Status, Address) 
-                    VALUES (@uid, GETDATE(), @total, 'New', @addr);
-                SELECT SCOPE_IDENTITY();";
+            INSERT INTO Orders (UserId, GuestFirstName, GuestLastName, GuestEmail, GuestPhone, OrderDate, TotalAmount, Status, Address) 
+            VALUES (@uid, @fn, @ln, @em, @ph, GETDATE(), @total, 'New', @addr);
+            SELECT SCOPE_IDENTITY();";
 
+                int newOrderId;
                 using (var cmd = new SqlCommand(createOrderSql, connection, transaction))
                 {
-                    cmd.Parameters.AddWithValue("@uid", userId);
+                    cmd.Parameters.AddWithValue("@uid", (object?)order.UserId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@fn", order.GuestFirstName ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ln", order.GuestLastName ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@em", order.GuestEmail ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ph", order.GuestPhone ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@total", totalAmount);
-                    cmd.Parameters.AddWithValue("@addr", address);
+                    cmd.Parameters.AddWithValue("@addr", order.Address ?? (object)DBNull.Value);
+
                     newOrderId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
                 }
 
                 string addItemSql = "INSERT INTO OrderItems (OrderId, ProductId, Price, Quantity) VALUES (@oid, @pid, @price, @q)";
-
                 foreach (var item in cartItems)
                 {
                     using var cmd = new SqlCommand(addItemSql, connection, transaction);
                     cmd.Parameters.AddWithValue("@oid", newOrderId);
                     cmd.Parameters.AddWithValue("@pid", item.ProductId);
-                    cmd.Parameters.AddWithValue("@price", item.Price); 
+                    cmd.Parameters.AddWithValue("@price", item.Price);
                     cmd.Parameters.AddWithValue("@q", item.Quantity);
                     await cmd.ExecuteNonQueryAsync();
                 }
 
-                string clearCartSql = "DELETE FROM CartItems WHERE UserId = @uid";
+                string clearCartSql = @"DELETE FROM CartItems WHERE (@uid IS NOT NULL AND UserId = @uid) OR (@gid IS NOT NULL AND GuestId = @gid)";
                 using (var cmd = new SqlCommand(clearCartSql, connection, transaction))
                 {
-                    cmd.Parameters.AddWithValue("@uid", userId);
+                    cmd.Parameters.AddWithValue("@uid", (object?)order.UserId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@gid", (object?)guestId ?? DBNull.Value);
                     await cmd.ExecuteNonQueryAsync();
                 }
 
@@ -394,6 +452,53 @@ namespace Toolify.ProductService.Data
                 transaction.Rollback();
                 throw;
             }
+        }
+
+        public async Task<List<OrderHistoryDto>> GetUserOrdersAsync(int userId)
+        {
+            var orders = new List<OrderHistoryDto>();
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            string sql = @"
+        SELECT o.Id, o.OrderDate, o.TotalAmount, o.Status,
+               oi.Quantity, oi.Price, p.Name, p.ImagePath
+        FROM Orders o
+        JOIN OrderItems oi ON o.Id = oi.OrderId
+        JOIN Products p ON oi.ProductId = p.Id
+        WHERE o.UserId = @uid
+        ORDER BY o.OrderDate DESC";
+
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@uid", userId);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                int orderId = reader.GetInt32(0);
+                var existingOrder = orders.FirstOrDefault(o => o.OrderId == orderId);
+
+                if (existingOrder == null)
+                {
+                    existingOrder = new OrderHistoryDto
+                    {
+                        OrderId = orderId,
+                        OrderDate = reader.GetDateTime(1),
+                        TotalAmount = reader.GetDecimal(2),
+                        Status = reader.GetString(3)
+                    };
+                    orders.Add(existingOrder);
+                }
+
+                existingOrder.Items.Add(new OrderItemDto
+                {
+                    Quantity = reader.GetInt32(4),
+                    Price = reader.GetDecimal(5),
+                    ProductName = reader.GetString(6),
+                    ImageUrl = reader.IsDBNull(7) ? "/images/no-image.png" : reader.GetString(7)
+                });
+            }
+            return orders;
         }
     }
 }
