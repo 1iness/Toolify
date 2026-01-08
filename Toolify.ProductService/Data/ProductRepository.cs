@@ -283,21 +283,67 @@ namespace Toolify.ProductService.Data
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task UpdateQuantityAsync(int productId, int? userId, string? guestId, int change)
+        public async Task<bool> UpdateQuantityAsync(int productId, int? userId, string? guestId, int change)
         {
             using var connection = _factory.CreateConnection();
             await connection.OpenAsync();
 
-            string sql = @"
-            UPDATE CartItems SET Quantity = CASE WHEN Quantity + @change < 1 THEN 1 ELSE Quantity + @change END
-            WHERE ProductId = @pid AND (@uid IS NOT NULL AND UserId = @uid OR GuestId = @gid)";
+            string sqlCheck = @"
+        SELECT c.Quantity, p.StockQuantity
+        FROM CartItems c
+        JOIN Products p ON c.ProductId = p.Id
+        WHERE c.ProductId = @pid 
+          AND (c.UserId = @uid OR (c.UserId IS NULL AND c.GuestId = @gid))";
 
-            using var cmd = new SqlCommand(sql, connection);
-            cmd.Parameters.AddWithValue("@pid", productId);
-            cmd.Parameters.AddWithValue("@change", change);
-            cmd.Parameters.AddWithValue("@uid", (object?)userId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@gid", (object?)guestId ?? DBNull.Value);
-            await cmd.ExecuteNonQueryAsync();
+            int currentCartQuantity = 0;
+            int stockQuantity = 0;
+
+            using (var cmdCheck = new SqlCommand(sqlCheck, connection))
+            {
+                cmdCheck.Parameters.AddWithValue("@pid", productId);
+                cmdCheck.Parameters.AddWithValue("@uid", (object?)userId ?? DBNull.Value);
+                cmdCheck.Parameters.AddWithValue("@gid", (object?)guestId ?? DBNull.Value);
+
+                using (var reader = await cmdCheck.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        currentCartQuantity = reader.GetInt32(0);
+                        stockQuantity = reader.GetInt32(1);
+                    }
+                    else
+                    {
+                        return false; 
+                    }
+                }
+            }
+
+            int newQuantity = currentCartQuantity + change;
+
+            if (newQuantity < 1) return false;
+
+            if (newQuantity > stockQuantity)
+            {
+                return false; 
+            }
+
+            string sqlUpdate = @"
+        UPDATE CartItems 
+        SET Quantity = @qty 
+        WHERE ProductId = @pid 
+          AND (UserId = @uid OR (UserId IS NULL AND GuestId = @gid))";
+
+            using (var cmdUpdate = new SqlCommand(sqlUpdate, connection))
+            {
+                cmdUpdate.Parameters.AddWithValue("@qty", newQuantity);
+                cmdUpdate.Parameters.AddWithValue("@pid", productId);
+                cmdUpdate.Parameters.AddWithValue("@uid", (object?)userId ?? DBNull.Value);
+                cmdUpdate.Parameters.AddWithValue("@gid", (object?)guestId ?? DBNull.Value);
+
+                await cmdUpdate.ExecuteNonQueryAsync();
+            }
+
+            return true;
         }
 
         public async Task MergeCartsAsync(string guestId, int userId)

@@ -2,10 +2,12 @@
 
 @{
     ViewData["Title"] = "Оформление заказа";
+    ViewData["ParentPage"] = "Моя корзина";
+    ViewData["ParentLink"] = Url.Action("Index", "Cart");
 }
 
 <link rel="stylesheet" href="~/css/checkout.css" />
-
+<partial name="_Breadcrumbs" />
 <div class="checkout-container py-4">
     <form asp-action="Create" method="post" id="checkoutForm">
         <div class="row checkout-grid">

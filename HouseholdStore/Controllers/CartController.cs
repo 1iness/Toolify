@@ -39,7 +39,12 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> ChangeQuantity(int id, int change)
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
-            await _productRepo.UpdateQuantityAsync(id, userId, guestId, change);
+            bool isUpdated = await _productRepo.UpdateQuantityAsync(id, userId, guestId, change);
+
+            if (!isUpdated && change > 0)
+            {
+                TempData["Error"] = "Недостаточно товара на складе для добавления!";
+            }
             return RedirectToAction("Index");
         }
 

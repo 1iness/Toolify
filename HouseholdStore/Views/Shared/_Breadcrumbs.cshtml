@@ -1,0 +1,45 @@
+﻿@{
+    // Получаем текущее название страницы из ViewData, которое мы будем задавать в View
+    var currentPage = ViewData["Title"] as string;
+
+    // Можно передать ссылку для кнопки "Назад", или использовать JS для возврата
+    var backLink = ViewData["BackLink"] as string;
+}
+
+<div class="nav-sandwich-bar">
+    @if (!string.IsNullOrEmpty(backLink))
+    {
+        // Если указана конкретная ссылка
+        <a href="@backLink" class="btn-back-custom">Назад</a>
+    }
+    else
+    {
+        // По умолчанию: возвращает на предыдущую страницу истории браузера
+        <button onclick="history.back()" class="btn-back-custom">Назад</button>
+    }
+
+    <ul class="breadcrumbs-list">
+
+        @* Всегда ссылка на Главную *@
+        <li class="breadcrumb-item">
+            <a asp-controller="Home" asp-action="Index">Главная</a>
+        </li>
+
+        @* Разделитель *@
+        <li class="breadcrumb-separator"><i class="fa-solid fa-chevron-right">></i></li>
+
+        @* Можно добавить промежуточные звенья, если нужно (например Каталог) *@
+        @if (ViewData["ParentPage"] != null && ViewData["ParentLink"] != null)
+        {
+            <li class="breadcrumb-item">
+                <a href="@ViewData["ParentLink"]">@ViewData["ParentPage"]</a>
+            </li>
+            <li class="breadcrumb-separator">></li>
+        }
+
+        @* Текущая страница (не кликабельная) *@
+        <li class="breadcrumb-item active">
+            @currentPage
+        </li>
+    </ul>
+</div>

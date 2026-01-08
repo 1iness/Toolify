@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = Model.Name;
+    ViewData["ParentPage"] = "Каталог";
+    ViewData["ParentLink"] = "/Home/Index";
 
     bool hasDiscount = Model.Discount > 0;
     bool isOutOfStock = Model.StockQuantity <= 0;
@@ -12,6 +14,7 @@
     }
 }
 
+<partial name="_Breadcrumbs" />
 <div class="product-details-container">
 
     <div class="detail-image">
