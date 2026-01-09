@@ -1,0 +1,41 @@
+﻿@model HouseholdStore.Models.ConfirmEmailViewModel
+
+<h2>Подтверждение Email</h2>
+
+<form asp-action="ConfirmEmail" method="post">
+    <div asp-validation-summary="All" style="color:red"></div>
+
+    <input asp-for="Email" type="hidden" />
+    <input asp-for="Code" placeholder="Введите код" />
+
+    <button type="submit">Подтвердить</button>
+</form>
+
+<button id="resendBtn" disabled>Отправить код ещё раз (60)</button>
+
+<script>
+    let seconds = 60;
+    const btn = document.getElementById("resendBtn");
+
+    const timer = setInterval(() => {
+        seconds--;
+        btn.textContent = `Отправить код ещё раз (${seconds})`;
+
+        if (seconds <= 0) {
+            clearInterval(timer);
+            btn.disabled = false;
+            btn.textContent = "Отправить код ещё раз";
+        }
+    }, 1000);
+
+    btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        seconds = 60;
+
+        await fetch("/Account/ResendConfirmCode", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "email=@Model.Email"
+        });
+    });
+</script>

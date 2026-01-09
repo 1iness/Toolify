@@ -7,6 +7,7 @@ using Toolify.AuthService.Data;
 using Toolify.AuthService.DTO;
 using Toolify.AuthService.Models;
 using Toolify.AuthService.Security;
+using Toolify.AuthService.Services;
 
 namespace Toolify.AuthService.Controllers;
 
@@ -16,11 +17,13 @@ public class AuthController : ControllerBase
 {
     private readonly IConfiguration _config;
     private readonly UserRepository _repo;
+    private readonly EmailService _email;
 
-    public AuthController(IConfiguration config, UserRepository repo)
+    public AuthController(IConfiguration config, UserRepository repo, EmailService email)
     {
         _config = config;
         _repo = repo;
+        _email = email;
     }
 
     [HttpPost("register")]
@@ -32,6 +35,8 @@ public class AuthController : ControllerBase
         if (_repo.UserExists(request.Email))
             return BadRequest("User already exists");
 
+        var code = new Random().Next(100000, 999999).ToString();
+
         var user = new User
         {
             FirstName = request.FirstName,
@@ -39,19 +44,41 @@ public class AuthController : ControllerBase
             Email = request.Email,
             Phone = request.Phone,
             Password = PasswordHasher.Hash(request.Password),
-            Role = "User"
+            Role = "User",
+            EmailConfirmed = false,
+            EmailConfirmCode = code,
+            EmailConfirmExpires = DateTime.UtcNow.AddMinutes(10)
         };
 
         _repo.CreateUser(user);
+        _email.SendConfirmCode(user.Email, code);
 
         return Ok("User registered");
     }
+
+    [HttpPost("confirm-email")]
+    public IActionResult ConfirmEmail(ConfirmEmailRequest request)
+    {
+        var user = _repo.GetUserByEmail(request.Email);
+
+        if (user == null)
+            return BadRequest("User not found");
+
+        if (user.EmailConfirmCode != request.Code ||
+            user.EmailConfirmExpires < DateTime.UtcNow)
+            return BadRequest("Invalid or expired code");
+
+        _repo.ConfirmEmail(request.Email);
+        return Ok();
+    }
+
 
     [HttpPost("login")]
     public IActionResult Login(LoginRequest request)
     {
         var passwordHash = PasswordHasher.Hash(request.Password);
         var user = _repo.GetUserByEmailAndPassword(request.Email, passwordHash);
+
 
         if (user == null)
             return Unauthorized("Invalid login or password");
@@ -63,6 +90,7 @@ public class AuthController : ControllerBase
             token = token
         });
     }
+
 
     private string GenerateJwt(User user)
     {
@@ -94,6 +122,7 @@ public class AuthController : ControllerBase
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
     [HttpGet("user")]
     public IActionResult GetUser(string email)
     {
@@ -111,5 +140,32 @@ public class AuthController : ControllerBase
             user.Phone
         });
     }
+
+    [HttpPost("resend-confirm-code")]
+    public IActionResult ResendConfirmCode(ResendConfirmCodeRequest request)
+    {
+        var user = _repo.GetUserByEmail(request.Email);
+
+        if (user == null)
+            return BadRequest("User not found");
+
+        if (user.EmailConfirmed)
+            return BadRequest("Email already confirmed");
+
+        var code = new Random().Next(100000, 999999).ToString();
+
+        _repo.UpdateEmailConfirmCode(
+            request.Email,
+            code,
+            DateTime.UtcNow.AddMinutes(10)
+        );
+
+        _email.SendConfirmCode(request.Email, code);
+
+        return Ok();
+    }
+
+
+
 }
 

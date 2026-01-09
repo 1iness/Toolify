@@ -31,14 +31,18 @@ public class UserRepository
         con.Open();
 
         var cmd = new SqlCommand(@"
-            INSERT INTO Users (FirstName, LastName, Email, Phone, PasswordHash)
-            VALUES (@fn, @ln, @em, @ph, @pw)", con);
+            INSERT INTO Users (FirstName, LastName, Email, Phone, PasswordHash, Role, EmailConfirmed, EmailConfirmCode, EmailConfirmExpires)
+            VALUES (@fn, @ln, @em, @ph, @pw, @role, @confirmed, @code, @expires)", con);
 
         cmd.Parameters.AddWithValue("@fn", user.FirstName);
         cmd.Parameters.AddWithValue("@ln", user.LastName);
         cmd.Parameters.AddWithValue("@em", user.Email);
         cmd.Parameters.AddWithValue("@ph", user.Phone);
         cmd.Parameters.AddWithValue("@pw", user.Password);
+        cmd.Parameters.AddWithValue("@role", user.Role);
+        cmd.Parameters.AddWithValue("@confirmed", user.EmailConfirmed);
+        cmd.Parameters.AddWithValue("@code", user.EmailConfirmCode);
+        cmd.Parameters.AddWithValue("@expires", user.EmailConfirmExpires);
 
         cmd.ExecuteNonQuery();
     }
@@ -95,8 +99,45 @@ public class UserRepository
             Email = reader["Email"].ToString()!,
             Phone = reader["Phone"].ToString()!,
             Password = reader["PasswordHash"].ToString()!,
-            Role = reader["Role"].ToString()!
+            Role = reader["Role"].ToString()!,
+            EmailConfirmed = (bool)reader["EmailConfirmed"],
+            EmailConfirmCode = reader["EmailConfirmCode"]?.ToString(),
+            EmailConfirmExpires = reader["EmailConfirmExpires"] == DBNull.Value ? null : (DateTime)reader["EmailConfirmExpires"]
         };
     }
+    public void ConfirmEmail(string email)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand(@"
+        UPDATE Users
+        SET EmailConfirmed = 1,
+            EmailConfirmCode = NULL,
+            EmailConfirmExpires = NULL
+        WHERE Email = @em", con);
+
+        cmd.Parameters.AddWithValue("@em", email);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void UpdateEmailConfirmCode(string email, string code, DateTime expires)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand(@"
+        UPDATE Users
+        SET EmailConfirmCode = @code,
+            EmailConfirmExpires = @expires
+        WHERE Email = @em", con);
+
+        cmd.Parameters.AddWithValue("@em", email);
+        cmd.Parameters.AddWithValue("@code", code);
+        cmd.Parameters.AddWithValue("@expires", expires);
+
+        cmd.ExecuteNonQuery();
+    }
+    
 
 }

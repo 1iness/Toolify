@@ -55,4 +55,22 @@ public class AuthApiService
 
         return null;
     }
+    public async Task<bool> ConfirmEmail(string email, string code)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"{BASE_URL}/confirm-email",
+            new { Email = email, Code = code });
+
+        return response.IsSuccessStatusCode;
+    }
+    public async Task<bool> ResendConfirmCode(string email)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "resend-confirm-code",
+            new { Email = email });
+
+        return response.IsSuccessStatusCode;
+    }
+
+
 }

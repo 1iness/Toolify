@@ -10,5 +10,9 @@ namespace Toolify.AuthService.Models
         public string Phone { get; set; } = null;
         public string Password { get; set; } = null;
         public string Role { get; set; } = "User";
+        public bool EmailConfirmed { get; set; }
+        public string? EmailConfirmCode { get; set; }
+        public DateTime? EmailConfirmExpires { get; set; }
+      
     }
 }

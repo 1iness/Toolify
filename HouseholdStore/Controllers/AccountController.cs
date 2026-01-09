@@ -22,7 +22,15 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login() => View();
+        public IActionResult Login()
+        {
+            var model = new LoginViewModel
+            {
+                Email = TempData["LoginEmail"] as string,
+            };
+
+            return View(model);
+        }
 
         [HttpGet]
         public IActionResult Register() => View();
@@ -33,14 +41,42 @@ namespace HouseholdStore.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var result = await _auth.Register(model);
-            if (!result)
+            var success = await _auth.Register(model);
+
+            if (!success)
             {
-                ModelState.AddModelError("", "Registration error");
+                ModelState.AddModelError("", "Пользователь с таким Email уже существует ");
                 return View(model);
             }
 
+
+            return RedirectToAction("ConfirmEmail", new { email = model.Email });
+        }
+
+        [HttpGet]
+        public IActionResult ConfirmEmail(string email)
+        {
+            return View(new ConfirmEmailViewModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var success = await _auth.ConfirmEmail(model.Email, model.Code);
+
+            if (!success)
+            {
+                ModelState.AddModelError("", "Неверный или просроченный код");
+                return View(model);
+            }
+
+            TempData["LoginEmail"] = model.Email;
+
             return RedirectToAction("Login");
+
         }
 
         [HttpPost]
@@ -142,5 +178,14 @@ namespace HouseholdStore.Controllers
             Response.Cookies.Delete("jwt");
             return RedirectToAction("Index", "Home"); 
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ResendConfirmCode(string email)
+        {
+            await _auth.ResendConfirmCode(email);
+            return Ok();
+        }
+
+
     }
 }
