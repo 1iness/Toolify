@@ -1,0 +1,171 @@
+﻿@model HouseholdStore.Models.ConfirmEmailViewModel
+@{
+    ViewData["Title"] = "Подтверждение почты";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="stylesheet" href="~/css/register.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        .code-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+            .code-inputs input {
+                width: 50px;
+                height: 55px;
+                text-align: center;
+                font-size: 22px;
+                border: 2px solid #E8E8E8;
+                border-radius: 10px;
+                transition: 0.3s;
+            }
+
+                .code-inputs input:focus {
+                    border-color: #2CDD00;
+                    box-shadow: 0 0 0 3px rgba(44, 221, 0, 0.1);
+                    outline: none;
+                }
+
+        .resend-btn {
+            margin-top: 15px;
+            background: none;
+            border: none;
+            color: #2CDD00;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+            .resend-btn:disabled {
+                color: #999;
+                cursor: not-allowed;
+            }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-page-container">
+        <div class="auth-form-wrapper">
+
+            <div class="auth-header">
+                <h1 class="auth-title">Подтвердите почту</h1>
+                <p class="auth-subtitle">Введите 6-значный код из письма</p>
+            </div>
+
+            <form asp-action="ConfirmEmail" method="post" class="auth-form">
+
+                <div asp-validation-summary="All" style="color:red; font-size:13px; text-align:center;"></div>
+
+                <input asp-for="Email" type="hidden" />
+                <input asp-for="Code" type="hidden" id="fullCode" />
+
+                <div class="code-inputs">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <input type="text" maxlength="1" class="code-box" inputmode="numeric" />
+                    }
+                </div>
+
+                <button type="submit" class="auth-btn primary-btn">
+                    Подтвердить
+                </button>
+            </form>
+
+            <div style="text-align:center;">
+                <button id="resendBtn" class="resend-btn" disabled>
+                    Отправить код ещё раз (60)
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll(".code-box");
+        const fullCodeInput = document.getElementById("fullCode");
+
+        inputs[0].focus();
+
+        inputs.forEach((input, index) => {
+            input.addEventListener("input", () => {
+                input.value = input.value.replace(/[^0-9]/g, "");
+
+                if (input.value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+
+                updateCode();
+            });
+
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Backspace" && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+
+        document.addEventListener("paste", (e) => {
+            const data = e.clipboardData.getData("text").trim();
+            if (/^\d{6}$/.test(data)) {
+                inputs.forEach((input, i) => input.value = data[i]);
+                updateCode();
+            }
+        });
+
+        function updateCode() {
+            fullCodeInput.value = Array.from(inputs).map(i => i.value).join("");
+        }
+
+
+        let seconds = 60;
+        const btn = document.getElementById("resendBtn");
+
+        const timer = setInterval(() => {
+            seconds--;
+            btn.textContent = `Отправить код ещё раз (${seconds})`;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                btn.disabled = false;
+                btn.textContent = "Отправить код ещё раз";
+            }
+        }, 1000);
+
+        btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            seconds = 60;
+
+            const restartTimer = setInterval(() => {
+                seconds--;
+                btn.textContent = `Отправить код ещё раз (${seconds})`;
+
+                if (seconds <= 0) {
+                    clearInterval(restartTimer);
+                    btn.disabled = false;
+                    btn.textContent = "Отправить код ещё раз";
+                }
+            }, 1000);
+
+            await fetch("/Account/ResendConfirmCode", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "email=@Model.Email"
+            });
+        });
+    </script>
+
+</body>
+</html>

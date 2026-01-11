@@ -262,6 +262,18 @@ hrml, body{
     transform: translateX(30px);
     animation: imageSlide 0.8s ease-out 0.3s forwards;
 }
+
+/*ОШИБКА ДЛЯ ПОЛЕЙ ВВОДА*/
+.field-error {
+    display: block; 
+    margin-top: 6px; 
+    font-size: 13px; 
+    color: #e53935; 
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500; 
+}
+
+
 @media (max-width: 1024px) {
     .auth-page-container {
         gap: 40px;

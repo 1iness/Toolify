@@ -14,9 +14,13 @@ namespace HouseholdStore
             builder.Services.AddControllersWithViews();
 
             builder.Services.AddHttpClient();
-            builder.Services.AddScoped<AuthApiService>();
+            builder.Services.AddHttpClient<AuthApiService>(client =>
+            {
+                client.BaseAddress = new Uri("https://localhost:7152/api/auth/");
+            });
             builder.Services.AddHttpClient<ProductApiService>();
             builder.Services.AddScoped<ProductApiService>();
+
 
 
             builder.Services.AddSingleton<Toolify.ProductService.Database.SqlConnectionFactory>(sp =>

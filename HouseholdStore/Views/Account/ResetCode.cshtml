@@ -1,0 +1,153 @@
+﻿@model HouseholdStore.Models.ResetCodeViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Подтверждение кода</title>
+    <link rel="stylesheet" href="~/css/login.css" />
+
+    <style>
+        .code-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+            .code-inputs input {
+                width: 50px;
+                height: 55px;
+                text-align: center;
+                font-size: 22px;
+                border: 2px solid #E8E8E8;
+                border-radius: 13px;
+                transition: all 0.3s ease;
+            }
+
+                .code-inputs input:focus {
+                    border-color: #2CDD00;
+                    box-shadow: 0 0 0 3px rgba(44, 221, 0, 0.1);
+                    outline: none;
+                }
+    </style>
+</head>
+<body>
+
+    <div class="auth-page-container">
+        <div class="auth-form-wrapper">
+
+            <div class="auth-header">
+                <h1 class="auth-title">Введите код</h1>
+                <p class="auth-subtitle">Код отправлен на вашу почту</p>
+            </div>
+
+            <form method="post" asp-action="ResetCode" class="auth-form">
+
+                <input type="hidden" asp-for="Email" />
+                <input type="hidden" asp-for="Code" id="fullCode" />
+
+                <div class="code-inputs">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <input type="text" maxlength="1" class="code-box" inputmode="numeric" />
+                    }
+                </div>
+
+                <button type="submit" class="auth-btn primary-btn">
+                    Подтвердить
+                </button>
+
+                <div style="text-align:center; margin-top:15px;">
+                    <button type="button" id="resendBtn" class="auth-btn" disabled>
+                        Отправить код ещё раз (<span id="timer">60</span>с)
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll(".code-box");
+        const fullCodeInput = document.getElementById("fullCode");
+
+        inputs[0].focus();
+
+        inputs.forEach((input, index) => {
+
+            input.addEventListener("input", () => {
+                input.value = input.value.replace(/[^0-9]/g, "");
+
+                if (input.value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+
+                updateCode();
+            });
+
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Backspace" && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+
+        document.addEventListener("paste", (e) => {
+            const data = e.clipboardData.getData("text").trim();
+            if (/^\d{6}$/.test(data)) {
+                inputs.forEach((input, i) => input.value = data[i]);
+                updateCode();
+            }
+        });
+
+        function updateCode() {
+            fullCodeInput.value = Array.from(inputs).map(i => i.value).join("");
+        }
+
+
+
+
+        let seconds = 60;
+        const btn = document.getElementById("resendBtn");
+
+        const timer = setInterval(() => {
+            seconds--;
+            btn.textContent = `Отправить код ещё раз (${seconds})`;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                btn.disabled = false;
+                btn.textContent = "Отправить код ещё раз";
+            }
+        }, 1000);
+
+        btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            seconds = 60;
+
+            const restartTimer = setInterval(() => {
+                seconds--;
+                btn.textContent = `Отправить код ещё раз (${seconds})`;
+
+                if (seconds <= 0) {
+                    clearInterval(restartTimer);
+                    btn.disabled = false;
+                    btn.textContent = "Отправить код ещё раз";
+                }
+            }, 1000);
+
+            await fetch("/Account/ResendResetCode", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "email=@Model.Email"
+            });
+        });
+    </script>
+
+</body>
+</html>
