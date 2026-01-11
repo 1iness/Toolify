@@ -51,7 +51,7 @@ public class AuthController : ControllerBase
         };
 
         _repo.CreateUser(user);
-        _email.SendConfirmCode(user.Email, code);
+        _email.SendRegistrationCode(user.Email, code);
 
         return Ok("User registered");
     }
@@ -160,12 +160,42 @@ public class AuthController : ControllerBase
             DateTime.UtcNow.AddMinutes(10)
         );
 
-        _email.SendConfirmCode(request.Email, code);
+        _email.SendResetPasswordCode(request.Email, code);
 
         return Ok();
     }
 
+    [HttpPost("forgot-password")]
+    public IActionResult ForgotPassword(ForgotPasswordRequest request)
+    {
+        var user = _repo.GetUserByEmail(request.Email);
 
+        if (user == null)
+            return Ok(); 
 
+        var code = new Random().Next(100000, 999999).ToString();
+
+        _repo.SetPasswordResetCode(request.Email, code, DateTime.UtcNow.AddMinutes(10));
+        _email.SendResetPasswordCode(request.Email, code);
+
+        return Ok();
+    }
+
+    [HttpPost("confirm-reset-code")]
+    public IActionResult ConfirmResetCode(ResetPasswordConfirmRequest request)
+    {
+        if (!_repo.CheckResetCode(request.Email, request.Code))
+            return BadRequest("Invalid");
+
+        return Ok();
+    }
+
+    [HttpPost("reset-password")]
+    public IActionResult ResetPassword(ResetPasswordRequest request)
+    {
+        var hash = PasswordHasher.Hash(request.NewPassword);
+        _repo.UpdatePassword(request.Email, hash);
+        return Ok();
+    }
 }
 

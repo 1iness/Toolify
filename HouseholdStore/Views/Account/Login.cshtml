@@ -50,7 +50,9 @@
                             <input asp-for="Remember" type="checkbox" />
                             <span>Запомнить меня</span>
                         </label>
-                        <a href="#" class="forgot-password">Забыли пароль?</a>
+                        <a asp-controller="Account" asp-action="ForgotPassword" class="forgot-password">
+                            Забыли пароль?
+                        </a>
                     </div>
                 </div>
 

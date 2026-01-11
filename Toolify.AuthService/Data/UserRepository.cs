@@ -138,6 +138,56 @@ public class UserRepository
 
         cmd.ExecuteNonQuery();
     }
-    
+
+    public void SetPasswordResetCode(string email, string code, DateTime expires)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand(@"
+        UPDATE Users
+        SET PasswordResetCode=@code,
+            PasswordResetExpires=@expires
+        WHERE Email=@em", con);
+
+        cmd.Parameters.AddWithValue("@em", email);
+        cmd.Parameters.AddWithValue("@code", code);
+        cmd.Parameters.AddWithValue("@expires", expires);
+
+        cmd.ExecuteNonQuery();
+    }
+
+    public bool CheckResetCode(string email, string code)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand(@"
+        SELECT COUNT(*) FROM Users
+        WHERE Email=@em AND PasswordResetCode=@code AND PasswordResetExpires > GETUTCDATE()", con);
+
+        cmd.Parameters.AddWithValue("@em", email);
+        cmd.Parameters.AddWithValue("@code", code);
+
+        return (int)cmd.ExecuteScalar() > 0;
+    }
+
+    public void UpdatePassword(string email, string newHash)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand(@"
+        UPDATE Users
+        SET PasswordHash=@pw,
+            PasswordResetCode=NULL,
+            PasswordResetExpires=NULL
+        WHERE Email=@em", con);
+
+        cmd.Parameters.AddWithValue("@em", email);
+        cmd.Parameters.AddWithValue("@pw", newHash);
+
+        cmd.ExecuteNonQuery();
+    }
 
 }

@@ -72,5 +72,23 @@ public class AuthApiService
         return response.IsSuccessStatusCode;
     }
 
+    public async Task ForgotPassword(string email)
+    {
+        await _http.PostAsJsonAsync($"{BASE_URL}/forgot-password", new { Email = email });
+    }
+
+    public async Task<bool> ConfirmResetCode(string email, string code)
+    {
+        var res = await _http.PostAsJsonAsync($"{BASE_URL}/confirm-reset-code",
+            new { Email = email, Code = code });
+
+        return res.IsSuccessStatusCode;
+    }
+
+    public async Task ResetPassword(string email, string newPassword)
+    {
+        await _http.PostAsJsonAsync($"{BASE_URL}/reset-password",
+            new { Email = email, NewPassword = newPassword });
+    }
 
 }

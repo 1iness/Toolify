@@ -186,6 +186,67 @@ namespace HouseholdStore.Controllers
             return Ok();
         }
 
+        [HttpGet]
+        public IActionResult ForgotPassword() => View();
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            await _auth.ForgotPassword(model.Email);
+
+            return RedirectToAction("ResetCode", new { email = model.Email });
+        }
+
+        [HttpGet]
+        public IActionResult ResetCode(string email)
+        {
+            return View(new ResetCodeViewModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetCode(ResetCodeViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            if (!await _auth.ConfirmResetCode(model.Email, model.Code))
+            {
+                ModelState.AddModelError("", "Неверный код");
+                return View(model);
+            }
+
+            return RedirectToAction("NewPassword", new { email = model.Email });
+        }
+
+        [HttpGet]
+        public IActionResult NewPassword(string email)
+        {
+            return View(new NewPasswordViewModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> NewPassword(NewPasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            await _auth.ResetPassword(model.Email, model.Password);
+
+            TempData["LoginEmail"] = model.Email;
+
+            return RedirectToAction("Login");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResendResetCode(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest();
+
+            await _auth.ForgotPassword(email);
+
+            return Ok();
+        }
 
     }
 }

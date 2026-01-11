@@ -1,6 +1,5 @@
-﻿@model HouseholdStore.Models.ConfirmEmailViewModel
+﻿@model HouseholdStore.Models.ResetCodeViewModel
 @{
-    ViewData["Title"] = "Подтверждение почты";
     Layout = null;
 }
 
@@ -8,11 +7,8 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-
-    <link rel="stylesheet" href="~/css/register.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Подтверждение кода</title>
+    <link rel="stylesheet" href="~/css/login.css" />
 
     <style>
         .code-inputs {
@@ -28,8 +24,8 @@
                 text-align: center;
                 font-size: 22px;
                 border: 2px solid #E8E8E8;
-                border-radius: 10px;
-                transition: 0.3s;
+                border-radius: 13px;
+                transition: all 0.3s ease;
             }
 
                 .code-inputs input:focus {
@@ -37,40 +33,22 @@
                     box-shadow: 0 0 0 3px rgba(44, 221, 0, 0.1);
                     outline: none;
                 }
-
-        .resend-btn {
-            margin-top: 15px;
-            background: none;
-            border: none;
-            color: #2CDD00;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-            .resend-btn:disabled {
-                color: #999;
-                cursor: not-allowed;
-            }
     </style>
 </head>
-
 <body>
 
     <div class="auth-page-container">
         <div class="auth-form-wrapper">
 
             <div class="auth-header">
-                <h1 class="auth-title">Подтвердите почту</h1>
-                <p class="auth-subtitle">Введите 6-значный код из письма</p>
+                <h1 class="auth-title">Введите код</h1>
+                <p class="auth-subtitle">Код отправлен на вашу почту</p>
             </div>
 
-            <form asp-action="ConfirmEmail" method="post" class="auth-form">
+            <form method="post" asp-action="ResetCode" class="auth-form">
 
-                <div asp-validation-summary="All" style="color:red; font-size:13px; text-align:center;"></div>
-
-                <input asp-for="Email" type="hidden" />
-                <input asp-for="Code" type="hidden" id="fullCode" />
+                <input type="hidden" asp-for="Email" />
+                <input type="hidden" asp-for="Code" id="fullCode" />
 
                 <div class="code-inputs">
                     @for (int i = 0; i < 6; i++)
@@ -82,13 +60,14 @@
                 <button type="submit" class="auth-btn primary-btn">
                     Подтвердить
                 </button>
-            </form>
 
-            <div style="text-align:center;">
-                <button id="resendBtn" class="resend-btn" disabled>
-                    Отправить код ещё раз (60)
-                </button>
-            </div>
+                <div style="text-align:center; margin-top:15px;">
+                    <button type="button" id="resendBtn" class="auth-btn" disabled>
+                        Отправить код ещё раз (<span id="timer">60</span>с)
+                    </button>
+                </div>
+
+            </form>
 
         </div>
     </div>
@@ -100,6 +79,7 @@
         inputs[0].focus();
 
         inputs.forEach((input, index) => {
+
             input.addEventListener("input", () => {
                 input.value = input.value.replace(/[^0-9]/g, "");
 
@@ -128,6 +108,8 @@
         function updateCode() {
             fullCodeInput.value = Array.from(inputs).map(i => i.value).join("");
         }
+
+
 
 
         let seconds = 60;
@@ -159,7 +141,7 @@
                 }
             }, 1000);
 
-            await fetch("/Account/ResendConfirmCode", {
+            await fetch("/Account/ResendResetCode", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: "email=@Model.Email"
