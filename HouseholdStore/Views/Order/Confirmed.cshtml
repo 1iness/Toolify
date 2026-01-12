@@ -1,6 +1,81 @@
 ﻿@model int
-<div class="alert alert-success mt-5 text-center">
-    <h1>Спасибо за покупку!</h1>
-    <p>Ваш заказ <strong>#@Model</strong> успешно создан.</p>
-    <a href="/" class="btn btn-primary">Вернуться в магазин</a>
+
+<div class="order-success-container">
+    <div class="success-card">
+        <div class="checkmark">✓</div>
+
+        <h1>Спасибо за покупку!</h1>
+        <p>Ваш заказ успешно создан</p>
+
+        <div class="order-number">
+            № @Model
+        </div>
+
+        <div class="actions">
+            <a href="/" class="btn btn-primary">Продолжить покупки</a>
+            <a href="/Account/Profile" class="btn btn-outline-secondary">Мои заказы</a>
+        </div>
+    </div>
 </div>
+
+<style>
+.order-success-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+}
+
+.btn {
+     background: #28a745;
+    color: #fff;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+}
+.success-card {
+    background: #fff;
+    padding: 40px 60px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    animation: fadeIn 0.6s ease;
+}
+
+.checkmark {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: #28a745;
+    color: white;
+    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.order-number {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 15px 0 30px;
+}
+
+.actions a {
+    margin: 0 10px;
+}
+
+</style>
+
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Заказ оформлен!',
+        text: 'Спасибо за покупку',
+        confirmButtonText: 'Отлично'
+    });
+</script>

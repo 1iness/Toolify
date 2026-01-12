@@ -64,5 +64,9 @@ namespace HouseholdStore.Controllers
             return Content("админ ура ура админ!");
         }
 
+        public IActionResult About()
+        {
+            return View();
+        }
     }
 }
