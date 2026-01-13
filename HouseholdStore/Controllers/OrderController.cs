@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
+using Toolify.AuthService.Services;
 
 namespace HouseholdStore.Controllers
 {
@@ -13,10 +14,13 @@ namespace HouseholdStore.Controllers
     {
         private readonly ProductRepository _productRepo;
         private readonly AuthApiService _authService;
-        public OrderController(ProductRepository productRepo, AuthApiService authService)
+        private readonly EmailService _emailService;
+
+        public OrderController(ProductRepository productRepo, AuthApiService authService, EmailService emailService)
         {
             _productRepo = productRepo;
             _authService = authService;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -81,9 +85,27 @@ namespace HouseholdStore.Controllers
             return RedirectToAction("Confirmed", new { id = orderId });
         }
 
-        public IActionResult Confirmed(int id)
+        public async Task<IActionResult> Confirmed(int id)
         {
-            return View(id); 
+            string? email = null;
+
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                email = User.Identity.Name;
+            }
+
+            if (string.IsNullOrEmpty(email))
+            {
+                email = await _productRepo.GetOrderEmailAsync(id);
+            }
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                await _emailService.SendOrderConfirmedAsync(email, id);
+            }
+
+            return View(id);
         }
+
     }
 }

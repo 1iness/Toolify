@@ -500,5 +500,18 @@ namespace Toolify.ProductService.Data
             }
             return orders;
         }
+        public async Task<string?> GetOrderEmailAsync(int orderId)
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            string sql = "SELECT GuestEmail FROM Orders WHERE Id = @id";
+
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@id", orderId);
+
+            var result = await cmd.ExecuteScalarAsync();
+            return result == DBNull.Value ? null : result?.ToString();
+        }
     }
 }

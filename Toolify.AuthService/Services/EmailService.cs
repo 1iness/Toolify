@@ -50,6 +50,31 @@ namespace Toolify.AuthService.Services
             message.To.Add(toEmail);
             smtp.Send(message);
         }
+
+        //сообщени на почту при оформлении заказа
+        public async Task SendOrderConfirmedAsync(string toEmail, int orderId)
+        {
+
+            var smtp = CreateClient();
+
+            var message = new MailMessage
+            {
+                From = new MailAddress("toolify.store@gmail.com", "Toolify Store"),
+                Subject = "Ваш заказ успешно оформлен",
+                Body = $@"
+                Здравствуйте!
+                Спасибо за покупку в магазине Toolify Store
+                Номер вашего заказа: #{orderId}
+                С уважением,
+                Toolify Store",  
+                IsBodyHtml = false
+            };
+
+            message.To.Add(toEmail);
+
+            await smtp.SendMailAsync(message);
+        }
+
     }
 }
 

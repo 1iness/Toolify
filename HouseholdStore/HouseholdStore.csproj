@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Toolify.AuthService\Toolify.AuthService.csproj" />
     <ProjectReference Include="..\Toolify.ProductService\Toolify.ProductService.csproj" />
   </ItemGroup>
 

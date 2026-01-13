@@ -15,4 +15,8 @@
     <Folder Include="View\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Toolify.AuthService\Toolify.AuthService.csproj" />
+  </ItemGroup>
+
 </Project>

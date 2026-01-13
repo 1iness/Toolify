@@ -1,6 +1,7 @@
 ﻿using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.DependencyInjection;
+using Toolify.AuthService.Services;
 
 namespace HouseholdStore
 {
@@ -20,7 +21,7 @@ namespace HouseholdStore
             });
             builder.Services.AddHttpClient<ProductApiService>();
             builder.Services.AddScoped<ProductApiService>();
-
+            builder.Services.AddScoped<EmailService>();
 
 
             builder.Services.AddSingleton<Toolify.ProductService.Database.SqlConnectionFactory>(sp =>
@@ -43,8 +44,6 @@ namespace HouseholdStore
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
-
-
 
             var app = builder.Build();
 
