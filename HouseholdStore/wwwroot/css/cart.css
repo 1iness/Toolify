@@ -357,6 +357,7 @@ img[style*="display: none"] + .empty-emoji {
     font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
+    text-decoration: none;
 }
 
     .checkout-btn:hover {

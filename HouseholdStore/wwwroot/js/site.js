@@ -268,6 +268,7 @@ window.addEventListener('load', () => {
 
     //Анимация товара для добавления в корзину
 function addToCartAnimated(event, productId, btnElement) {
+
     event.preventDefault(); 
 
     const card = btnElement.closest('.product-card');
@@ -328,6 +329,15 @@ function addToCartAnimated(event, productId, btnElement) {
                     badge.style.transition = "transform 0.2s";
                     setTimeout(() => badge.style.transform = "scale(1)", 200);
                 }
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Товар добавлен в корзину',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true
+                });
             }
         })
         .catch(error => console.error('Ошибка:', error))

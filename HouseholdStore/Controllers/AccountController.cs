@@ -32,53 +32,6 @@ namespace HouseholdStore.Controllers
             return View(model);
         }
 
-        [HttpGet]
-        public IActionResult Register() => View();
-
-        [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
-        {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            var success = await _auth.Register(model);
-
-            if (!success)
-            {
-                ModelState.AddModelError("", "Пользователь с таким Email уже существует ");
-                return View(model);
-            }
-
-
-            return RedirectToAction("ConfirmEmail", new { email = model.Email });
-        }
-
-        [HttpGet]
-        public IActionResult ConfirmEmail(string email)
-        {
-            return View(new ConfirmEmailViewModel { Email = email });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ConfirmEmail(ConfirmEmailViewModel model)
-        {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            var success = await _auth.ConfirmEmail(model.Email, model.Code);
-
-            if (!success)
-            {
-                ModelState.AddModelError("", "Неверный или просроченный код");
-                return View(model);
-            }
-
-            TempData["LoginEmail"] = model.Email;
-
-            return RedirectToAction("Login");
-
-        }
-
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
@@ -86,7 +39,8 @@ namespace HouseholdStore.Controllers
 
             if (token == null)
             {
-                ModelState.AddModelError("", "Invalid login or password");
+                TempData["ToastMessage"] = "Неверный email или пароль";
+                TempData["ToastType"] = "error";
                 return View(model);
             }
 
@@ -113,7 +67,7 @@ namespace HouseholdStore.Controllers
                 new ClaimsPrincipal(identity),
                 new AuthenticationProperties
                 {
-                    IsPersistent = true, 
+                    IsPersistent = true,
                     ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60)
                 }
             );
@@ -130,7 +84,62 @@ namespace HouseholdStore.Controllers
             }
 
             Response.Cookies.Append("jwt", token);
+
+            TempData["ToastMessage"] = "Вы успешно вошли в аккаунт";
+            TempData["ToastType"] = "success";
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public IActionResult Register() => View();
+
+        [HttpPost]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var success = await _auth.Register(model);
+
+            if (!success)
+            {
+                TempData["ToastMessage"] = "Пользователь с таким Email уже существует";
+                TempData["ToastType"] = "error";
+                return View(model);
+            }
+
+            TempData["ToastMessage"] = "Код подтверждения отправлен на почту";
+            TempData["ToastType"] = "success";
+            return RedirectToAction("ConfirmEmail", new { email = model.Email });
+        }
+
+        [HttpGet]
+        public IActionResult ConfirmEmail(string email)
+        {
+            return View(new ConfirmEmailViewModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var success = await _auth.ConfirmEmail(model.Email, model.Code);
+
+            if (!success)
+            {
+                TempData["ToastMessage"] = "Неверный или просроченный код";
+                TempData["ToastType"] = "error";
+                return View(model);
+            }
+
+            TempData["ToastMessage"] = "Email подтверждён. Теперь войдите в аккаунт";
+            TempData["ToastType"] = "success";
+            TempData["LoginEmail"] = model.Email;
+
+            return RedirectToAction("Login");
+
         }
 
         [HttpGet]
@@ -176,6 +185,9 @@ namespace HouseholdStore.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             Response.Cookies.Delete("jwt");
+
+            TempData["ToastMessage"] = "Вы вышли из аккаунта";
+            TempData["ToastType"] = "info";
             return RedirectToAction("Index", "Home"); 
         }
 
@@ -185,6 +197,7 @@ namespace HouseholdStore.Controllers
             await _auth.ResendConfirmCode(email);
             return Ok();
         }
+
 
         [HttpGet]
         public IActionResult ForgotPassword() => View();
@@ -196,6 +209,8 @@ namespace HouseholdStore.Controllers
 
             await _auth.ForgotPassword(model.Email);
 
+            TempData["ToastMessage"] = "Код восстановления отправлен на почту";
+            TempData["ToastType"] = "success";
             return RedirectToAction("ResetCode", new { email = model.Email });
         }
 
@@ -212,7 +227,8 @@ namespace HouseholdStore.Controllers
 
             if (!await _auth.ConfirmResetCode(model.Email, model.Code))
             {
-                ModelState.AddModelError("", "Неверный код");
+                TempData["ToastMessage"] = "Неверный код восстановления";
+                TempData["ToastType"] = "error";
                 return View(model);
             }
 
@@ -231,6 +247,9 @@ namespace HouseholdStore.Controllers
             if (!ModelState.IsValid) return View(model);
 
             await _auth.ResetPassword(model.Email, model.Password);
+
+            TempData["ToastMessage"] = "Пароль успешно изменён";
+            TempData["ToastType"] = "success";
 
             TempData["LoginEmail"] = model.Email;
 

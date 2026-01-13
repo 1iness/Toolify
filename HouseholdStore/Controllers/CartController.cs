@@ -26,6 +26,9 @@ namespace HouseholdStore.Controllers
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
             _productRepo.AddToCart(id, userId, guestId);
+
+            TempData["ToastMessage"] = "Товар добавлен в корзину";
+            TempData["ToastType"] = "success";
             return RedirectToAction("Index");
         }
 
@@ -33,6 +36,9 @@ namespace HouseholdStore.Controllers
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
             await _productRepo.RemoveFromCartAsync(id, userId, guestId);
+
+            TempData["ToastMessage"] = "Товар удалён из корзины";
+            TempData["ToastType"] = "info";
             return RedirectToAction("Index");
         }
 
@@ -43,9 +49,15 @@ namespace HouseholdStore.Controllers
 
             if (!isUpdated && change > 0)
             {
-                TempData["Error"] = "Недостаточно товара на складе для добавления!";
+                TempData["ToastMessage"] = "Недостаточно товара на складе";
+                TempData["ToastType"] = "error";
             }
-            return RedirectToAction("Index");
+            else
+            {
+                TempData["ToastMessage"] = "Количество обновлено";
+                TempData["ToastType"] = "success";
+            }
+                return RedirectToAction("Index");
         }
 
         [HttpPost] 

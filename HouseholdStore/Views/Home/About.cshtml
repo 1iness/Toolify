@@ -1,0 +1,230 @@
+﻿@{
+    ViewData["Title"] = "О Нас";
+}
+
+<partial name="_Breadcrumbs" />
+
+<link rel="stylesheet" href="~/css/about.css" />
+
+<div class="about-container">
+    <section class="about-hero">
+        <h1 class="about-title">О Toolify</h1>
+        <p class="about-subtitle">Ваш надежный помощник в мире хозяйственных товаров с 2015 года</p>
+        <div class="hero-image">
+            <div class="image-placeholder" style="height: 300px; background: linear-gradient(135deg, #e8f8ee 0%, #f0f9f3 100%); border-radius: 20px;"></div>
+        </div>
+    </section>
+
+    <div class="about-content-wrapper">
+        <aside class="about-sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Быстрая навигация</h3>
+                <ul class="sidebar-menu">
+                    <li><a href="#mission" class="sidebar-link active">Наша миссия</a></li>
+                    <li><a href="#values" class="sidebar-link">Наши ценности</a></li>
+                    <li><a href="#advantages" class="sidebar-link">Наши преимущества</a></li>
+                    <li><a href="#team" class="sidebar-link">Наша команда</a></li>
+                    <li><a href="#contacts" class="sidebar-link">Контакты</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-stats">
+                <div class="stat-item">
+                    <span class="stat-number">8+</span>
+                    <span class="stat-text">лет на рынке</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">50,000+</span>
+                    <span class="stat-text">товаров в каталоге</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">300,000+</span>
+                    <span class="stat-text">довольных клиентов</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="about-main-content">
+            <section id="mission" class="about-section">
+                <h2 class="section-title">Наша миссия</h2>
+                <div class="mission-content">
+                    <p>В Toolify мы верим, что качественные хозяйственные товары должны быть доступны каждому. Наша цель — сделать покупку всего необходимого для дома простой, быстрой и приятной.</p>
+
+                    <div class="mission-highlight">
+                        <div class="highlight-icon">🏠</div>
+                        <div class="highlight-text">
+                            <h4>Создаем уют в каждом доме</h4>
+                            <p>От кухонных принадлежностей до инструментов для ремонта — мы подбираем товары, которые делают жизнь комфортнее.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="values" class="about-section">
+                <h2 class="section-title">Наши ценности</h2>
+                <div class="values-grid">
+                    <div class="value-card">
+                        <div class="value-icon">⭐</div>
+                        <h3>Качество</h3>
+                        <p>Тщательно отбираем каждого поставщика и тестируем товары перед добавлением в каталог</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🚚</div>
+                        <h3>Доступность</h3>
+                        <p>Доставляем заказы по всемей Республике Беларусь с бесплатной доставкой от 100 рублей</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">👨‍💼</div>
+                        <h3>Клиенто-<br>ориентированность</h3>
+                        <p>Наша служба поддержки работает 24/7, чтобы помочь вам с выбором и решением вопросов</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🌱</div>
+                        <h3>Устойчивое развитие</h3>
+                        <p>Внедряем экологичную упаковку и поддерживаем переработку товаров</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="advantages" class="about-section">
+                <h2 class="section-title">Почему выбирают Toolify?</h2>
+                <div class="advantages-list">
+                    <div class="advantage-item">
+                        <span class="advantage-number">01</span>
+                        <div>
+                            <h4>Широкий ассортимент</h4>
+                            <p>Более 50,000 товаров в 20+ категориях: от чистящих средств до садового инвентаря</p>
+                        </div>
+                    </div>
+                    <div class="advantage-item">
+                        <span class="advantage-number">02</span>
+                        <div>
+                            <h4>Гарантия качества</h4>
+                            <p>Все товары проходят проверку и имеют сертификаты соответствия</p>
+                        </div>
+                    </div>
+                    <div class="advantage-item">
+                        <span class="advantage-number">03</span>
+                        <div>
+                            <h4>Удобная доставка</h4>
+                            <p>Доставка в день заказа по Минску, 1-3 дня по регионам. Самовывоз из 150+ пунктов</p>
+                        </div>
+                    </div>
+                    <div class="advantage-item">
+                        <span class="advantage-number">04</span>
+                        <div>
+                            <h4>Выгодные цены</h4>
+                            <p>Прямые контракты с производителями позволяют предлагать лучшие цены на рынке</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="team" class="about-section">
+                <h2 class="section-title">Наша команда</h2>
+                <p class="team-description">За успехом Toolify стоят профессионалы своего дела: от опытных закупщиков до внимательных специалистов поддержки.</p>
+
+                <div class="team-stats">
+                    <div class="team-stat">
+                        <div class="team-stat-number">150+</div>
+                        <div class="team-stat-label">сотрудников</div>
+                    </div>
+                    <div class="team-stat">
+                        <div class="team-stat-number">12</div>
+                        <div class="team-stat-label">экспертов по качеству</div>
+                    </div>
+                    <div class="team-stat">
+                        <div class="team-stat-number">24/7</div>
+                        <div class="team-stat-label">работает поддержка</div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="contacts" class="about-section contact-section">
+                <h2 class="section-title">Остались вопросы?</h2>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <div class="contact-icon">📧</div>
+                        <div>
+                            <h4>Электронная почта</h4>
+                            <p>toolifyhousestore@gmail.com</p>
+                            <p class="contact-note">Отвечаем в течение 1 часа</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">📞</div>
+                        <div>
+                            <h4>Телефон</h4>
+                            <p>8 (033) 777-33-23</p>
+                            <p class="contact-note">Бесплатно по Минску</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">🏢</div>
+                        <div>
+                            <h4>Офис</h4>
+                            <p>Миснк, ул. Радиальная, д. 15</p>
+                            <p class="contact-note">Пн-Пт: 8:30-22:00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cta-block">
+                    <h3>Готовы сделать заказ?</h3>
+                    <p>Начните покупать с Toolify уже сегодня</p>
+                    <div class="cta-buttons">
+                        <a asp-controller="Home" asp-action="Index" class="btn-primary">Перейти в каталог</a>
+                        <a href="#" class="btn-secondary">Связаться с нами</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 100,
+                            behavior: 'smooth'
+                        });
+
+                        sidebarLinks.forEach(l => l.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+
+            window.addEventListener('scroll', function() {
+                const sections = document.querySelectorAll('.about-section');
+                let currentSection = '';
+
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (scrollY >= (sectionTop - 150)) {
+                        currentSection = '#' + section.getAttribute('id');
+                    }
+                });
+
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === currentSection) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="~/css/site.css" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/product.css"/>
+
 </head>
 <body>
     <!-- ХЕДЕР -->
@@ -19,9 +20,9 @@
         </div>
 
         <nav class="menu">
-            <a asp-controller="About" asp-action="About">О Нас</a>
+            <a asp-controller="Home" asp-action="About">О Нас</a>
             <a asp-controller="Home" asp-action="Index">Главная</a>
-            <a asp-controller="Catalog" asp-action="About">Каталог</a>
+            <a asp-controller="Home" asp-action="Index">Каталог</a>
         </nav>
 
         <div class="header-icons">
@@ -144,7 +145,23 @@
         </div>
     </footer>
 
+
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if (TempData["ToastMessage"] != null)
+    {
+        <script>
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: '@TempData["ToastType"]',
+                title: '@TempData["ToastMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+    }
 </body>
 </html>
