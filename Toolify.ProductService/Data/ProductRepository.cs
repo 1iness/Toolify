@@ -239,7 +239,7 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
 
             string sql = @"
-        SELECT c.ProductId, p.Name, p.Price, p.ImagePath, c.Quantity, p.Discount
+        SELECT c.ProductId, p.Name, p.Price, p.ImagePath, c.Quantity, p.Discount, p.ArticleNumber
         FROM CartItems c
         JOIN Products p ON c.ProductId = p.Id
         WHERE (@uid IS NOT NULL AND c.UserId = @uid) 
@@ -266,7 +266,8 @@ namespace Toolify.ProductService.Data
                     Price = finalPrice, 
                     OldPrice = discount > 0 ? basePrice : null, 
                     ImageUrl = reader.IsDBNull(reader.GetOrdinal("ImagePath")) ? null : reader.GetString(reader.GetOrdinal("ImagePath")),
-                    Quantity = reader.GetInt32(reader.GetOrdinal("Quantity"))
+                    Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                    ArticleNumber = reader.IsDBNull(reader.GetOrdinal("ArticleNumber"))? null : reader.GetString(reader.GetOrdinal("ArticleNumber"))
                 });
             }
             return items;

@@ -10,6 +10,7 @@ namespace Toolify.ProductService.Models
         public decimal Price { get; set; }      
         public decimal? OldPrice { get; set; }  
         public int Quantity { get; set; }
+        public string? ArticleNumber { get; set; }
         public decimal TotalPrice => Price * Quantity;
         public decimal? TotalOldPrice => OldPrice * Quantity;
     }
