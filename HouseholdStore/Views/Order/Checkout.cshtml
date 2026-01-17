@@ -40,7 +40,7 @@
                 </div>
 
                 <div class="checkout-card">
-                    <h4>Способ доставки</h4>
+                    <h4>Адрес доставки</h4>
                     <div class="mb-3">
                         <label class="form-label">Адрес доставки</label>
                         <textarea asp-for="Address" class="form-control" rows="2" placeholder="Город, улица, дом, квартира"></textarea>
@@ -80,13 +80,7 @@
                     </div>
                 </div>
 
-                <div class="checkout-card">
-                    <h4>Комментарий</h4>
-                    <div class="mb-3">
-                        <label class="form-label">Ваш комментарий</label>
-                        <input type="text" class="form-control" placeholder="Не обязательно" name="Comment">
-                    </div>
-                </div>
+                
 
                 <div class="checkout-card">
                     <h4>Ваши данные</h4>
@@ -161,7 +155,12 @@
     </form>
 </div>
 
-<script>
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
     // подтверждения телефона 
     function confirmPhone() {
         const phoneInput = document.getElementById('phoneInput');
@@ -236,4 +235,6 @@
             }
         });
     }
-</script>
+    </script>
+
+ }
