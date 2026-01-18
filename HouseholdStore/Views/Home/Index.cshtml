@@ -5,9 +5,21 @@
 }
 
 <!-- БАННЕР ДО КАТЕГОРИЙ -->
-<div class="banner-container scroll-animate">
-    <div class="banner">
-        <img src="~/image/baner1.png" />
+<div class="banner-carousel-container">
+    <div class="custom-carousel">
+        <div class="carousel-slides">
+            <div class="slide active" style="display: block;">
+                <img src="/image/baner1.png" alt="Баннер 1"/>
+            </div>
+            <div class="slide">
+                <img src="/image/baner2.png" alt="Баннер 2"/>
+            </div>
+        </div>
+
+        <div class="carousel-dots">
+            <span class="dot active" onclick="currentSlide(0)"></span>
+            <span class="dot" onclick="currentSlide(1)"></span>
+        </div>
     </div>
 </div>
 
@@ -214,3 +226,35 @@
         </div>
     </div>
 </div>
+<script>
+    window.addEventListener('load', function() {
+        let index = 0;
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.dot');
+
+        if (slides.length === 0) return;
+
+        function show(n) {
+            slides.forEach(s => s.style.display = "none");
+            dots.forEach(d => d.classList.remove("active"));
+
+            if (n >= slides.length) index = 0;
+            if (n < 0) index = slides.length - 1;
+
+            slides[index].style.display = "block";
+            dots[index].classList.add("active");
+        }
+
+        window.currentSlide = function(n) {
+            index = n;
+            show(index);
+        }
+
+        setInterval(() => {
+            index++;
+            show(index);
+        }, 5000);
+
+        console.log("Карусель инициализирована. Найдено слайдов: " + slides.length);
+    });
+</script>
