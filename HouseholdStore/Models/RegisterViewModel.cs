@@ -14,7 +14,7 @@ namespace HouseholdStore.Models
         [Required(ErrorMessage = "Введите Email")]
         [EmailAddress(ErrorMessage = "Некорректный формат Email")]
         [RegularExpression(
-           @"^[^@\s]+@(gmail\.com|mail\.ru)$",
+          @"^[a-zA-Z0-9]+([._%+-]?[a-zA-Z0-9]+)*@(gmail\.com|mail\.ru)$",
            ErrorMessage = "Допустимы только gmail.com или mail.ru"
        )]
         public string Email { get; set; }
