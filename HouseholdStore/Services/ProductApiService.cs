@@ -115,5 +115,18 @@ namespace HouseholdStore.Services
 
             return await response.Content.ReadFromJsonAsync<List<Product>>(jsonOptions);
         }
+        public async Task<List<ReviewViewModel>> GetReviewsAsync(int productId)
+        {
+            var response = await _http.GetAsync($"/api/reviews/{productId}");
+            if (!response.IsSuccessStatusCode) return new List<ReviewViewModel>();
+
+            return await response.Content.ReadFromJsonAsync<List<ReviewViewModel>>(jsonOptions);
+        }
+
+        public async Task AddReviewAsync(ReviewViewModel review)
+        {
+            var response = await _http.PostAsJsonAsync("/api/reviews", review);
+            response.EnsureSuccessStatusCode();
+        }
     }
 }

@@ -514,5 +514,56 @@ namespace Toolify.ProductService.Data
             var result = await cmd.ExecuteScalarAsync();
             return result == DBNull.Value ? null : result?.ToString();
         }
+        public async Task<List<Review>> GetReviewsByProductIdAsync(int productId)
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            string sql = "SELECT * FROM Reviews WHERE ProductId = @pid ORDER BY CreatedAt DESC";
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@pid", productId);
+
+            var reviews = new List<Review>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                reviews.Add(new Review
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
+                    UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
+                    UserName = reader.GetString(reader.GetOrdinal("UserName")),
+                    UserEmail = reader.GetString(reader.GetOrdinal("UserEmail")),
+                    Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                    Pros = reader.IsDBNull(reader.GetOrdinal("Pros")) ? null : reader.GetString(reader.GetOrdinal("Pros")),
+                    Cons = reader.IsDBNull(reader.GetOrdinal("Cons")) ? null : reader.GetString(reader.GetOrdinal("Cons")),
+                    Comment = reader.IsDBNull(reader.GetOrdinal("Comment")) ? null : reader.GetString(reader.GetOrdinal("Comment")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+                });
+            }
+            return reviews;
+        }
+
+        public async Task AddReviewAsync(Review review)
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+
+            string sql = @"
+                INSERT INTO Reviews (ProductId, UserId, UserName, UserEmail, Rating, Pros, Cons, Comment, CreatedAt)
+                VALUES (@pid, @uid, @name, @email, @rate, @pros, @cons, @com, GETDATE())";
+
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@pid", review.ProductId);
+            command.Parameters.AddWithValue("@uid", (object?)review.UserId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@name", review.UserName);
+            command.Parameters.AddWithValue("@email", review.UserEmail);
+            command.Parameters.AddWithValue("@rate", review.Rating);
+            command.Parameters.AddWithValue("@pros", (object?)review.Pros ?? DBNull.Value);
+            command.Parameters.AddWithValue("@cons", (object?)review.Cons ?? DBNull.Value);
+            command.Parameters.AddWithValue("@com", (object?)review.Comment ?? DBNull.Value);
+
+            await command.ExecuteNonQueryAsync();
+        }
     }
 }

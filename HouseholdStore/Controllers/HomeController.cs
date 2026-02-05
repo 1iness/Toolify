@@ -3,6 +3,7 @@ using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace HouseholdStore.Controllers
 {
@@ -55,7 +56,44 @@ namespace HouseholdStore.Controllers
             {
                 return NotFound();
             }
+
+            var reviews = await _productApi.GetReviewsAsync(id);
+
+            ViewBag.Reviews = reviews; 
+            ViewBag.ReviewsCount = reviews.Count;
+            ViewBag.AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
+
+            var starCounts = new int[6]; 
+            foreach (var r in reviews) starCounts[r.Rating]++;
+
+            ViewBag.StarCounts = starCounts; 
+
             return View(product);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LeaveReview(ReviewViewModel model)
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out int uid))
+                {
+                    model.UserId = uid;
+                }
+            }
+
+            model.CreatedAt = DateTime.Now;
+
+            try
+            {
+                await _productApi.AddReviewAsync(model);
+                return RedirectToAction("Details", new { id = model.ProductId });
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Details", new { id = model.ProductId });
+            }
         }
 
         [Authorize(Roles = "Admin")]

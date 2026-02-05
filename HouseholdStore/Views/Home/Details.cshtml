@@ -88,82 +88,154 @@
     </div>
 </div>
 
+@{
+    var reviews = ViewBag.Reviews as List<HouseholdStore.Models.ReviewViewModel> ?? new List<HouseholdStore.Models.ReviewViewModel>();
+    var avgRating = (double)(ViewBag.AverageRating ?? 0);
+    var reviewsCount = (int)(ViewBag.ReviewsCount ?? 0);
+    var starCounts = ViewBag.StarCounts as int[] ?? new int[6];
+}
+
 <div class="reviews-container">
 
     <div class="reviews-left-column">
-        <h2 class="reviews-title">Отзывы о товаре</h2>
+        <h2 class="reviews-title">Отзывы о товаре (@reviewsCount)</h2>
 
-        <div class="reviews-filters">
-            <span class="filter-sort">Сортировать по: <a href="#" class="active">Дате</a> <a href="#">Рейтингу</a></span>
-            <div class="filter-tags">
-                <span>5 звезд</span>
-                <span>4 звезды</span>
-                <span>3 звезды</span>
-                <span>2 звезды</span>
-                <span>1 звезда</span>
+        @if (!reviews.Any())
+        {
+            <p style="color: #777; margin-bottom: 20px;">Отзывов пока нет. Будьте первым!</p>
+        }
+        else
+        {
+            <div class="reviews-filters">
+                <span class="filter-sort">Сортировать по: <a href="#" class="active">Дате</a> <a href="#">Рейтингу</a></span>
             </div>
-        </div>
 
-        <div class="review-list">
-            <div class="review-item">
-                <div class="review-header">
-                    <div class="user-avatar"></div>
-                    <span class="user-name">Аноним</span>
-                    <div class="stars-green">★★★★★</div>
-                </div>
-                <div class="review-body">
-                    <span class="comment-label">Комментарий</span>
-                    <p>все ок</p>
-                </div>
-                <div class="shop-response">
-                    <span class="shop-name">Интернет-магазин <i class="check-icon">✔</i></span>
-                    <p>Добрый день, спасибо за высокую оценку.</p>
-                </div>
+            <div class="review-list">
+                @foreach (var review in reviews)
+                {
+                    <div class="review-item">
+                        <div class="review-header">
+                            <div class="user-avatar"></div> <span class="user-name">@review.UserName</span>
+                            <div class="stars-green">
+                                @for (int i = 0; i < review.Rating; i++)
+                                {
+                                    <span>★</span>
+                                }
+                            </div>
+                            <span style="font-size: 12px; color: #999; margin-left: auto;">@review.CreatedAt.ToString("dd.MM.yyyy")</span>
+                        </div>
+                        <div class="review-body">
+                            @if (!string.IsNullOrEmpty(review.Pros))
+                            {
+                                <span class="comment-label">Достоинства:</span>
+                                <p>@review.Pros</p>
+                            }
+                            @if (!string.IsNullOrEmpty(review.Cons))
+                            {
+                                <span class="comment-label" style="margin-top:10px;">Недостатки:</span>
+                                <p>@review.Cons</p>
+                            }
+                            @if (!string.IsNullOrEmpty(review.Comment))
+                            {
+                                <span class="comment-label" style="margin-top:10px;">Комментарий:</span>
+                                <p>@review.Comment</p>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
-        </div>
+        }
     </div>
 
     <div class="reviews-right-column">
         <div class="rating-card">
-            <h3 class="rating-title">Отзывы покупателей (44)</h3>
+            <h3 class="rating-title">Рейтинг покупателей</h3>
 
             <div class="rating-main-row">
-                <div class="stars-green big">★★★★★</div>
-                <div class="rating-score">4.7 <span>/ 5</span></div>
+                <div class="stars-green big">
+                    @for (int i = 0; i < Math.Round(avgRating); i++)
+                    {
+                        <span>★</span>
+                    }
+                </div>
+                <div class="rating-score">@avgRating.ToString("0.0") <span>/ 5</span></div>
             </div>
 
             <div class="rating-bars">
-                <div class="bar-row">
-                    <span class="star-label">5 звезд</span>
-                    <div class="progress-track"><div class="progress-fill" style="width: 90.9%;"></div></div>
-                    <span class="percent-label">90.9%</span>
-                </div>
-                <div class="bar-row">
-                    <span class="star-label">4 звезды</span>
-                    <div class="progress-track"><div class="progress-fill" style="width: 0%;"></div></div>
-                    <span class="percent-label">1%</span>
-                </div>
-                <div class="bar-row">
-                    <span class="star-label">3 звезды</span>
-                    <div class="progress-track"><div class="progress-fill" style="width: 2.3%;"></div></div>
-                    <span class="percent-label">2.3%</span>
-                </div>
-                <div class="bar-row">
-                    <span class="star-label">2 звезды</span>
-                    <div class="progress-track"><div class="progress-fill" style="width: 4.5%;"></div></div>
-                    <span class="percent-label">4.5%</span>
-                </div>
-                <div class="bar-row">
-                    <span class="star-label">1 звезда</span>
-                    <div class="progress-track"><div class="progress-fill" style="width: 2.3%;"></div></div>
-                    <span class="percent-label">2.3%</span>
-                </div>
+                @for (int i = 5; i >= 1; i--)
+                {
+                    var count = starCounts[i];
+                    var percent = reviewsCount > 0 ? (double)count / reviewsCount * 100 : 0;
+                    <div class="bar-row">
+                        <span class="star-label">@i звезд</span>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: @percent.ToString("0")%;"></div>
+                        </div>
+                        <span class="percent-label">@percent.ToString("0")%</span>
+                    </div>
+                }
             </div>
 
-            <button class="btn-leave-review">
+            <button class="btn-leave-review" onclick="openReviewModal()">
                 Оставить свой отзыв
             </button>
         </div>
     </div>
-
 </div>
+
+<div id="reviewModal" class="modal-overlay">
+    <div class="review-modal">
+        <button class="modal-close" onclick="closeReviewModal()">×</button>
+        <h3 class="modal-title">Ваш отзыв</h3>
+
+        <form asp-controller="Home" asp-action="LeaveReview" method="post">
+            <input type="hidden" name="ProductId" value="@Model.Id" />
+
+            <div class="form-group" style="text-align: center;">
+                <label class="form-label">Общая оценка</label>
+                <input type="hidden" name="Rating" id="ratingInput" value="5" />
+                <div class="star-rating-input" id="starContainer">
+                    <span class="star-item active" data-value="1">★</span>
+                    <span class="star-item active" data-value="2">★</span>
+                    <span class="star-item active" data-value="3">★</span>
+                    <span class="star-item active" data-value="4">★</span>
+                    <span class="star-item active" data-value="5">★</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Достоинства</label>
+                <input type="text" name="Pros" class="form-input" placeholder="Что вам понравилось" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Недостатки</label>
+                <input type="text" name="Cons" class="form-input" placeholder="Что не оправдало ожиданий" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Комментарий</label>
+                <textarea name="Comment" class="form-textarea" placeholder="Другие впечатления"></textarea>
+            </div>
+
+            <div class="user-row">
+                <div class="form-group">
+                    <label class="form-label">Как вас зовут</label>
+                    <input type="text" name="UserName" class="form-input" required
+                           value="@(User.Identity.IsAuthenticated? User.Identity.Name : "")" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ваш e-mail</label>
+                    <input type="email" name="UserEmail" class="form-input" required
+                           value="@(User.Identity.IsAuthenticated? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value : "")" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit-review">Отправить отзыв</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/product-reviews.js" asp-append-version="true"></script>
+}
