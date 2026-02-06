@@ -116,7 +116,24 @@
                     }
                 </div>
 
-                <div class="rating" style="color: #ffc107; font-size: 20px; margin-bottom: 5px;">★★★★☆</div>
+                <div class="rating-wrapper" style="color: #ffc107; font-size: 18px; margin-bottom: 5px;" title="Рейтинг: @product.AverageRating.ToString("F1")">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (product.AverageRating >= i)
+                        {
+                            <i class="bi bi-star-fill"></i>
+                        }
+                        else if (product.AverageRating >= (i - 0.5))
+                        {
+                            <i class="bi bi-star-half"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-star"></i>
+                        }
+                    }
+                    <span style="color: #999; font-size: 12px; margin-left: 5px;"></span>
+                </div>
 
                 <h3 class="title" style="margin-bottom: 10px; height: 40px; overflow: hidden;">
                     @product.Name

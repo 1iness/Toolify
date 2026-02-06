@@ -52,7 +52,6 @@
             }
         });
 
-        // Подсветка уже выбранных звезд, при движении по ним
         if (className === 'hover') {
         } else {
             stars.forEach(s => {
@@ -61,3 +60,48 @@
         }
     }
 });
+
+let isDesc = true;
+let currentCriteria = 'date';
+
+function sortReviews(criteria) {
+    const container = document.getElementById('review-list-container');
+    const reviews = Array.from(container.getElementsByClassName('review-item'));
+    const dateLink = document.getElementById('sort-date');
+    const ratingLink = document.getElementById('sort-rating');
+
+    if (currentCriteria === criteria) {
+        isDesc = !isDesc;
+    } else {
+        currentCriteria = criteria;
+        isDesc = true;
+    }
+
+    dateLink.classList.remove('active', 'sort-asc', 'sort-desc');
+    ratingLink.classList.remove('active', 'sort-asc', 'sort-desc');
+
+    const activeLink = (criteria === 'date') ? dateLink : ratingLink;
+    activeLink.classList.add('active');
+    activeLink.classList.add(isDesc ? 'sort-desc' : 'sort-asc');
+
+    reviews.sort((a, b) => {
+        let valA, valB;
+
+        if (criteria === 'date') {
+            valA = parseInt(a.getAttribute('data-date'));
+            valB = parseInt(b.getAttribute('data-date'));
+        } else {
+            valA = parseInt(a.getAttribute('data-rating'));
+            valB = parseInt(b.getAttribute('data-rating'));
+        }
+
+        if (isDesc) {
+            return valB - valA; // От большего к меньшему
+        } else {
+            return valA - valB; // От меньшего к большему
+        }
+    });
+
+    container.innerHTML = '';
+    reviews.forEach(review => container.appendChild(review));
+}

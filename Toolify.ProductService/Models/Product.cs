@@ -12,5 +12,7 @@
         public int StockQuantity { get; set; }
         public int Discount { get; set; }
         public string? ArticleNumber { get; set; }
+        public double AverageRating { get; set; }
+        public int ReviewsCount { get; set; }
     }
 }

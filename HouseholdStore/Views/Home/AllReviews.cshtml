@@ -1,0 +1,64 @@
+﻿@model Toolify.ProductService.Models.Product
+@{
+    var reviews = ViewBag.Reviews as List<HouseholdStore.Models.ReviewViewModel> ?? new List<HouseholdStore.Models.ReviewViewModel>();
+    var reviewsCount = reviews.Count;
+}
+
+<link rel="stylesheet" href="~/css/product.css" />
+
+<partial name="_Breadcrumbs" />
+
+<div class="container" style="max-width: 900px; margin: 40px auto;">
+    <h1 class="page-title">Отзывы о товаре @Model.Name</h1>
+
+    <div class="reviews-filters" style="margin-bottom: 30px;">
+        <span class="filter-sort">
+            Сортировать по:
+            <a href="javascript:void(0)" id="sort-date" class="sort-link active" onclick="sortReviews('date')">
+                Дате <span class="sort-arrow"></span>
+            </a>
+            <a href="javascript:void(0)" id="sort-rating" class="sort-link" onclick="sortReviews('rating')">
+                Рейтингу <span class="sort-arrow"></span>
+            </a>
+        </span>
+    </div>
+
+    <div class="review-list" id="review-list-container">
+        @foreach (var review in reviews)
+        {
+            <div class="review-item"
+                 data-rating="@review.Rating"
+                 data-date="@(((DateTimeOffset)review.CreatedAt).ToUnixTimeMilliseconds())">
+
+                <div class="review-header">
+                    <span class="user-name" style="font-weight:bold;">@review.UserName</span>
+                    <div class="stars-green">
+                        @for (int i = 0; i < review.Rating; i++)
+                        {
+                            <span>★</span>
+                        }
+                    </div>
+                    <span style="color: #999; margin-left: auto;">@review.CreatedAt.ToString("dd.MM.yyyy")</span>
+                </div>
+
+                <div class="review-body">
+                    @if (!string.IsNullOrEmpty(review.Pros))
+                    {
+                        <strong>Достоинства:</strong>
+                        <p>@review.Pros</p>
+     }
+                    @if (!string.IsNullOrEmpty(review.Cons))
+                    {
+                        <strong>Недостатки:</strong>
+                        <p>@review.Cons</p>
+     }
+                    <p>@review.Comment</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/product-reviews.js" asp-append-version="true"></script>
+}

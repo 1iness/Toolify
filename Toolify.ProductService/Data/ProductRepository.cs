@@ -18,16 +18,25 @@ namespace Toolify.ProductService.Data
             using var connection = _factory.CreateConnection();
             await connection.OpenAsync();
 
-            using var command = new SqlCommand("SELECT * FROM Products", connection);
+            string sql = @"
+        SELECT p.*, 
+               (SELECT ISNULL(AVG(CAST(Rating AS FLOAT)), 0) FROM Reviews WHERE ProductId = p.Id) as AverageRating,
+               (SELECT COUNT(*) FROM Reviews WHERE ProductId = p.Id) as ReviewsCount
+        FROM Products p";
 
+            using var command = new SqlCommand(sql, connection);
             var products = new List<Product>();
 
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                products.Add(MapProduct(reader));
-            }
+                var product = MapProduct(reader); 
 
+                product.AverageRating = reader.IsDBNull(reader.GetOrdinal("AverageRating")) ? 0 : Convert.ToDouble(reader["AverageRating"]);
+                product.ReviewsCount = (int)reader["ReviewsCount"];
+
+                products.Add(product);
+            }
             return products;
         }
         

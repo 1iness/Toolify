@@ -23,13 +23,21 @@
              onerror="this.onerror=null; this.src='/images/no-image.png';" />
     </div>
 
+    @{
+        var reviews = ViewBag.Reviews as List<HouseholdStore.Models.ReviewViewModel> ?? new List<HouseholdStore.Models.ReviewViewModel>();
+        var avgRating = (double)(ViewBag.AverageRating ?? 0);
+        var reviewsCount = (int)(ViewBag.ReviewsCount ?? 0);
+        var starCounts = ViewBag.StarCounts as int[] ?? new int[6];
+    }
+
     <div class="detail-info">
         <h1 class="detail-title">@Model.Name</h1>
 
         <div class="detail-rating-row">
             <span class="stars">★</span>
-            <span class="rating-value">0.0</span>
-            <span class="reviews-count">0 отзывов</span>
+            
+            <span class="rating-value">@avgRating.ToString("0.0") </span>
+            <span class="reviews-count">(@reviewsCount отзывов)</span>
             <span style="margin-left: 20px; color: #666; font-size: 0.9em;">
                 Артикул: @Model.ArticleNumber
             </span>
@@ -88,12 +96,6 @@
     </div>
 </div>
 
-@{
-    var reviews = ViewBag.Reviews as List<HouseholdStore.Models.ReviewViewModel> ?? new List<HouseholdStore.Models.ReviewViewModel>();
-    var avgRating = (double)(ViewBag.AverageRating ?? 0);
-    var reviewsCount = (int)(ViewBag.ReviewsCount ?? 0);
-    var starCounts = ViewBag.StarCounts as int[] ?? new int[6];
-}
 
 <div class="reviews-container">
 
@@ -106,44 +108,47 @@
         }
         else
         {
-            <div class="reviews-filters">
-                <span class="filter-sort">Сортировать по: <a href="#" class="active">Дате</a> <a href="#">Рейтингу</a></span>
-            </div>
+            <div class="reviews-preview-wrapper">
+                <div class="review-list">
+                    @foreach (var review in reviews.Take(3))
+                    {
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="user-avatar"></div>
+                                <span class="user-name">@review.UserName</span>
 
-            <div class="review-list">
-                @foreach (var review in reviews)
-                {
-                    <div class="review-item">
-                        <div class="review-header">
-                            <div class="user-avatar"></div> <span class="user-name">@review.UserName</span>
-                            <div class="stars-green">
-                                @for (int i = 0; i < review.Rating; i++)
-                                {
-                                    <span>★</span>
-                                }
+                                <div class="stars-green">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star")"></i>
+                                    }
+                                </div>
+
+                                <span style="font-size: 12px; color: #999; margin-left: auto;">
+                                    @review.CreatedAt.ToString("dd.MM.yyyy")
+                                </span>
                             </div>
-                            <span style="font-size: 12px; color: #999; margin-left: auto;">@review.CreatedAt.ToString("dd.MM.yyyy")</span>
-                        </div>
-                        <div class="review-body">
-                            @if (!string.IsNullOrEmpty(review.Pros))
-                            {
-                                <span class="comment-label">Достоинства:</span>
-                                <p>@review.Pros</p>
-                            }
-                            @if (!string.IsNullOrEmpty(review.Cons))
-                            {
-                                <span class="comment-label" style="margin-top:10px;">Недостатки:</span>
-                                <p>@review.Cons</p>
-                            }
-                            @if (!string.IsNullOrEmpty(review.Comment))
-                            {
-                                <span class="comment-label" style="margin-top:10px;">Комментарий:</span>
+                            <div class="review-body">
                                 <p>@review.Comment</p>
-                            }
+                            </div>
                         </div>
-                    </div>
+                    }
+                </div>
+
+                @if (reviewsCount > 3)
+                {
+                    <div class="reviews-fade-overlay"></div>
                 }
             </div>
+
+            @if (reviewsCount > 3)
+            {
+                <div style="text-align: center; margin-top: 20px;">
+                    <a asp-action="AllReviews" asp-route-productId="@Model.Id" class="btn-view-all-reviews">
+                        Смотреть все отзывы (@reviewsCount)
+                    </a>
+                </div>
+            }
         }
     </div>
 
@@ -152,10 +157,21 @@
             <h3 class="rating-title">Рейтинг покупателей</h3>
 
             <div class="rating-main-row">
-                <div class="stars-green big">
-                    @for (int i = 0; i < Math.Round(avgRating); i++)
+                <div class="stars-green big" style="color: #28a745;">
+                    @for (int i = 1; i <= 5; i++)
                     {
-                        <span>★</span>
+                        if (avgRating >= i)
+                        {
+                            <i class="bi bi-star-fill"></i> 
+                        }
+                        else if (avgRating >= (i - 0.5))
+                        {
+                            <i class="bi bi-star-half"></i> 
+                        }
+                        else
+                        {
+                            <i class="bi bi-star"></i> 
+                        }
                     }
                 </div>
                 <div class="rating-score">@avgRating.ToString("0.0") <span>/ 5</span></div>

@@ -20,7 +20,16 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Index()
         {
             var products = await _productApi.GetAllAsync();
+            var ratings = new Dictionary<int, double>();
 
+            foreach (var product in products)
+            {
+                var reviews = await _productApi.GetReviewsAsync(product.Id);
+                double avg = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
+                ratings[product.Id] = avg;
+            }
+
+            ViewBag.ProductRatings = ratings;
             return View(products);
         }
         public IActionResult Privacy()
@@ -94,6 +103,22 @@ namespace HouseholdStore.Controllers
             {
                 return RedirectToAction("Details", new { id = model.ProductId });
             }
+        }
+        public async Task<IActionResult> AllReviews(int productId)
+        {
+            var product = await _productApi.GetByIdAsync(productId);
+            if (product == null) return NotFound();
+
+            var reviews = await _productApi.GetReviewsAsync(productId);
+
+            ViewBag.Reviews = reviews;
+            ViewBag.ReviewsCount = reviews.Count;
+
+            ViewData["ParentPage"] = "Каталог";
+            ViewData["ParentLink"] = "/Home/Index";
+            ViewData["Title"] = $"Отзывы о {product.Name}";
+
+            return View(product);
         }
 
         [Authorize(Roles = "Admin")]
