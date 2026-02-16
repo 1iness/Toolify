@@ -34,11 +34,51 @@
 
     <!-- БЛОК ПОД ХЕДЕРОМ-->
     <div class="sub-header">
-        <button class="catalog-btn">
-            Каталог товаров
-            <img src="~/image/menu.png" />
-        </button>
+        <div class="catalog-dropdown-wrapper">
+            <button class="catalog-btn">
+                <i class="bi bi-list" style="font-size: 20px;"></i>
+                Каталог товаров
+            </button>
 
+            <div class="catalog-menu">
+                <a href="/Home/Index?sort=hits" class="menu-item hit-item">
+                    <i class="bi bi-fire"></i>
+                    <span>Хиты продаж</span>
+                </a>
+
+                <a href="/Home/Index?category=home" class="menu-item">
+                    <i class="bi bi-house-door"></i>
+                    <span>Для дома</span>
+                </a>
+
+                <a href="/Home/Index?category=cosmetics" class="menu-item">
+                    <i class="bi bi-magic"></i>
+                    <span>Косметика</span>
+                </a>
+
+                <a href="/Home/Index?category=auto" class="menu-item">
+                    <i class="bi bi-car-front"></i>
+                    <span>Для авто</span>
+                </a>
+
+                <a href="/Home/Index?category=cleaning" class="menu-item">
+                    <i class="bi bi-bucket"></i>
+                    <span>Для уборки</span>
+                </a>
+
+                <a href="/Home/Index?category=tech" class="menu-item">
+                    <i class="bi bi-laptop"></i>
+                    <span>Техника</span>
+                </a>
+
+                <div class="menu-divider"></div>
+
+                <a href="/Home/Catalog?category=sale" class="menu-item sale-item">
+                    <i class="bi bi-percent"></i>
+                    <span>Распродажа</span>
+                </a>
+            </div>
+        </div>
 
         <div class="search-wrapper">
             <div class="search-block">
@@ -162,6 +202,7 @@
                 timer: 3000,
                 timerProgressBar: true
             });
+
         </script>
     }
 </body>

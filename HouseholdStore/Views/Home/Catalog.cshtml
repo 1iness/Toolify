@@ -1,0 +1,159 @@
+﻿@model List<Toolify.ProductService.Models.Product>
+
+@{
+    ViewData["Title"] = "Каталог товаров";
+
+    // Получаем фильтры из ViewBag для сохранения состояния формы
+    var cat = ViewBag.SelectedCategory as string;
+    var sort = ViewBag.SelectedSort as string;
+    var min = ViewBag.MinPrice as decimal?;
+    var max = ViewBag.MaxPrice as decimal?;
+}
+
+<partial name="_Breadcrumbs" />
+<div class="catalog-page-container">
+
+    <aside class="catalog-sidebar">
+        <form method="get" action="@Url.Action("Catalog", "Home")" id="filterForm">
+            <input type="hidden" name="category" value="@cat" />
+            <input type="hidden" name="sort" value="@sort" />
+
+            <div class="filter-group">
+                <h3>Цена, ₽</h3>
+                <div class="price-inputs">
+                    <div class="input-wrapper">
+                        <span>от</span>
+                        <input type="number" name="minPrice" value="@min" placeholder="0" min="0">
+                    </div>
+                    <div class="input-wrapper">
+                        <span>до</span>
+                        <input type="number" name="maxPrice" value="@max" placeholder="99999" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-apply-filters">Показать товары</button>
+
+            <div class="filter-group">
+                <h3>Бренд</h3>
+                <label class="checkbox-container">
+                    Samsung
+                    <input type="checkbox">
+                    <span class="checkmark"></span>
+                </label>
+                <label class="checkbox-container">
+                    Xiaomi
+                    <input type="checkbox">
+                    <span class="checkmark"></span>
+                </label>
+            </div>
+        </form>
+    </aside>
+
+
+    <main class="catalog-content">
+
+        <div class="catalog-top-bar">
+            <span class="products-count">Найдено: @Model.Count товаров</span>
+
+            <div class="sort-wrapper">
+                <span>Сортировать по:</span>
+                <select id="sortSelect" onchange="submitSort(this.value)">
+                    <!option value="" @(string.IsNullOrEmpty(sort) ? "selected" : "")>По умолчанию</!option>
+                    <!option value="price_asc" @(sort == "price_asc" ? "selected" : "")>Сначала дешевые</!option>
+                    <!option value="price_desc" @(sort == "price_desc" ? "selected" : "")>Сначала дорогие</!option>
+                    <!option value="name" @(sort == "name" ? "selected" : "")>По названию (А-Я)</!option>
+                    <!option value="rating" @(sort == "rating" ? "selected" : "")>По рейтингу</!option>
+                </select>
+            </div>
+        </div>
+
+        @if (Model.Any())
+        {
+            <div class="products-grid">
+                @foreach (var product in Model)
+                {
+                    // Рассчитываем цену со скидкой для отображения
+                    decimal currentPrice = product.Price;
+                    if (product.Discount > 0)
+                    {
+                        currentPrice = product.Price - (product.Price * product.Discount / 100);
+                    }
+
+                    // Твоя карточка товара
+                    <div class="product-card">
+                        @if (product.Discount > 0)
+                        {
+                            <div class="discount-badge">-@product.Discount%</div>
+                        }
+
+                        <a asp-controller="Home" asp-action="Details" asp-route-id="@product.Id" class="product-image-link">
+                            <img src="https://localhost:7188@(product.ImagePath)" alt="@product.Name"
+                                 onerror="this.onerror=null; this.src='/images/no-image.png';" />
+                        </a>
+
+                        <div class="product-info">
+                            <div class="price-row">
+                                <span class="current-price">@currentPrice.ToString("C0")</span>
+                                @if (product.Discount > 0)
+                                {
+                                    <span class="old-price">@product.Price.ToString("C0")</span>
+                                }
+                            </div>
+
+                            <h3 class="product-name">
+                                <a asp-controller="Home" asp-action="Details" asp-route-id="@product.Id">@product.Name</a>
+                            </h3>
+
+                            <div class="stars-gold small" style="margin-bottom: 10px;" title="Рейтинг">
+                                @{
+                                    var rating = 0.0; /* Замени на product.AverageRating */
+                                }
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (rating >= i)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    else if (rating >= i - 0.5)
+                                    {
+
+                                        <i class="bi bi-star-half"></i>
+                                    }
+                                    else
+                                    {
+
+                                        <i class="bi bi-star"></i>
+                                    }
+                                }
+                                <span style="color: #999; font-size: 12px; margin-left: 4px;">(@rating)</span>
+                            </div>
+
+                            <button class="btn-add-cart">В корзину</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="no-products">
+                <i class="bi bi-search" style="font-size: 40px; color: #ccc;"></i>
+                <p>Товары не найдены. Попробуйте изменить фильтры.</p>
+            </div>
+        }
+    </main>
+</div>
+
+<script>
+    function submitSort(value) {
+        // Находим форму фильтрации
+        var form = document.getElementById('filterForm');
+        // Находим скрытое поле сортировки внутри формы
+        var sortInput = form.querySelector('input[name="sort"]');
+        // Меняем значение
+        sortInput.value = value;
+        // Отправляем форму
+        form.submit();
+    }
+</script>

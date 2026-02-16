@@ -280,6 +280,132 @@ body {
     overflow-y: auto; 
     border: 1px solid #ddd;
 }
+.catalog-dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+    .catalog-dropdown-wrapper:hover .catalog-menu {
+        display: block;
+        animation: fadeInMenu 0.2s ease-out;
+    }
+
+.catalog-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .catalog-btn:hover {
+        background-color: #218838;
+    }
+
+/* выпадающее меню */
+.catalog-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 260px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    padding: 10px 0;
+    z-index: 9999;
+    border: 1px solid #eee;
+    padding-top: 15px;
+    margin-top: 0;
+}
+    .catalog-menu::before {
+        content: "";
+        position: absolute;
+        top: -15px;
+        left: 0;
+        width: 100%;
+        height: 15px;
+        background: transparent;
+    }
+    .catalog-menu.active {
+        display: block;
+        animation: fadeInMenu 0.2s ease-out;
+    }
+
+/* ѕункты меню */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+    /* иконки в меню */
+    .menu-item i {
+        font-size: 20px;
+        color: #28a745;
+        width: 24px;
+        text-align: center;
+    }
+
+    .menu-item:hover {
+        background-color: transparent;
+    }
+        .menu-item:hover span {
+            color: #28a745; 
+        }
+
+.hit-item i {
+    color: #ffc107 !important;
+}
+}
+
+.hit-item:hover {
+    color: #ff5722;
+    background-color: #ff57221a;
+}
+
+.sale-item {
+    color: #333;
+    font-weight: 700;
+}
+
+    .sale-item i {
+        color: #dc3545 !important;
+    }
+
+    .sale-item:hover {
+        background-color: #ffebee;
+    }
+
+.menu-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 5px 0;
+}
+
+@keyframes fadeInMenu {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Ёлемент в списке */
 .search-item {
     display: flex;

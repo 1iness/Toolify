@@ -121,6 +121,50 @@ namespace HouseholdStore.Controllers
             return View(product);
         }
 
+        public async Task<IActionResult> Catalog(
+            string category,
+            string sort,
+            decimal? minPrice,
+            decimal? maxPrice)
+        {
+            var products = await _productApi.GetAllAsync();
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                if (category == "sale")
+                    products = products.Where(p => p.Discount > 0).ToList();
+                else if (category == "hits")
+                    products = products.OrderByDescending(p => p.StockQuantity).ToList(); 
+                else
+                   //написать логику под каждую категорию
+                { }
+            }
+
+            if (minPrice.HasValue)
+            {
+                products = products.Where(p => (p.Price * (100 - p.Discount) / 100) >= minPrice.Value).ToList();
+            }
+            if (maxPrice.HasValue)
+            {
+                products = products.Where(p => (p.Price * (100 - p.Discount) / 100) <= maxPrice.Value).ToList();
+            }
+
+            products = sort switch
+            {
+                "price_asc" => products.OrderBy(p => p.Price * (100 - p.Discount) / 100).ToList(),
+                "price_desc" => products.OrderByDescending(p => p.Price * (100 - p.Discount) / 100).ToList(),
+                "name" => products.OrderBy(p => p.Name).ToList(),
+                "rating" => products.OrderByDescending(p => p.StockQuantity).ToList(), 
+                _ => products 
+            };
+            ViewBag.SelectedCategory = category;
+            ViewBag.SelectedSort = sort;
+            ViewBag.MinPrice = minPrice;
+            ViewBag.MaxPrice = maxPrice;
+
+            return View(products);
+        }
+
         [Authorize(Roles = "Admin")]
         public IActionResult AdminOnly()
         {
