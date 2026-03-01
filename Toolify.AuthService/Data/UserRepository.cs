@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using Toolify.AuthService.Models;
+using System.Data;
 
 namespace Toolify.AuthService.Data;
 
@@ -18,9 +19,11 @@ public class UserRepository
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE Email=@email", con);
-        cmd.Parameters.AddWithValue("@email", email);
-
+        var cmd = new SqlCommand("usp_UserExists", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("Email", email);
         int count = (int)cmd.ExecuteScalar();
         return count > 0;
     }
@@ -30,19 +33,20 @@ public class UserRepository
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand(@"
-            INSERT INTO Users (FirstName, LastName, Email, Phone, PasswordHash, Role, EmailConfirmed, EmailConfirmCode, EmailConfirmExpires)
-            VALUES (@fn, @ln, @em, @ph, @pw, @role, @confirmed, @code, @expires)", con);
+        var cmd = new SqlCommand("usp_CreateUser", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
-        cmd.Parameters.AddWithValue("@fn", user.FirstName);
-        cmd.Parameters.AddWithValue("@ln", user.LastName);
-        cmd.Parameters.AddWithValue("@em", user.Email);
-        cmd.Parameters.AddWithValue("@ph", user.Phone);
-        cmd.Parameters.AddWithValue("@pw", user.Password);
-        cmd.Parameters.AddWithValue("@role", user.Role);
-        cmd.Parameters.AddWithValue("@confirmed", user.EmailConfirmed);
-        cmd.Parameters.AddWithValue("@code", user.EmailConfirmCode);
-        cmd.Parameters.AddWithValue("@expires", user.EmailConfirmExpires);
+        cmd.Parameters.AddWithValue("@FirstName", user.FirstName);
+        cmd.Parameters.AddWithValue("@LastName", user.LastName);
+        cmd.Parameters.AddWithValue("@Email", user.Email);
+        cmd.Parameters.AddWithValue("@Phone", user.Phone);
+        cmd.Parameters.AddWithValue("@PasswordHash", user.Password);
+        cmd.Parameters.AddWithValue("@Role", user.Role);
+        cmd.Parameters.AddWithValue("@EmailConfirmed", user.EmailConfirmed);
+        cmd.Parameters.AddWithValue("@EmailConfirmCode", (object?)user.EmailConfirmCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@EmailConfirmExpires", (object?)user.EmailConfirmExpires ?? DBNull.Value);
 
         cmd.ExecuteNonQuery();
     }
@@ -52,72 +56,49 @@ public class UserRepository
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand(@"
-        SELECT * FROM Users 
-        WHERE Email=@em AND PasswordHash=@pw", con);
-
-        cmd.Parameters.AddWithValue("@em", email);
-        cmd.Parameters.AddWithValue("@pw", password);
+        var cmd = new SqlCommand("usp_GetUserByEmailAndPassword", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@Email", email);
+        cmd.Parameters.AddWithValue("@PasswordHash", password);
 
         using var reader = cmd.ExecuteReader();
 
         if (!reader.Read())
             return null;
 
-        return new User
-        {
-            Id = (int)reader["Id"],
-            FirstName = reader["FirstName"].ToString()!,
-            LastName = reader["LastName"].ToString()!,
-            Email = reader["Email"].ToString()!,
-            Phone = reader["Phone"].ToString()!,
-            Password = reader["PasswordHash"].ToString()!,
-            Role = reader["Role"].ToString()!
-        };
+        return MapUserFromReader(reader);
     }
     public User? GetUserByEmail(string email)
     {
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand(@"
-        SELECT * FROM Users 
-        WHERE Email=@em", con);
-
-        cmd.Parameters.AddWithValue("@em", email);
+        var cmd = new SqlCommand("usp_GetUserByEmail", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@Email", email);
 
         using var reader = cmd.ExecuteReader();
 
         if (!reader.Read())
             return null;
 
-        return new User
-        {
-            Id = (int)reader["Id"],
-            FirstName = reader["FirstName"].ToString()!,
-            LastName = reader["LastName"].ToString()!,
-            Email = reader["Email"].ToString()!,
-            Phone = reader["Phone"].ToString()!,
-            Password = reader["PasswordHash"].ToString()!,
-            Role = reader["Role"].ToString()!,
-            EmailConfirmed = (bool)reader["EmailConfirmed"],
-            EmailConfirmCode = reader["EmailConfirmCode"]?.ToString(),
-            EmailConfirmExpires = reader["EmailConfirmExpires"] == DBNull.Value ? null : (DateTime)reader["EmailConfirmExpires"]
-        };
+        return MapUserFromReader(reader);
     }
     public void ConfirmEmail(string email)
     {
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand(@"
-        UPDATE Users
-        SET EmailConfirmed = 1,
-            EmailConfirmCode = NULL,
-            EmailConfirmExpires = NULL
-        WHERE Email = @em", con);
+        var cmd = new SqlCommand("usp_ConfirmEmail", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@Email", email);
 
-        cmd.Parameters.AddWithValue("@em", email);
         cmd.ExecuteNonQuery();
     }
 
@@ -126,15 +107,13 @@ public class UserRepository
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand(@"
-        UPDATE Users
-        SET EmailConfirmCode = @code,
-            EmailConfirmExpires = @expires
-        WHERE Email = @em", con);
-
-        cmd.Parameters.AddWithValue("@em", email);
-        cmd.Parameters.AddWithValue("@code", code);
-        cmd.Parameters.AddWithValue("@expires", expires);
+        var cmd = new SqlCommand("usp_UpdateEmailConfirmCode", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@Email", email);
+        cmd.Parameters.AddWithValue("@Code", code);
+        cmd.Parameters.AddWithValue("@Expires", expires);
 
         cmd.ExecuteNonQuery();
     }
@@ -144,15 +123,13 @@ public class UserRepository
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand(@"
-        UPDATE Users
-        SET PasswordResetCode=@code,
-            PasswordResetExpires=@expires
-        WHERE Email=@em", con);
-
-        cmd.Parameters.AddWithValue("@em", email);
-        cmd.Parameters.AddWithValue("@code", code);
-        cmd.Parameters.AddWithValue("@expires", expires);
+        var cmd = new SqlCommand("usp_SetPasswordResetCode", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@Email", email);
+        cmd.Parameters.AddWithValue("@Code", code);
+        cmd.Parameters.AddWithValue("@Expires", expires);
 
         cmd.ExecuteNonQuery();
     }
@@ -162,12 +139,12 @@ public class UserRepository
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand(@"
-        SELECT COUNT(*) FROM Users
-        WHERE Email=@em AND PasswordResetCode=@code AND PasswordResetExpires > GETUTCDATE()", con);
-
-        cmd.Parameters.AddWithValue("@em", email);
-        cmd.Parameters.AddWithValue("@code", code);
+        var cmd = new SqlCommand("usp_CheckResetCode", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@Email", email);
+        cmd.Parameters.AddWithValue("@Code", code);
 
         return (int)cmd.ExecuteScalar() > 0;
     }
@@ -177,17 +154,30 @@ public class UserRepository
         using var con = new SqlConnection(_connectionString);
         con.Open();
 
-        var cmd = new SqlCommand(@"
-        UPDATE Users
-        SET PasswordHash=@pw,
-            PasswordResetCode=NULL,
-            PasswordResetExpires=NULL
-        WHERE Email=@em", con);
-
-        cmd.Parameters.AddWithValue("@em", email);
-        cmd.Parameters.AddWithValue("@pw", newHash);
+        var cmd = new SqlCommand("usp_UpdatePassword", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@Email", email);
+        cmd.Parameters.AddWithValue("@PasswordHash", newHash);
 
         cmd.ExecuteNonQuery();
     }
 
+    private User MapUserFromReader(SqlDataReader reader)
+    {
+        return new User
+        {
+            Id = (int)reader["Id"],
+            FirstName = reader["FirstName"].ToString()!,
+            LastName = reader["LastName"].ToString()!,
+            Email = reader["Email"].ToString()!,
+            Phone = reader["Phone"].ToString()!,
+            Password = reader["PasswordHash"].ToString()!,
+            Role = reader["Role"].ToString()!,
+            EmailConfirmed = reader["EmailConfirmed"] != DBNull.Value && (bool)reader["EmailConfirmed"],
+            EmailConfirmCode = reader["EmailConfirmCode"]?.ToString(),
+            EmailConfirmExpires = reader["EmailConfirmExpires"] == DBNull.Value ? null : (DateTime)reader["EmailConfirmExpires"]
+        };
+    }
 }
