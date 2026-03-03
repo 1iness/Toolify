@@ -82,5 +82,35 @@ namespace Toolify.ProductService.Controllers
 
             return Ok("Deleted");
         }
+
+        [HttpPost("{id}/upload-image")]
+        [Consumes("multipart/form-data")] 
+        public async Task<IActionResult> UploadImage(int id, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Файл не получен");
+
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+
+            var productImage = new ProductImage
+            {
+                ProductId = id,
+                ImageData = ms.ToArray(),
+                ContentType = file.ContentType,
+                IsMain = true
+            };
+
+            await _repo.AddProductImageAsync(productImage);
+            return Ok();
+        }
+
+        [HttpGet("{id}/image")]
+        public async Task<IActionResult> GetImage(int id)
+        {
+            var image = await _repo.GetMainImageAsync(id);
+            if (image == null) return NotFound();
+            return File(image.Value.Data, image.Value.ContentType);
+        }
     }
 }

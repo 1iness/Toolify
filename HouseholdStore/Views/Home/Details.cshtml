@@ -18,9 +18,10 @@
 <div class="product-details-container">
 
     <div class="detail-image">
-        <img src="https://localhost:7188@(Model.ImagePath)"
+        <img src="https://localhost:7188/api/Product/@(Model.Id)/image"
              alt="@Model.Name"
-             onerror="this.onerror=null; this.src='/images/no-image.png';" />
+             style="width: 100%; max-height: 500px; object-fit: contain;"
+             onerror="this.onerror=null; this.src='/image/no-image.png';" />
     </div>
 
     @{

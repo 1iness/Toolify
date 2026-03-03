@@ -62,6 +62,7 @@ namespace HouseholdStore.Controllers
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
             return View();
+
         }
 
         [HttpPost]
@@ -103,14 +104,6 @@ namespace HouseholdStore.Controllers
             await _api.DeleteAsync(id);
             return RedirectToAction("Index");
         }
-
-        [HttpPost]
-        public async Task<IActionResult> UploadImage(int id, IFormFile file)
-        {
-            await _api.UploadImageAsync(id, file);
-            return RedirectToAction("Edit", new { id });
-        }
-
     }
 }
 

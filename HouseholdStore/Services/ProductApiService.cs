@@ -1,4 +1,5 @@
 ﻿using HouseholdStore.Models;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -77,23 +78,18 @@ namespace HouseholdStore.Services
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<string?> UploadImageAsync(int id, IFormFile file)
+        public async Task<bool> UploadImageAsync(int id, IFormFile file)
         {
             using var content = new MultipartFormDataContent();
-            using var stream = file.OpenReadStream();
-            var fileContent = new StreamContent(stream);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+            var fileStream = file.OpenReadStream();
+            var fileContent = new StreamContent(fileStream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
 
             content.Add(fileContent, "file", file.FileName);
+            var response = await _http.PostAsync($"/api/Product/{id}/upload-image", content);
 
-            var response = await _http.PostAsync($"/api/admin/products/{id}/upload-image", content);
-
-            if (!response.IsSuccessStatusCode) return null;
-
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-
-            return doc.RootElement.GetProperty("path").GetString();
+            return response.IsSuccessStatusCode;
         }
         public async Task<List<Category>> GetCategoriesAsync()
         {
