@@ -112,5 +112,12 @@ namespace Toolify.ProductService.Controllers
             if (image == null) return NotFound();
             return File(image.Value.Data, image.Value.ContentType);
         }
+
+        [HttpGet("features/{categoryId}")]
+        public async Task<IActionResult> GetFeatures(int categoryId)
+        {
+            var features = await _repo.GetFeaturesByCategoryAsync(categoryId);
+            return Ok(features);
+        }
     }
 }

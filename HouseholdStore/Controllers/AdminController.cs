@@ -61,7 +61,7 @@ namespace HouseholdStore.Controllers
         {
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
-            return View();
+            return View(new Product());
 
         }
 
@@ -76,6 +76,14 @@ namespace HouseholdStore.Controllers
                 var newCat = new Category { Name = NewCategoryName };
                 var createdCat = await _api.CreateCategoryAsync(newCat);
                 product.CategoryId = createdCat.Id;
+
+                if (product.Configurations != null && product.Configurations.Any())
+                {
+                    foreach (var config in product.Configurations)
+                    {
+                        await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName);
+                    }
+                }
 
                 ModelState.Remove("CategoryId");
             }
@@ -103,6 +111,13 @@ namespace HouseholdStore.Controllers
         {
             await _api.DeleteAsync(id);
             return RedirectToAction("Index");
+        }
+
+        [HttpGet("Admin/GetFeatures")] 
+        public async Task<IActionResult> GetFeatures(int categoryId)
+        {
+            var features = await _api.GetFeaturesByCategoryAsync(categoryId);
+            return Json(features);
         }
     }
 }

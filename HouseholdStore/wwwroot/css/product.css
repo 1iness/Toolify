@@ -1016,6 +1016,55 @@
     color: #777;
 }
 
+/* --- ТАБЛИЦА ХАРАКТЕРИСТИК --- */
+.characteristics-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+    .characteristics-table tr {
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+        .characteristics-table tr:last-child {
+            border-bottom: none;
+        }
+
+.char-name {
+    width: 50%;
+    color: #888;
+    padding: 10px 0;
+    vertical-align: bottom;
+    position: relative;
+}
+
+    /* Эффект точек (dotted leader) между колонками */
+    .char-name span {
+        background: #fafafa; /* Цвет фона страницы товара, чтобы перекрыть точки */
+        padding-right: 10px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .char-name::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 14px;
+        width: 95%;
+        border-bottom: 1px dotted #ccc;
+        z-index: 1;
+    }
+
+.char-value {
+    width: 50%;
+    color: #333;
+    padding: 10px 0 10px 10px;
+    font-weight: 500;
+    vertical-align: bottom;
+}
+
 /* Адаптивность для мобильных */
 @media (max-width: 768px) {
     .catalog-page-container {

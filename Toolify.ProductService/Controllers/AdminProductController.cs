@@ -116,6 +116,20 @@ namespace Toolify.ProductService.Controllers
 
             return Ok(new { path = product.ImagePath });
         }
+        // GET: api/admin/products/features/{categoryId}
+        [HttpGet("features/{categoryId}")]
+        public async Task<IActionResult> GetFeatures(int categoryId)
+        {
+            var features = await _service.GetFeaturesByCategoryAsync(categoryId);
+            return Ok(features);
+        }
+        [HttpPost("features")]
+        public async Task<IActionResult> AddFeature([FromBody] ProductFeature feature)
+        {
+            if (feature == null) return BadRequest();
 
+            await _service.AddFeatureAsync(feature.CategoryId, feature.Name);
+            return Ok();
+        }
     }
 }

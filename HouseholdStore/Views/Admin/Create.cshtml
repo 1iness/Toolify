@@ -25,6 +25,17 @@
             <input type="text" name="NewCategoryName" placeholder="Название новой категории" style="width: 200px;" />
         </div>
 
+        <div id="features-section" style="display:none; margin-top: 20px; border: 1px solid #eee; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
+            <h3 style="font-size: 16px; margin-bottom: 15px;">Характеристики для выбранной категории</h3>
+            <div id="features-container">
+            </div>
+        </div>
+
+        <div id="custom-features-container"></div>
+        <button type="button" onclick="addCustomFeature()" style="margin-top: 10px; background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+            + Добавить свое поле
+        </button>
+
         <p>Название:</p>
         <input type="text" name="Name" value="@Model?.Name" required />
 
@@ -51,3 +62,77 @@
         <a href="/Admin/Index">Отмена</a>
     </form>
 </div>
+
+<script>
+    document.querySelector('select[name="CategoryId"]').addEventListener('change', async function () {
+        const categoryId = this.value;
+        const container = document.getElementById('features-container');
+        const section = document.getElementById('features-section');
+
+        if (!categoryId) {
+            section.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/Admin/GetFeatures?categoryId=${categoryId}`);
+            const features = await response.json();
+
+            container.innerHTML = '';
+
+            if (features.length > 0) {
+                section.style.display = 'block';
+                features.forEach((feature, index) => {
+                    const featureName = feature.name || feature.Name;
+                    const featureId = feature.id || feature.Id;
+
+                    const div = document.createElement('div');
+                    div.className = 'feature-row'; 
+                    div.style.display = 'flex';
+                    div.style.alignItems = 'center';
+                    div.style.marginBottom = '10px';
+                        div.innerHTML = `
+        <label style="display:block; font-weight:500;">${featureName}:</label>
+        <input type="hidden" name="Configurations[${index}].FeatureId" value="${featureId}" />
+        <input type="hidden" name="Configurations[${index}].FeatureName" value="${featureName}" />
+        <input type="text" name="Configurations[${index}].FeatureValue"
+               placeholder="Введите значение для ${featureName}"
+               style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+
+               <button type="button" onclick="removeFeature(this)"
+                style="margin-left: 10px; margin-top: 20px; background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+            ✕
+        </button>
+    `;
+                    container.appendChild(div);
+                });
+            } else {
+                section.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки характеристик:', error);
+        }
+    });
+
+        function addCustomFeature() {
+        const container = document.getElementById('features-container');
+        const index = container.children.length; 
+        const section = document.getElementById('features-section');
+        section.style.display = 'block';
+
+        const div = document.createElement('div');
+        div.style.marginBottom = '10px';
+        div.style.border = '1px dashed #ccc';
+        div.style.padding = '10px';
+
+        div.innerHTML = `
+            <input type="text" placeholder="Название (напр. Вес)" name="Configurations[${index}].FeatureName" style="width: 45%; margin-right: 5%;" />
+            <input type="text" placeholder="Значение (напр. 500г)" name="Configurations[${index}].FeatureValue" style="width: 45%;" />
+            <input type="hidden" name="Configurations[${index}].FeatureId" value="0" />
+        `;
+        container.appendChild(div);
+    }
+
+
+</script>

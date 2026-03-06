@@ -19,9 +19,11 @@
                     @foreach (var item in Model.CartItems)
                     {
                         <div class="order-item-row">
-                            <img src="https://localhost:7188@(item.ImageUrl)"
-                                 alt="@item.ProductName" class="item-img"
-                                 onerror="this.onerror=null; this.src='/images/no-image.png';" />
+                            <img src="https://localhost:7188/api/Product/@(item.ProductId)/image"
+                                 alt="@item.ProductName"
+                                 class="item-img"
+                                 style="width: 60px; height: 60px; border-radius: 4px; margin-right: 15px;"
+                                 onerror="this.onerror=null; this.src='/image/no-image.png';" />
 
                             <div class="item-details">
                                 <div class="item-name">@item.ProductName</div>

@@ -13,8 +13,6 @@ namespace Toolify.ProductService.Data
         {
             _factory = factory;
         }
-
-        // --- PRODUCTS ---
         public async Task<List<Product>> GetAllAsync()
         {
             using var connection = _factory.CreateConnection();
@@ -40,7 +38,6 @@ namespace Toolify.ProductService.Data
             return products;
         }
 
-        // Самый важный метод. Получает товар, конфигурации и картинки за 1 запрос
         public async Task<Product?> GetByIdAsync(int id)
         {
             using var connection = _factory.CreateConnection();
@@ -93,8 +90,10 @@ namespace Toolify.ProductService.Data
             var featureTable = new DataTable();
             featureTable.Columns.Add("FeatureId", typeof(int));
             featureTable.Columns.Add("FeatureValue", typeof(string));
-            foreach (var config in product.Configurations) featureTable.Rows.Add(config.FeatureId, config.FeatureValue);
-
+            foreach (var config in product.Configurations)
+            {
+                featureTable.Rows.Add(config.FeatureId, config.FeatureValue);
+            }
             var featureParam = command.Parameters.AddWithValue("@Features", featureTable);
             featureParam.SqlDbType = SqlDbType.Structured;
             featureParam.TypeName = "dbo.FeatureTableType";
@@ -134,7 +133,6 @@ namespace Toolify.ProductService.Data
             return rows > 0;
         }
 
-        // --- CATEGORIES ---
         public async Task<List<Category>> GetAllCategoriesAsync()
         {
             using var connection = _factory.CreateConnection();
@@ -154,15 +152,26 @@ namespace Toolify.ProductService.Data
         public async Task<Category> AddCategoryAsync(Category category)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_AddCategory", connection) { CommandType = CommandType.StoredProcedure };
+            using var command = new SqlCommand("sp_AddCategory", connection) 
+            { 
+                CommandType = CommandType.StoredProcedure
+            };
             command.Parameters.AddWithValue("@Name", category.Name);
 
             await connection.OpenAsync();
-            category.Id = Convert.ToInt32(await command.ExecuteScalarAsync());
-            return category;
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new Category
+                {
+                    Id = Convert.ToInt32(reader["Id"]),
+                    Name = reader["Name"].ToString() ?? string.Empty
+                };
+            }
+
+            throw new Exception("Ошибка при создании или получении категории.");
         }
 
-        // --- CART ---
         public async Task AddToCartAsync(int productId, int? userId, string? guestId, int quantity = 1)
         {
             using var connection = _factory.CreateConnection();
@@ -240,7 +249,6 @@ namespace Toolify.ProductService.Data
             await command.ExecuteNonQueryAsync();
         }
 
-        // --- ORDERS ---
         public async Task<int> CreateOrderAsync(Order order, string guestId, string? promoCode = null)
         {
             using var connection = _factory.CreateConnection();
@@ -305,7 +313,6 @@ namespace Toolify.ProductService.Data
             return result == DBNull.Value ? null : result?.ToString();
         }
 
-        // --- REVIEWS ---
         public async Task<List<Review>> GetReviewsByProductIdAsync(int productId)
         {
             using var connection = _factory.CreateConnection();
@@ -348,7 +355,6 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
         }
-        // Получение байтов изображения
         public async Task<(byte[] Data, string ContentType)?> GetMainImageAsync(int productId)
         {
             using var connection = _factory.CreateConnection();
@@ -368,7 +374,6 @@ namespace Toolify.ProductService.Data
             return null;
         }
 
-        // Сохранение изображения (для админки)
         public async Task AddProductImageAsync(ProductImage img)
         {
             using var connection = _factory.CreateConnection();
@@ -383,8 +388,43 @@ namespace Toolify.ProductService.Data
             await command.ExecuteNonQueryAsync();
         }
 
+        public async Task<List<ProductFeature>> GetFeaturesByCategoryAsync(int categoryId)
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
 
-        // --- ХЕЛПЕР ---
+            using var command = new SqlCommand("sp_GetFeaturesByCategory", connection);
+            command.CommandType = System.Data.CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@CategoryId", categoryId);
+
+            var features = new List<ProductFeature>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                features.Add(new ProductFeature
+                {
+                    Id = (int)reader["Id"],
+                    CategoryId = (int)reader["CategoryId"],
+                    Name = reader["Name"].ToString() ?? string.Empty
+                });
+            }
+            return features;
+        }
+        public async Task AddFeatureAsync(int categoryId, string name)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_AddProductFeature", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            command.Parameters.AddWithValue("@CategoryId", categoryId);
+            command.Parameters.AddWithValue("@Name", name);
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
         private Product MapProduct(SqlDataReader reader)
         {
             return new Product

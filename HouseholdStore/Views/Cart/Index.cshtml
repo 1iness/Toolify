@@ -37,9 +37,11 @@
             {
                 <div class="cart-item-card">
                     <div class="item-left">
-                        <img src="https://localhost:7188@(item.ImageUrl)"
-                             alt="@item.ProductName" class="item-img"
-                             onerror="this.onerror=null; this.src='/images/no-image.png';" />
+                        <img src="https://localhost:7188/api/Product/@(item.ProductId)/image"
+                             alt="@item.ProductName"
+                             class="item-img"
+                             style="width: 80px; height: 80px; border-radius: 8px;"
+                             onerror="this.onerror=null; this.src='/image/no-image.png';" />
 
                         <div class="item-info">
                             <h3 class="item-name">@item.ProductName</h3>

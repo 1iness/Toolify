@@ -20,7 +20,7 @@
     <div class="detail-image">
         <img src="https://localhost:7188/api/Product/@(Model.Id)/image"
              alt="@Model.Name"
-             style="width: 100%; max-height: 500px; object-fit: contain;"
+             style="width: 85%; max-height: 500px; object-fit: contain;"
              onerror="this.onerror=null; this.src='/image/no-image.png';" />
     </div>
 
@@ -66,6 +66,27 @@
             <h3>Описание</h3>
             <p>@Model.FullDescription</p>
         </div>
+        @if (Model.Configurations != null && Model.Configurations.Any())
+        {
+            <div class="detail-characteristics" style="margin-top: 30px;">
+                <h3 style="font-size: 18px; margin-bottom: 15px;">Характеристики</h3>
+                <table class="characteristics-table">
+                    <tbody>
+                        @foreach (var config in Model.Configurations)
+                        {
+                            <tr>
+                                <td class="char-name">
+                                    <span>@config.FeatureName</span>
+                                </td>
+                                <td class="char-value">
+                                    @config.FeatureValue
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 
    

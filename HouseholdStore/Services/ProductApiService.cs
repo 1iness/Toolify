@@ -124,5 +124,19 @@ namespace HouseholdStore.Services
             var response = await _http.PostAsJsonAsync("/api/reviews", review);
             response.EnsureSuccessStatusCode();
         }
+
+        public async Task<List<ProductFeature>> GetFeaturesByCategoryAsync(int categoryId)
+        {
+            var response = await _http.GetAsync($"/api/admin/products/features/{categoryId}");
+            if (!response.IsSuccessStatusCode) return new List<ProductFeature>();
+
+            return await response.Content.ReadFromJsonAsync<List<ProductFeature>>(jsonOptions) ?? new List<ProductFeature>();
+        }
+        public async Task AddFeatureToCategoryAsync(int categoryId, string featureName)
+        {
+            var content = new StringContent(JsonSerializer.Serialize(new { CategoryId = categoryId, Name = featureName }), System.Text.Encoding.UTF8, "application/json");
+
+            await _http.PostAsJsonAsync($"/api/admin/products/features", new { CategoryId = categoryId, Name = featureName });
+        }
     }
 }
