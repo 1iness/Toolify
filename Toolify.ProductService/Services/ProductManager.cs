@@ -74,10 +74,13 @@ namespace Toolify.ProductService.Services
         {
             return await _repository.GetFeaturesByCategoryAsync(categoryId);
         }
-        public async Task AddFeatureAsync(int categoryId, string name)
+        public async Task<ProductFeature> AddFeatureAsync(int categoryId, string name)
         {
-            if (categoryId <= 0 || string.IsNullOrWhiteSpace(name)) return;
-            await _repository.AddFeatureAsync(categoryId, name);
+            return await _repository.AddFeatureAsync(categoryId, name);
+        }
+        public async Task UpdateConfigurationsAsync(int productId, List<ProductConfiguration> configs)
+        {
+            await _repository.UpdateProductConfigurationsAsync(productId, configs);
         }
     }   
 }

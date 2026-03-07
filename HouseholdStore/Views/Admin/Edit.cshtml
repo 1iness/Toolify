@@ -28,6 +28,37 @@
         <p><b>Полное описание:</b></p>
         <textarea asp-for="FullDescription" rows="4" cols="50"></textarea>
 
+        <div id="features-section" style="margin-top: 20px; margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
+            <h3 style="font-size: 16px; margin-bottom: 15px;">Характеристики товара</h3>
+
+            <div id="features-container">
+                @if (Model.Configurations != null && Model.Configurations.Any())
+                {
+                    for (int i = 0; i < Model.Configurations.Count; i++)
+                    {
+                        var config = Model.Configurations[i];
+                        <div class="feature-row" style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <div style="flex-grow: 1;">
+                                <label style="display:block; font-weight:500;">@config.FeatureName:</label>
+                                <input type="hidden" name="Configurations[@i].FeatureId" value="@config.FeatureId" />
+                                <input type="hidden" name="Configurations[@i].FeatureName" value="@config.FeatureName" />
+                                <input type="text" name="Configurations[@i].FeatureValue" value="@config.FeatureValue"
+                                       style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                            </div>
+                            <button type="button" onclick="removeFeature(this)"
+                                    style="margin-left: 10px; margin-top: 20px; background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+                                ✕
+                            </button>
+                        </div>
+                    }
+                }
+            </div>
+
+            <button type="button" onclick="addCustomFeature()" style="margin-top: 10px; background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                + Добавить свое поле
+            </button>
+        </div>
+
         <div style="display: flex; gap: 20px;">
             <div>
                 <p><b>Цена (₽):</b></p>
@@ -60,3 +91,53 @@
         <a href="/Admin/Index" style="margin-left: 20px;">Отмена</a>
     </form>
 </div>
+
+<script>
+    function removeFeature(btn) {
+        const row = btn.closest('.feature-row');
+        const container = document.getElementById('features-container');
+        row.remove();
+
+        const rows = container.querySelectorAll('.feature-row');
+        rows.forEach((row, index) => {
+            row.querySelectorAll('input').forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    input.setAttribute('name', name.replace(/\[\d+\]/, `[${index}]`));
+                }
+            });
+        });
+    }
+
+    function addCustomFeature() {
+        const container = document.getElementById('features-container');
+        const index = container.querySelectorAll('.feature-row').length;
+
+        const div = document.createElement('div');
+        div.className = 'feature-row';
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.marginBottom = '10px';
+
+        div.innerHTML = `
+            <div style="flex-grow: 1; display: flex; gap: 10px;">
+                <div style="flex-grow: 1;">
+                    <label style="display:block; font-weight:500; color:gray;">Название:</label>
+                    <input type="text" placeholder="Напр. Вес" name="Configurations[${index}].FeatureName"
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required />
+                </div>
+                <div style="flex-grow: 1;">
+                    <label style="display:block; font-weight:500; color:gray;">Значение:</label>
+                    <input type="text" placeholder="Напр. 500г" name="Configurations[${index}].FeatureValue"
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required />
+                </div>
+                <input type="hidden" name="Configurations[${index}].FeatureId" value="0" />
+            </div>
+            <button type="button" onclick="removeFeature(this)"
+                    style="margin-left: 10px; margin-top: 20px; background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+                ✕
+            </button>
+        `;
+        container.appendChild(div);
+    }
+</script>

@@ -127,9 +127,9 @@ namespace Toolify.ProductService.Controllers
         public async Task<IActionResult> AddFeature([FromBody] ProductFeature feature)
         {
             if (feature == null) return BadRequest();
-
-            await _service.AddFeatureAsync(feature.CategoryId, feature.Name);
-            return Ok();
+            var createdFeature = await _service.AddFeatureAsync(feature.CategoryId, feature.Name);
+            return Ok(createdFeature);
         }
+
     }
 }

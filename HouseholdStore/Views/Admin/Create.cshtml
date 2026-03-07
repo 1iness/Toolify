@@ -28,6 +28,26 @@
         <div id="features-section" style="display:none; margin-top: 20px; border: 1px solid #eee; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
             <h3 style="font-size: 16px; margin-bottom: 15px;">Характеристики для выбранной категории</h3>
             <div id="features-container">
+                @if (Model.Configurations != null && Model.Configurations.Any())
+                {
+                    for (int i = 0; i < Model.Configurations.Count; i++)
+                    {
+                        var config = Model.Configurations[i];
+                        <div class="feature-row" style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <div style="flex-grow: 1;">
+                                <label style="display:block; font-weight:500;">@config.FeatureName:</label>
+                                <input type="hidden" name="Configurations[@i].FeatureId" value="@config.FeatureId" />
+                                <input type="hidden" name="Configurations[@i].FeatureName" value="@config.FeatureName" />
+                                <input type="text" name="Configurations[@i].FeatureValue" value="@config.FeatureValue"
+                                       style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                            </div>
+                            <button type="button" onclick="removeFeature(this)"
+                                    style="margin-left: 10px; margin-top: 20px; background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+                                ✕
+                            </button>
+                        </div>
+                    }
+                }
             </div>
         </div>
 
@@ -68,71 +88,107 @@
         const categoryId = this.value;
         const container = document.getElementById('features-container');
         const section = document.getElementById('features-section');
+        container.innerHTML = ''; 
 
         if (!categoryId) {
             section.style.display = 'none';
-            container.innerHTML = '';
             return;
         }
 
         try {
             const response = await fetch(`/Admin/GetFeatures?categoryId=${categoryId}`);
-            const features = await response.json();
+            const data = await response.json();
 
-            container.innerHTML = '';
-
-            if (features.length > 0) {
+            if (data && data.length > 0) {
                 section.style.display = 'block';
-                features.forEach((feature, index) => {
-                    const featureName = feature.name || feature.Name;
-                    const featureId = feature.id || feature.Id;
-
+                data.forEach((feature, index) => {
                     const div = document.createElement('div');
                     div.className = 'feature-row'; 
-                    div.style.display = 'flex';
-                    div.style.alignItems = 'center';
-                    div.style.marginBottom = '10px';
-                        div.innerHTML = `
-        <label style="display:block; font-weight:500;">${featureName}:</label>
-        <input type="hidden" name="Configurations[${index}].FeatureId" value="${featureId}" />
-        <input type="hidden" name="Configurations[${index}].FeatureName" value="${featureName}" />
-        <input type="text" name="Configurations[${index}].FeatureValue"
-               placeholder="Введите значение для ${featureName}"
-               style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                    div.style = "display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 4px;";
 
-               <button type="button" onclick="removeFeature(this)"
-                style="margin-left: 10px; margin-top: 20px; background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
-            ✕
-        </button>
-    `;
+                    div.innerHTML = `
+                        <div style="flex-grow: 1; display: flex; gap: 10px;">
+                            <div style="flex-grow: 1;">
+                                <label style="display:block; font-size: 12px; color: gray;">Характеристика:</label>
+                                <input type="text" name="Configurations[${index}].FeatureName" value="${feature.name}" readonly
+                                       style="width: 100%; background: #f0f0f0; border: 1px solid #ccc; padding: 5px;" />
+                            </div>
+                            <div style="flex-grow: 1;">
+                                <label style="display:block; font-size: 12px; color: gray;">Значение:</label>
+                                <input type="text" name="Configurations[${index}].FeatureValue" placeholder="Введите значение..." required
+                                       style="width: 100%; border: 1px solid #ccc; padding: 5px;" />
+                            </div>
+                            <input type="hidden" name="Configurations[${index}].FeatureId" value="${feature.id}" />
+                        </div>
+                        <button type="button" onclick="removeFeature(this)"
+                                style="margin-top: 18px; background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+                            ✕
+                        </button>
+                    `;
                     container.appendChild(div);
                 });
             } else {
                 section.style.display = 'none';
             }
         } catch (error) {
-            console.error('Ошибка загрузки характеристик:', error);
+            console.error('Ошибка:', error);
         }
     });
 
-        function addCustomFeature() {
+           function addCustomFeature() {
         const container = document.getElementById('features-container');
-        const index = container.children.length; 
         const section = document.getElementById('features-section');
         section.style.display = 'block';
 
         const div = document.createElement('div');
-        div.style.marginBottom = '10px';
-        div.style.border = '1px dashed #ccc';
-        div.style.padding = '10px';
+        div.className = 'feature-row';
+        div.style = "display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px;";
 
         div.innerHTML = `
-            <input type="text" placeholder="Название (напр. Вес)" name="Configurations[${index}].FeatureName" style="width: 45%; margin-right: 5%;" />
-            <input type="text" placeholder="Значение (напр. 500г)" name="Configurations[${index}].FeatureValue" style="width: 45%;" />
-            <input type="hidden" name="Configurations[${index}].FeatureId" value="0" />
+            <div style="flex-grow: 1; display: flex; gap: 10px;">
+                <div style="flex-grow: 1;">
+                    <input type="text" placeholder="Название (напр. Вес)" name="Configurations[X].FeatureName" required
+                           style="width: 100%; border: 1px solid #ccc; padding: 5px;" />
+                </div>
+                <div style="flex-grow: 1;">
+                    <input type="text" placeholder="Значение" name="Configurations[X].FeatureValue" required
+                           style="width: 100%; border: 1px solid #ccc; padding: 5px;" />
+                </div>
+                <input type="hidden" name="Configurations[X].FeatureId" value="0" />
+            </div>
+            <button type="button" onclick="removeFeature(this)"
+                    style="background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+                ✕
+            </button>
         `;
         container.appendChild(div);
+        reindexFeatures(); 
     }
 
+    function removeFeature(btn) {
+        const row = btn.closest('.feature-row');
+        row.remove();
+        reindexFeatures(); 
+
+        const container = document.getElementById('features-container');
+        if (container.children.length === 0) {
+            document.getElementById('features-section').style.display = 'none';
+        }
+    }
+
+    function reindexFeatures() {
+        const container = document.getElementById('features-container');
+        const rows = container.getElementsByClassName('feature-row');
+
+        for (let i = 0; i < rows.length; i++) {
+            const inputs = rows[i].querySelectorAll('input');
+            inputs.forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    input.setAttribute('name', name.replace(/\[\d+\]|\[X\]/, `[${i}]`));
+                }
+            });
+        }
+    }
 
 </script>

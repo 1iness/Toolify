@@ -117,6 +117,22 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@Discount", product.Discount);
             command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
 
+            var featureTable = new DataTable();
+            featureTable.Columns.Add("FeatureId", typeof(int));
+            featureTable.Columns.Add("FeatureValue", typeof(string));
+
+            if (product.Configurations != null)
+            {
+                foreach (var config in product.Configurations)
+                {
+                    featureTable.Rows.Add(config.FeatureId, config.FeatureValue);
+                }
+            }
+
+            var featureParam = command.Parameters.AddWithValue("@Features", featureTable);
+            featureParam.SqlDbType = SqlDbType.Structured;
+            featureParam.TypeName = "dbo.FeatureTableType";
+
             await connection.OpenAsync();
             int rows = await command.ExecuteNonQueryAsync();
             return rows > 0;
@@ -410,7 +426,7 @@ namespace Toolify.ProductService.Data
             }
             return features;
         }
-        public async Task AddFeatureAsync(int categoryId, string name)
+        public async Task<ProductFeature> AddFeatureAsync(int categoryId, string name)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_AddProductFeature", connection)
@@ -422,9 +438,43 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@Name", name);
 
             await connection.OpenAsync();
-            await command.ExecuteNonQueryAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new ProductFeature
+                {
+                    Id = Convert.ToInt32(reader["Id"]),
+                    CategoryId = reader.GetInt32(reader.GetOrdinal("CategoryId")),
+                    Name = reader.GetString(reader.GetOrdinal("Name"))
+                };
+            }
+            throw new Exception("Не удалось получить ID характеристики");
         }
+        public async Task UpdateProductConfigurationsAsync(int productId, List<ProductConfiguration> configurations)
+        {
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
 
+            using var deleteCmd = new SqlCommand("sp_DeleteProductConfigurations", connection)
+            { CommandType = CommandType.StoredProcedure };
+            deleteCmd.Parameters.AddWithValue("@ProductId", productId);
+            await deleteCmd.ExecuteNonQueryAsync();
+
+            if (configurations != null && configurations.Any())
+            {
+                foreach (var config in configurations)
+                {
+                    if (string.IsNullOrWhiteSpace(config.FeatureValue)) continue;
+
+                    using var insertCmd = new SqlCommand("sp_AddProductConfiguration", connection)
+                    { CommandType = CommandType.StoredProcedure };
+                    insertCmd.Parameters.AddWithValue("@ProductId", productId);
+                    insertCmd.Parameters.AddWithValue("@FeatureId", config.FeatureId);
+                    insertCmd.Parameters.AddWithValue("@FeatureValue", config.FeatureValue);
+                    await insertCmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
         private Product MapProduct(SqlDataReader reader)
         {
             return new Product

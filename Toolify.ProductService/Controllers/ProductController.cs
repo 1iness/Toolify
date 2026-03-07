@@ -119,5 +119,12 @@ namespace Toolify.ProductService.Controllers
             var features = await _repo.GetFeaturesByCategoryAsync(categoryId);
             return Ok(features);
         }
+
+        [HttpPost("{id}/configurations")]
+        public async Task<IActionResult> UpdateConfigs(int id, [FromBody] List<ProductConfiguration> configurations)
+        {
+            await _repo.UpdateProductConfigurationsAsync(id, configurations); 
+            return Ok();
+        }
     }
 }

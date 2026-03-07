@@ -132,11 +132,21 @@ namespace HouseholdStore.Services
 
             return await response.Content.ReadFromJsonAsync<List<ProductFeature>>(jsonOptions) ?? new List<ProductFeature>();
         }
-        public async Task AddFeatureToCategoryAsync(int categoryId, string featureName)
+        public async Task<ProductFeature?> AddFeatureToCategoryAsync(int categoryId, string featureName)
         {
-            var content = new StringContent(JsonSerializer.Serialize(new { CategoryId = categoryId, Name = featureName }), System.Text.Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(new { CategoryId = categoryId, Name = featureName }), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync("/api/admin/products/features", content);
 
-            await _http.PostAsJsonAsync($"/api/admin/products/features", new { CategoryId = categoryId, Name = featureName });
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<ProductFeature>(jsonOptions);
+            }
+            return null;
+        }
+        public async Task UpdateConfigurationsAsync(int productId, List<ProductConfiguration> configurations)
+        {
+            var response = await _http.PostAsJsonAsync($"/api/Product/{productId}/configurations", configurations);
+            response.EnsureSuccessStatusCode();
         }
     }
 }
