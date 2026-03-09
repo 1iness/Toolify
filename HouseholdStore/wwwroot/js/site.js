@@ -216,10 +216,12 @@ window.addEventListener('load', () => {
 
             products.forEach(p => {
                 let priceHtml = '';
-                
+
+                const apiBaseUrl = "https://localhost:7188";
+                const imgPath = `${apiBaseUrl}/api/Product/${p.id}/image`;
+
                 if (p.discount > 0) {
                     let discountedPrice = p.price * (1 - p.discount / 100);
-                    
                     priceHtml = `
                         <div class="price-block">
                             <span class="current-price" style="color: #e74c3c;">${formatMoney(discountedPrice)}</span>
@@ -227,28 +229,25 @@ window.addEventListener('load', () => {
                         </div>
                     `;
                 } else {
-                    priceHtml = `
-                        <div class="price-block">
-                            <span class="current-price">${formatMoney(p.price)}</span>
-                        </div>
-                    `;
+                        priceHtml = `
+                            <div class="price-block">
+                                <span class="current-price">${formatMoney(p.price)}</span>
+                            </div>
+                        `;
                 }
 
-                const apiBaseUrl = "https://localhost:7188";
-                const imgPath = p.imagePath ? (apiBaseUrl + p.imagePath) : '/images/no-image.png';
+                    const itemHtml = `
+                        <a href="/Home/Details/${p.id}" class="search-item">
+                            <img src="${imgPath}" alt="${p.name}" onerror="this.src='/images/no-image.png'">
 
-                const itemHtml = `
-                    <a href="/Home/Details/${p.id}" class="search-item">
-                        <img src="${imgPath}" alt="${p.name}" onerror="this.src='/images/no-image.png'">
-        
-                        <div class="info">
-                            <div class="product-name">${p.name}</div>
-                            <div class="product-art">Арт: ${p.articleNumber || '---'}</div>
-                        </div>
-        
-                        ${priceHtml}
-                    </a>
-                `;
+                            <div class="info">
+                                <div class="product-name">${p.name}</div>
+                                <div class="product-art">Арт: ${p.articleNumber || '---'}</div>
+                            </div>
+
+                            ${priceHtml}
+                        </a>
+                    `;
                 resultsBox.innerHTML += itemHtml;
             });
 

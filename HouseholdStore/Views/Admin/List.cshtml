@@ -29,17 +29,12 @@
                 <tr>
                     <td>@item.Id</td>
                     <td>
-                        @if (!string.IsNullOrEmpty(item.ImagePath))
-                        {
-                            <img src="https://localhost:7188@(item.ImagePath)"
-                                 width="80"
-                                 style="border-radius: 4px;"
-                                 onerror="this.src='/images/no-image.png'" />
-                        }
-                        else
-                        {
-                            <span>Нет фото</span>
-                        }
+                            <img src="https://localhost:7188/api/Product/@(item.Id)/image"
+                                 width="50"
+                                 height="50"
+                                 style="object-fit: cover; border-radius: 4px;"
+                                 onerror="this.onerror=null; this.src='/image/no-image.png';" />
+ 
                     </td>
                     <td>@item.Name</td>
                     <td>@item.Price.ToString("C")</td>

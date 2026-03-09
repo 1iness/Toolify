@@ -46,14 +46,44 @@ namespace HouseholdStore.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit(Product product, IFormFile? image)
         {
-            await _api.UpdateAsync(product);
-
-            if (image != null && image.Length > 0)
+            if (product.Configurations != null && product.Configurations.Any())
             {
-                await _api.UploadImageAsync(product.Id, image);
+                foreach (var config in product.Configurations)
+                {
+                    if (config.FeatureId == 0 && !string.IsNullOrWhiteSpace(config.FeatureName))
+                    {
+                        var createdFeature = await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName);
+                        if (createdFeature != null)
+                        {
+                            config.FeatureId = createdFeature.Id; 
+                        }
+                    }
+                }
             }
 
-            return RedirectToAction("Index");
+            ModelState.Remove("image");
+            ModelState.Remove("ArticleNumber");
+
+            if (ModelState.IsValid)
+            {
+                await _api.UpdateAsync(product);
+
+                if (product.Configurations != null)
+                {
+                    await _api.UpdateConfigurationsAsync(product.Id, product.Configurations);
+                }
+
+                if (image != null)
+                {
+                    await _api.UploadImageAsync(product.Id, image);
+                }
+
+                return RedirectToAction("Index");
+            }
+
+            var categories = await _api.GetCategoriesAsync();
+            ViewBag.Categories = new SelectList(categories, "Id", "Name", product.CategoryId);
+            return View(product);
         }
 
 
@@ -61,7 +91,8 @@ namespace HouseholdStore.Controllers
         {
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
-            return View();
+            return View(new Product());
+
         }
 
         [HttpPost]
@@ -75,7 +106,6 @@ namespace HouseholdStore.Controllers
                 var newCat = new Category { Name = NewCategoryName };
                 var createdCat = await _api.CreateCategoryAsync(newCat);
                 product.CategoryId = createdCat.Id;
-
                 ModelState.Remove("CategoryId");
             }
             else if (product.CategoryId <= 0)
@@ -83,16 +113,31 @@ namespace HouseholdStore.Controllers
                 ModelState.AddModelError("CategoryId", "Выберите категорию или создайте новую!");
             }
 
+            if (product.CategoryId > 0 && product.Configurations != null && product.Configurations.Any())
+            {
+                foreach (var config in product.Configurations)
+                {
+                    if (config.FeatureId == 0 && !string.IsNullOrWhiteSpace(config.FeatureName))
+                    {
+                        var createdFeature = await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName);
+                        if (createdFeature != null)
+                        {
+                            config.FeatureId = createdFeature.Id; 
+                        }
+                    }
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 var newProductId = await _api.CreateAsync(product);
-
                 if (image != null && newProductId.HasValue)
                 {
                     await _api.UploadImageAsync(newProductId.Value, image);
                 }
                 return RedirectToAction("Index");
             }
+
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
             return View(product);
@@ -104,13 +149,12 @@ namespace HouseholdStore.Controllers
             return RedirectToAction("Index");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UploadImage(int id, IFormFile file)
+        [HttpGet("Admin/GetFeatures")] 
+        public async Task<IActionResult> GetFeatures(int categoryId)
         {
-            await _api.UploadImageAsync(id, file);
-            return RedirectToAction("Edit", new { id });
+            var features = await _api.GetFeaturesByCategoryAsync(categoryId);
+            return Json(features);
         }
-
     }
 }
 

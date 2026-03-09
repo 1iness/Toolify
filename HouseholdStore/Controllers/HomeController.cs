@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Security.Claims;
+using Toolify.ProductService.Models;
 
 namespace HouseholdStore.Controllers
 {
@@ -121,46 +122,56 @@ namespace HouseholdStore.Controllers
             return View(product);
         }
 
-        public async Task<IActionResult> Catalog(
-            string category,
-            string sort,
-            decimal? minPrice,
-            decimal? maxPrice)
+        public async Task<IActionResult> Catalog(CatalogFilterViewModel filter)
         {
             var products = await _productApi.GetAllAsync();
 
-            if (!string.IsNullOrEmpty(category))
+            if (!string.IsNullOrEmpty(filter.SpecialCategory))
             {
-                if (category == "sale")
+                if (filter.SpecialCategory == "sale")
                     products = products.Where(p => p.Discount > 0).ToList();
-                else if (category == "hits")
-                    products = products.OrderByDescending(p => p.StockQuantity).ToList(); 
-                else
-                   //написать логику под каждую категорию
-                { }
+                else if (filter.SpecialCategory == "hits")
+                    products = products.OrderByDescending(p => p.StockQuantity).ToList();
             }
 
-            if (minPrice.HasValue)
+            if (filter.CategoryId.HasValue && filter.CategoryId.Value > 0)
             {
-                products = products.Where(p => (p.Price * (100 - p.Discount) / 100) >= minPrice.Value).ToList();
-            }
-            if (maxPrice.HasValue)
-            {
-                products = products.Where(p => (p.Price * (100 - p.Discount) / 100) <= maxPrice.Value).ToList();
+                products = products.Where(p => p.CategoryId == filter.CategoryId.Value).ToList();
+
+                ViewBag.CategoryFilters = await _productApi.GetCategoryFiltersAsync(filter.CategoryId.Value);
             }
 
-            products = sort switch
+            if (filter.SelectedFeatures != null && filter.SelectedFeatures.Any())
+            {
+                products = products.Where(p =>
+                    filter.SelectedFeatures.All(selected =>
+                        p.Configurations != null &&
+                        p.Configurations.Any(c => c.FeatureId == selected.Key && selected.Value.Contains(c.FeatureValue))
+                    )
+                ).ToList();
+            }
+
+            if (filter.MinPrice.HasValue)
+                products = products.Where(p => (p.Price * (100 - p.Discount) / 100) >= filter.MinPrice.Value).ToList();
+
+            if (filter.MaxPrice.HasValue)
+                products = products.Where(p => (p.Price * (100 - p.Discount) / 100) <= filter.MaxPrice.Value).ToList();
+
+            products = filter.Sort switch
             {
                 "price_asc" => products.OrderBy(p => p.Price * (100 - p.Discount) / 100).ToList(),
                 "price_desc" => products.OrderByDescending(p => p.Price * (100 - p.Discount) / 100).ToList(),
                 "name" => products.OrderBy(p => p.Name).ToList(),
-                "rating" => products.OrderByDescending(p => p.StockQuantity).ToList(), 
-                _ => products 
+                "rating" => products.OrderByDescending(p => p.StockQuantity).ToList(),
+                _ => products
             };
-            ViewBag.SelectedCategory = category;
-            ViewBag.SelectedSort = sort;
-            ViewBag.MinPrice = minPrice;
-            ViewBag.MaxPrice = maxPrice;
+
+            ViewBag.CategoryId = filter.CategoryId;
+            ViewBag.SpecialCategory = filter.SpecialCategory;
+            ViewBag.SelectedSort = filter.Sort;
+            ViewBag.MinPrice = filter.MinPrice;
+            ViewBag.MaxPrice = filter.MaxPrice;
+            ViewBag.SelectedFeatures = filter.SelectedFeatures; 
 
             return View(products);
         }

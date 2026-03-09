@@ -1,4 +1,5 @@
 ﻿using HouseholdStore.Models;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -77,23 +78,18 @@ namespace HouseholdStore.Services
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<string?> UploadImageAsync(int id, IFormFile file)
+        public async Task<bool> UploadImageAsync(int id, IFormFile file)
         {
             using var content = new MultipartFormDataContent();
-            using var stream = file.OpenReadStream();
-            var fileContent = new StreamContent(stream);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+            var fileStream = file.OpenReadStream();
+            var fileContent = new StreamContent(fileStream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
 
             content.Add(fileContent, "file", file.FileName);
+            var response = await _http.PostAsync($"/api/Product/{id}/upload-image", content);
 
-            var response = await _http.PostAsync($"/api/admin/products/{id}/upload-image", content);
-
-            if (!response.IsSuccessStatusCode) return null;
-
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-
-            return doc.RootElement.GetProperty("path").GetString();
+            return response.IsSuccessStatusCode;
         }
         public async Task<List<Category>> GetCategoriesAsync()
         {
@@ -127,6 +123,44 @@ namespace HouseholdStore.Services
         {
             var response = await _http.PostAsJsonAsync("/api/reviews", review);
             response.EnsureSuccessStatusCode();
+        }
+
+        public async Task<List<ProductFeature>> GetFeaturesByCategoryAsync(int categoryId)
+        {
+            var response = await _http.GetAsync($"/api/admin/products/features/{categoryId}");
+            if (!response.IsSuccessStatusCode) return new List<ProductFeature>();
+
+            return await response.Content.ReadFromJsonAsync<List<ProductFeature>>(jsonOptions) ?? new List<ProductFeature>();
+        }
+        public async Task<ProductFeature?> AddFeatureToCategoryAsync(int categoryId, string featureName)
+        {
+            var content = new StringContent(JsonSerializer.Serialize(new { CategoryId = categoryId, Name = featureName }), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync("/api/admin/products/features", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<ProductFeature>(jsonOptions);
+            }
+            return null;
+        }
+        public async Task UpdateConfigurationsAsync(int productId, List<ProductConfiguration> configurations)
+        {
+            var response = await _http.PostAsJsonAsync($"/api/Product/{productId}/configurations", configurations);
+            response.EnsureSuccessStatusCode();
+        }
+        public async Task<List<Toolify.ProductService.Models.CategoryFilterDto>> GetCategoryFiltersAsync(int categoryId)
+        {
+            var response = await _http.GetAsync($"/api/Product/filters/{categoryId}");
+            if (!response.IsSuccessStatusCode) return new List<Toolify.ProductService.Models.CategoryFilterDto>();
+
+            return await response.Content.ReadFromJsonAsync<List<Toolify.ProductService.Models.CategoryFilterDto>>(jsonOptions)
+                   ?? new List<Toolify.ProductService.Models.CategoryFilterDto>();
+        }
+        public async Task<List<dynamic>> GetDynamicFiltersAsync(int categoryId)
+        {
+            var response = await _http.GetAsync($"/api/Product/features/{categoryId}");
+            if (!response.IsSuccessStatusCode) return new List<dynamic>();
+            return await response.Content.ReadFromJsonAsync<List<dynamic>>(jsonOptions);
         }
     }
 }

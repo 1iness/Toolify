@@ -69,6 +69,22 @@ namespace Toolify.ProductService.Services
 
             if (product.Price <= 0)
                 throw new ArgumentException("Price must be greater than zero");
-        }    
+        }
+        public async Task<List<ProductFeature>> GetFeaturesByCategoryAsync(int categoryId)
+        {
+            return await _repository.GetFeaturesByCategoryAsync(categoryId);
+        }
+        public async Task<ProductFeature> AddFeatureAsync(int categoryId, string name)
+        {
+            return await _repository.AddFeatureAsync(categoryId, name);
+        }
+        public async Task UpdateConfigurationsAsync(int productId, List<ProductConfiguration> configs)
+        {
+            await _repository.UpdateProductConfigurationsAsync(productId, configs);
+        }
+        public async Task<List<CategoryFilterDto>> GetCategoryFiltersAsync(int categoryId)
+        {
+            return await _repository.GetCategoryFiltersAsync(categoryId);
+        }
     }   
 }

@@ -14,5 +14,10 @@
         public string? ArticleNumber { get; set; }
         public double AverageRating { get; set; }
         public int ReviewsCount { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public List<ProductImage> Images { get; set; } = new();
+        public List<ProductConfiguration> Configurations { get; set; } = new();
+
     }
 }
