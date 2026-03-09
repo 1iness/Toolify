@@ -61,7 +61,8 @@ namespace HouseholdStore.Controllers
                 }
             }
 
-            ModelState.Remove("image"); 
+            ModelState.Remove("image");
+            ModelState.Remove("ArticleNumber");
 
             if (ModelState.IsValid)
             {

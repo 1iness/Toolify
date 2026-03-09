@@ -428,16 +428,14 @@ body {
 
     /* Картинка товара */
     .search-item img {
-        width: 100px;
-        height: 100px;
+        width: 60px !important;
+        height: 60px !important;
         object-fit: contain; 
         border-radius: 3px;
         margin-right: 20px;
         background: #fff;
-        border: 1px solid #eee;
         flex-shrink:0;
     }
-
     /* Текстовая информация */
     .search-item .info {
         flex-grow: 1;
@@ -446,7 +444,7 @@ body {
     }
 
     .search-item .product-name {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 500;
         margin-bottom: 2px;
     }

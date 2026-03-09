@@ -148,5 +148,19 @@ namespace HouseholdStore.Services
             var response = await _http.PostAsJsonAsync($"/api/Product/{productId}/configurations", configurations);
             response.EnsureSuccessStatusCode();
         }
+        public async Task<List<Toolify.ProductService.Models.CategoryFilterDto>> GetCategoryFiltersAsync(int categoryId)
+        {
+            var response = await _http.GetAsync($"/api/Product/filters/{categoryId}");
+            if (!response.IsSuccessStatusCode) return new List<Toolify.ProductService.Models.CategoryFilterDto>();
+
+            return await response.Content.ReadFromJsonAsync<List<Toolify.ProductService.Models.CategoryFilterDto>>(jsonOptions)
+                   ?? new List<Toolify.ProductService.Models.CategoryFilterDto>();
+        }
+        public async Task<List<dynamic>> GetDynamicFiltersAsync(int categoryId)
+        {
+            var response = await _http.GetAsync($"/api/Product/features/{categoryId}");
+            if (!response.IsSuccessStatusCode) return new List<dynamic>();
+            return await response.Content.ReadFromJsonAsync<List<dynamic>>(jsonOptions);
+        }
     }
 }

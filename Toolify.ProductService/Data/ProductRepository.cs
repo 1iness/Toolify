@@ -21,7 +21,30 @@ namespace Toolify.ProductService.Data
 
             var products = new List<Product>();
             using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync()) products.Add(MapProduct(reader));
+
+            while (await reader.ReadAsync())
+            {
+                products.Add(MapProduct(reader));
+            }
+            if (await reader.NextResultAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    int productId = reader.GetInt32(reader.GetOrdinal("ProductId"));
+                    var product = products.FirstOrDefault(p => p.Id == productId);
+
+                    if (product != null)
+                    {
+                        product.Configurations.Add(new ProductConfiguration
+                        {
+                            FeatureId = reader.GetInt32(reader.GetOrdinal("FeatureId")),
+                            FeatureName = reader.GetString(reader.GetOrdinal("FeatureName")),
+                            FeatureValue = reader.GetString(reader.GetOrdinal("FeatureValue"))
+                        });
+                    }
+                }
+            }
+
             return products;
         }
 
@@ -474,6 +497,41 @@ namespace Toolify.ProductService.Data
                     await insertCmd.ExecuteNonQueryAsync();
                 }
             }
+        }
+
+        public async Task<List<CategoryFilterDto>> GetCategoryFiltersAsync(int categoryId)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetCategoryFilters", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            command.Parameters.AddWithValue("@CategoryId", categoryId);
+
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+
+            var filters = new List<CategoryFilterDto>();
+
+            while (await reader.ReadAsync())
+            {
+                int featureId = Convert.ToInt32(reader["FeatureId"]);
+                string featureName = reader["FeatureName"].ToString() ?? string.Empty;
+                string featureValue = reader["FeatureValue"].ToString() ?? string.Empty;
+
+                var existingFilter = filters.FirstOrDefault(f => f.FeatureId == featureId);
+                if (existingFilter == null)
+                {
+                    existingFilter = new CategoryFilterDto { FeatureId = featureId, FeatureName = featureName };
+                    filters.Add(existingFilter);
+                }
+
+                if (!existingFilter.AvailableValues.Contains(featureValue))
+                {
+                    existingFilter.AvailableValues.Add(featureValue);
+                }
+            }
+            return filters;
         }
         private Product MapProduct(SqlDataReader reader)
         {

@@ -13,6 +13,7 @@
     <form method="post" enctype="multipart/form-data" asp-action="Edit">
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="ImagePath" />
+        <input type="hidden" asp-for="ArticleNumber">
 
         <p><b>Категория:</b></p>
         <select asp-for="CategoryId" asp-items="ViewBag.Categories" required style="padding: 5px; width: 200px;">

@@ -126,5 +126,11 @@ namespace Toolify.ProductService.Controllers
             await _repo.UpdateProductConfigurationsAsync(id, configurations); 
             return Ok();
         }
+        [HttpGet("filters/{categoryId}")]
+        public async Task<IActionResult> GetCategoryFilters(int categoryId)
+        {
+            var filters = await _repo.GetCategoryFiltersAsync(categoryId); 
+            return Ok(filters);
+        }
     }
 }

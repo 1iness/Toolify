@@ -82,5 +82,9 @@ namespace Toolify.ProductService.Services
         {
             await _repository.UpdateProductConfigurationsAsync(productId, configs);
         }
+        public async Task<List<CategoryFilterDto>> GetCategoryFiltersAsync(int categoryId)
+        {
+            return await _repository.GetCategoryFiltersAsync(categoryId);
+        }
     }   
 }
