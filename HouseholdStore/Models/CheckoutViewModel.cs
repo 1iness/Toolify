@@ -26,13 +26,14 @@ namespace HouseholdStore.Models
         [Required(ErrorMessage = "Введите адрес доставки")]
         public string Address { get; set; }
 
-        [Required(ErrorMessage = "Введите номер карты")]
-        public string CardNumber { get; set; }
+        //[Required(ErrorMessage = "Введите номер карты")]
+        public string? CardNumber { get; set; }
 
-        [Required(ErrorMessage = "Введите срок действия")]
-        public string CardExpiry { get; set; }
+        //[Required(ErrorMessage = "Введите срок действия")]
+        public string? CardExpiry { get; set; }
 
-        [Required(ErrorMessage = "Введите CVV")]
-        public string CardCvv { get; set; }
+        //[Required(ErrorMessage = "Введите CVV")]
+        public string? CardCvv { get; set; }
+        public string? PromoCode { get; set; }
     }
 }

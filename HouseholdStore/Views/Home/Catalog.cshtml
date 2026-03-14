@@ -19,7 +19,7 @@
         <input type="hidden" name="Sort" value="@ViewBag.SelectedSort" />
 
         <div class="filter-group">
-            <h3>Цена, ₽</h3>
+            <h3>Цена, Руб</h3>
             <div class="price-inputs">
                 <div class="input-wrapper">
                     <span>от</span>
@@ -136,7 +136,12 @@
                                 <strong style="font-size: 18px;">@product.Price руб</strong>
                             </div>
 
-                            <button class="btn-add-cart" style="width: 100%;">В корзину</button>
+                            <button type="button"
+                                    class="btn-add-cart"
+                                    style="width: 100%;"
+                                    onclick="addToCartAnimated(event, @product.Id, this)">
+                                В корзину
+                            </button>
                         </div>
                     </div>
                 }

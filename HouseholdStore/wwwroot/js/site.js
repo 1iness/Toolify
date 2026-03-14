@@ -271,7 +271,11 @@ function addToCartAnimated(event, productId, btnElement) {
     event.preventDefault(); 
 
     const card = btnElement.closest('.product-card');
-    const productImg = card.querySelector('img');
+    let productImg = card ? card.querySelector('img') : null;
+
+    if (!productImg) {
+        productImg = document.getElementById('compare-img-' + productId);
+    }
 
     const cartIcon = document.getElementById('cart-target-img');
 

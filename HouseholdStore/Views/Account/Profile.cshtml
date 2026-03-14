@@ -35,34 +35,34 @@
     <main class="profile-content">
         <section id="tab-personal" class="profile-section">
             <h2 class="section-title">Личные данные</h2>
-            <div class="data-grid">
-                <div class="form-group">
+            <div class="personal-grid">
+                <div class="info-group">
                     <label>Имя</label>
-                    <input type="text" class="form-input" value="@Model.FirstName" readonly />
+                    <input type="text" value="@Model.FirstName" class="form-input" readonly>
                 </div>
-                <div class="form-group">
+                <div class="info-group">
                     <label>Фамилия</label>
-                    <input type="text" class="form-input" value="@Model.LastName" readonly />
+                    <input type="text" value="@Model.LastName" class="form-input" readonly>
                 </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" class="form-input" value="@Model.Email" readonly />
+                <div class="info-group">
+                    <label>Электронная почта</label>
+                    <input type="email" value="@Model.Email" class="form-input" readonly>
                 </div>
-                <div class="form-group">
+                <div class="info-group">
                     <label>Телефон</label>
-                    <input type="tel" class="form-input" value="@Model.Phone" readonly />
+                    <input type="text" value="@Model.Phone" class="form-input" readonly>
                 </div>
             </div>
-            <button class="save-changes-btn">Сохранить изменения</button>
+            <button class="save-changes-btn">Редактировать данные</button>
         </section>
 
         <section id="tab-orders" class="profile-section" style="display: none;">
             <h2 class="section-title">Текущие заказы</h2>
 
-            @if (Model.Orders != null && Model.Orders.Any(o => o.Status == "New" || o.Status == "Processing"))
+            @if (Model.Orders != null && Model.Orders.Any(o => o.Status == "Новый" || o.Status == "В обработке" || o.Status == "Доставляется"))
             {
                 <div class="orders-list">
-                    @foreach (var order in Model.Orders.Where(o => o.Status == "New" || o.Status == "Processing"))
+                    @foreach (var order in Model.Orders.Where(o => o.Status == "Новый" || o.Status == "В обработке" || o.Status == "Доставляется"))
                     {
                         <div class="order-card-item">
                             <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
@@ -70,26 +70,31 @@
                                     <span class="fw-bold">Заказ №@order.OrderId</span>
                                     <span class="text-muted ms-2">от @order.OrderDate.ToString("dd.MM.yyyy")</span>
                                 </div>
-                                <span class="status-badge">@order.Status</span>
+                                @{
+                                    var badgeClass = order.Status == "Новый" ? "bg-info" : "bg-warning";
+                                }
+                                <span class="status-badge badge @badgeClass text-dark">@order.Status</span>
                             </div>
 
-                            <div class="d-flex flex-wrap gap-3">
+                            <div class="order-items-scroll-v">
                                 @foreach (var item in order.Items)
                                 {
-                                    <div class="text-center" style="width: 80px;">
-                                        <img src="https://localhost:7188@(item.ImageUrl)"
-                                             class="rounded border"
-                                             style="width: 60px; height: 60px; object-fit: cover;"
+                                    <div class="order-product-row">
+                                        <img src="https://localhost:7188/api/Product/@(item.ProductId)/image"
+                                             class="rounded border me-3"
+                                             style="width: 50px; height: 50px; object-fit: cover;"
                                              onerror="this.src='/images/no-image.png'" />
-                                        <div class="text-truncate mt-1" style="font-size: 10px;">@item.ProductName</div>
-                                        <div class="fw-bold" style="font-size: 11px;">@item.Quantity шт.</div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold small text-dark">@item.ProductName</div>
+                                            <div class="text-muted" style="font-size: 11px;">@item.Quantity шт. × @item.Price.ToString("N2") руб.</div>
+                                        </div>
                                     </div>
                                 }
                             </div>
 
-                            <div class="text-end mt-2">
+                            <div class="text-end mt-3 border-top pt-2">
                                 <span class="text-muted small">Итого: </span>
-                                <span class="fw-bold">@order.TotalAmount.ToString("N2") руб</span>
+                                <span class="fw-bold text-primary" style="font-size: 1.1rem;">@order.TotalAmount.ToString("N2") руб</span>
                             </div>
                         </div>
                     }
@@ -98,8 +103,8 @@
             else
             {
                 <div class="orders-empty-state">
-                    <p>У вас пока нет активных заказов</p>
-                    <a asp-controller="Home" asp-action="Index" class="go-to-catalog">Перейти в каталог</a>
+                    <p>Активных заказов нет</p>
+                    <a asp-controller="Home" asp-action="Index" class="go-to-catalog">В каталог</a>
                 </div>
             }
         </section>
@@ -107,18 +112,37 @@
         <section id="tab-history" class="profile-section" style="display: none;">
             <h2 class="section-title">История заказов</h2>
 
-            @if (Model.Orders != null && Model.Orders.Any(o => o.Status != "New" && o.Status != "Processing"))
+            @if (Model.Orders != null && Model.Orders.Any(o => o.Status == "Доставлен" || o.Status == "Отменен" || o.Status == "Завершен"))
             {
                 <div class="orders-list">
-                    @foreach (var order in Model.Orders.Where(o => o.Status != "New" && o.Status != "Processing"))
+                    @foreach (var order in Model.Orders.Where(o => o.Status == "Доставлен" || o.Status == "Отменен" || o.Status == "Завершен"))
                     {
-                        <div class="order-card-item" style="opacity: 0.8;">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Заказ №@order.OrderId от @order.OrderDate.ToShortDateString()</span>
-                                <span class="badge bg-light text-dark">@order.Status</span>
+                        <div class="order-card-item" style="opacity: 0.85; background: #fcfcfc;">
+                            <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                <div>
+                                    <span class="fw-bold">Заказ №@order.OrderId</span>
+                                    <span class="text-muted ms-2">от @order.OrderDate.ToString("dd.MM.yyyy")</span>
+                                </div>
+                                @{
+                                    var histBadge = order.Status == "Отменен" ? "bg-danger" : "bg-light";
+                                }
+                                <span class="status-badge badge @histBadge text-dark">@order.Status</span>
                             </div>
-                            <div class="text-muted small">
-                                Сумма: @order.TotalAmount.ToString("N2") руб
+
+                            <div class="order-items-scroll-v" style="max-height: 150px;">
+                                @foreach (var item in order.Items)
+                                {
+                                    <div class="order-product-row">
+                                        <div class="flex-grow-1 d-flex justify-content-between">
+                                            <div class="fw-normal small text-dark">@item.ProductName (x@item.Quantity)</div>
+                                            <div class="text-muted" style="font-size: 12px;">@item.Price.ToString("N2") руб.</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="text-end mt-2 border-top pt-2">
+                                <span class="text-muted small">Сумма заказа: <strong class="text-dark">@order.TotalAmount.ToString("N2") руб</strong></span>
                             </div>
                         </div>
                     }
@@ -131,7 +155,6 @@
                 </div>
             }
         </section>
-
     </main>
 </div>
 

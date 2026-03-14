@@ -163,6 +163,30 @@ public class UserRepository
 
         cmd.ExecuteNonQuery();
     }
+    public async Task<List<User>> GetAllUsersAsync()
+    {
+        var users = new List<User>();
+
+        using (var con = new SqlConnection(_connectionString))
+        {
+            using (var cmd = new SqlCommand("usp_GetAllUsers", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                await con.OpenAsync();
+
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        users.Add(MapUserFromReader(reader));
+                    }
+                }
+            }
+        }
+
+        return users;
+    }
 
     private User MapUserFromReader(SqlDataReader reader)
     {

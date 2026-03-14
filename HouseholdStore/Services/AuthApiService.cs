@@ -90,5 +90,21 @@ public class AuthApiService
         await _http.PostAsJsonAsync($"{BASE_URL}/reset-password",
             new { Email = email, NewPassword = newPassword });
     }
+    public async Task<List<User>> GetAllUsersAsync()
+    {
+        var token = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
+        if (!string.IsNullOrEmpty(token))
+        {
+            _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
 
+        var response = await _http.GetAsync($"{BASE_URL}/users");
+
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<List<User>>() ?? new List<User>();
+        }
+
+        return new List<User>();
+    }
 }

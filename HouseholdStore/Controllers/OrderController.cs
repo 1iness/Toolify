@@ -15,12 +15,14 @@ namespace HouseholdStore.Controllers
         private readonly ProductRepository _productRepo;
         private readonly AuthApiService _authService;
         private readonly EmailService _emailService;
+        private readonly ProductApiService _api;
 
-        public OrderController(ProductRepository productRepo, AuthApiService authService, EmailService emailService)
+        public OrderController(ProductRepository productRepo, AuthApiService authService, EmailService emailService, ProductApiService api)
         {
             _productRepo = productRepo;
             _authService = authService;
             _emailService = emailService;
+            _api = api;
         }
 
         [HttpGet]
@@ -72,15 +74,16 @@ namespace HouseholdStore.Controllers
 
             var order = new Order
             {
-                UserId = userId, 
+                UserId = userId,
                 GuestFirstName = model.FirstName,
                 GuestLastName = model.LastName,
                 GuestEmail = model.Email,
                 GuestPhone = model.Phone,
-                Address = model.Address
+                Address = model.Address,
+                PromoCode = model.PromoCode
             };
 
-            int orderId = await _productRepo.CreateOrderAsync(order, guestId);
+            int orderId = await _productRepo.CreateOrderAsync(order, guestId, model.PromoCode);
 
             return RedirectToAction("Confirmed", new { id = orderId });
         }
@@ -105,6 +108,17 @@ namespace HouseholdStore.Controllers
             }
 
             return View(id);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApplyPromo(string code)
+        {
+            var discount = await _api.GetPromoDiscountAsync(code);
+            if (discount.HasValue)
+            {
+                return Json(new { success = true, discount = discount.Value });
+            }
+            return Json(new { success = false, message = "Неверный промокод" });
         }
 
     }

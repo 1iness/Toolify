@@ -11,8 +11,9 @@
         public string GuestPhone { get; set; }
         public DateTime OrderDate { get; set; }
         public decimal TotalAmount { get; set; }
-        public string Status { get; set; } = "New";
+        public string Status { get; set; } = "Новый";
         public string Address { get; set; } = string.Empty;
         public List<OrderItem> Items { get; set; } = new();
+        public string? PromoCode { get; set; } 
     }
 }

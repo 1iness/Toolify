@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -196,6 +197,14 @@ public class AuthController : ControllerBase
         var hash = PasswordHasher.Hash(request.NewPassword);
         _repo.UpdatePassword(request.Email, hash);
         return Ok();
+    }
+
+    [Authorize(Roles = "Admin")] 
+    [HttpGet("users")]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        var users = await _repo.GetAllUsersAsync();
+        return Ok(users);
     }
 }
 

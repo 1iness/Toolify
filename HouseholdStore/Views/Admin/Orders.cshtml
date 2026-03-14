@@ -1,0 +1,51 @@
+﻿@model IEnumerable<Toolify.ProductService.Models.Order>
+
+@{
+    ViewData["Title"] = "Управление заказами";
+    Layout = null;
+}
+
+<h2>Учет заказов</h2>
+
+<table class="table table-bordered mt-4">
+    <thead class="table-dark">
+        <tr>
+            <th>№ Заказа</th>
+            <th>Дата</th>
+            <th>Клиент</th>
+            <th>Сумма</th>
+            <th>Промокод</th>
+            <th>Статус</th>
+            <th>Действие</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>@order.Id</td>
+                <td>@order.OrderDate.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>
+                    @(order.GuestFirstName ?? "Зарегистрированный") @order.GuestLastName <br />
+                    <small>@order.GuestEmail</small>
+                </td>
+                <td>@order.TotalAmount руб.</td>
+                <td>@(string.IsNullOrEmpty(order.PromoCode) ? "-" : order.PromoCode)</td>
+                <td>
+                    <form asp-action="UpdateOrderStatus" method="post" class="d-flex">
+                        <input type="hidden" name="orderId" value="@order.Id" />
+                        <select name="status" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+                            <option value="Новый" selected="@(order.Status == "Новый")">Новый</option>
+                            <option value="В обработке" selected="@(order.Status == "В обработке")">В обработке</option>
+                            <option value="Оплачен" selected="@(order.Status == "Оплачен")">Оплачен</option>
+                            <option value="Отменен" selected="@(order.Status == "Отменен")">Отменен</option>
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-info">Детали</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

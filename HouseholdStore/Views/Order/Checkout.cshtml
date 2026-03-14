@@ -11,7 +11,6 @@
 <div class="checkout-container py-4">
     <form asp-action="Create" method="post" id="checkoutForm">
         <div class="row checkout-grid">
-
             <div class="col-lg-8">
 
                 <div class="checkout-card">
@@ -27,7 +26,7 @@
 
                             <div class="item-details">
                                 <div class="item-name">@item.ProductName</div>
-                                <div class="item-meta">Арт. @item.ProductId &bull; @item.Quantity шт.</div>
+                                <div class="item-meta">Арт. @(string.IsNullOrEmpty(item.ArticleNumber) ? "---" : item.ArticleNumber) &bull; @item.Quantity шт.</div>
                             </div>
 
                             <div class="item-price-block">
@@ -42,76 +41,109 @@
                 </div>
 
                 <div class="checkout-card">
-                    <h4>Адрес доставки</h4>
-                    <div class="mb-3">
-                        <label class="form-label">Адрес доставки</label>
-                        <textarea asp-for="Address" class="form-control" rows="2" placeholder="Город, улица, дом, квартира"></textarea>
-                        <span asp-validation-for="Address" class="text-danger"></span>
-                    </div>
-                </div>
-
-                <div class="checkout-card">
-                    <h4>Способ оплаты</h4>
-
-                    <div class="payment-method">
-                        Оплатить онлайн
-                    </div>
-
-                    <div class="payment-icons mb-3">
-                        <span class="badge bg-light text-dark border">VISA</span>
-                        <span class="badge bg-light text-dark border">MasterCard</span>
-                        <span class="badge bg-light text-dark border">Белкарт</span>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">Номер карты</label>
-                            <input asp-for="CardNumber" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" />
-                            <span asp-validation-for="CardNumber" class="text-danger"></span>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">Срок (ММ/ГГ)</label>
-                            <input asp-for="CardExpiry" class="form-control" placeholder="12/25" maxlength="5" />
-                            <span asp-validation-for="CardExpiry" class="text-danger"></span>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">CVC/CVV</label>
-                            <input asp-for="CardCvv" type="password" class="form-control" placeholder="•••" maxlength="3" />
-                            <span asp-validation-for="CardCvv" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-
-                
-
-                <div class="checkout-card">
                     <h4>Ваши данные</h4>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Имя*</label>
-                            <input asp-for="FirstName" class="form-control" placeholder="Имя" />
+                            <input asp-for="FirstName" class="form-control" placeholder="Имя" required />
                             <span asp-validation-for="FirstName" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Фамилия*</label>
-                            <input asp-for="LastName" class="form-control" placeholder="Фамилия" />
+                            <input asp-for="LastName" class="form-control" placeholder="Фамилия" required />
                             <span asp-validation-for="LastName" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Телефон*</label>
                             <div class="input-group">
-                                <input asp-for="Phone" id="phoneInput" class="form-control" placeholder="+375 (XX) XXX-XX-XX" />
-                                <button type="button" class="btn btn-outline-success" id="btnConfirmPhone" onclick="confirmPhone()">
-                                    OK
-                                </button>
+                                <input asp-for="Phone" id="phoneInput" class="form-control" placeholder="+375 (XX) XXX-XX-XX" required />
+                                <button type="button" class="btn btn-outline-success" id="btnConfirmPhone" onclick="confirmPhone()">OK</button>
                             </div>
                             <span asp-validation-for="Phone" class="text-danger"></span>
                             <small id="phoneStatus" class="text-muted d-block mt-1" style="font-size: 0.8rem">Подтвердите номер для оплаты</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">E-Mail*</label>
-                            <input asp-for="Email" class="form-control" placeholder="Электронная почта" />
+                            <input asp-for="Email" class="form-control" placeholder="Электронная почта" required />
                             <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-card">
+                    <h4>Способ доставки</h4>
+                    <div class="mb-4">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="DeliveryType" id="delCourier" value="Courier" checked onchange="toggleDelivery()">
+                            <label class="form-check-label" for="delCourier">Курьером до двери</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="DeliveryType" id="delPickup" value="Pickup" onchange="toggleDelivery()">
+                            <label class="form-check-label" for="delPickup">Самовывоз (из пункта выдачи)</label>
+                        </div>
+                    </div>
+
+                    <div id="addressFieldsBlock">
+                        <h5 style="font-size: 16px; margin-bottom: 15px;">Адрес доставки</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Город / Нас. пункт</label>
+                                <input type="text" id="CityInput" class="form-control address-part" placeholder="Минск" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Улица</label>
+                                <input type="text" id="StreetInput" class="form-control address-part" placeholder="пр. Независимости" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Дом / Корпус</label>
+                                <input type="text" id="HouseInput" class="form-control address-part" placeholder="11А" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Квартира / Офис</label>
+                                <input type="text" id="AptInput" class="form-control address-part" placeholder="кв. 5 (оставьте пустым для частного дома)" />
+                            </div>
+                        </div>
+                        <input type="hidden" asp-for="Address" id="FinalAddress" />
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="checkout-card">
+                    <h4>Способ оплаты</h4>
+                    <div class="mb-4">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="PaymentType" id="payOnline" value="Online" checked onchange="togglePayment()">
+                            <label class="form-check-label" for="payOnline">Картой онлайн</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="PaymentType" id="payCash" value="Cash" onchange="togglePayment()">
+                            <label class="form-check-label" for="payCash">При получении</label>
+                        </div>
+                    </div>
+
+                    <div id="onlinePaymentFields">
+                        <div class="payment-icons mb-3">
+                            <span class="badge bg-light text-dark border">VISA</span>
+                            <span class="badge bg-light text-dark border">MasterCard</span>
+                            <span class="badge bg-light text-dark border">Белкарт</span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Номер карты</label>
+                                <input asp-for="CardNumber" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" />
+                                <span asp-validation-for="CardNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Срок (ММ/ГГ)</label>
+                                <input asp-for="CardExpiry" class="form-control" placeholder="12/25" maxlength="5" />
+                                <span asp-validation-for="CardExpiry" class="text-danger"></span>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">CVC/CVV</label>
+                                <input asp-for="CardCvv" type="password" class="form-control" placeholder="•••" maxlength="3" />
+                                <span asp-validation-for="CardCvv" class="text-danger"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -119,8 +151,8 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="checkout-card summary-card">
-                    <h4>В корзине</h4>
+                <div class="checkout-card summary-card" style="position: sticky; top: 20px;">
+                    <h4>Ваш заказ</h4>
 
                     <div class="summary-row">
                         <span>Товары, @Model.CartItems.Sum(x => x.Quantity) шт.</span>
@@ -136,20 +168,37 @@
                     }
 
                     <div class="summary-row">
+                        <span>Доставка</span>
+                        <span id="summaryDeliveryText">Курьер</span>
+                    </div>
+
+                    <div class="summary-row">
                         <span>Оплата</span>
-                        <span class="text-success">Оплатить онлайн</span>
+                        <span id="summaryPaymentText" class="text-success">Онлайн</span>
+                    </div>
+
+                    <hr />
+
+                    <div class="promo-code-block mb-3">
+                        <label class="form-label" style="font-size: 14px; font-weight: 600;">Есть промокод?</label>
+                        <div class="input-group">
+                            <input type="text" id="promoInput" class="form-control" placeholder="Введите промокод">
+                            <button type="button" onclick="applyPromoCode()" class="btn btn-primary">Применить</button>
+                            <input type="hidden" asp-for="PromoCode" id="appliedPromoCode" />
+                            <small id="promoStatus" class="d-block mt-1"></small>
+                        </div>
+                        <small id="promoStatus" class="text-muted d-block mt-1"></small>
                     </div>
 
                     <div class="summary-total">
                         <span>Итого:</span>
-                        <span class="total-price-large">@Model.TotalAmount.ToString("N2") руб</span>
+                        <span id="totalAmount" class=" total-price-large">@Model.TotalAmount.ToString("N2") руб</span>
                     </div>
 
-                    <button type="submit" id="btnSubmitOrder" class="btn-pay" disabled>
-                        Оплатить заказ
-                    </button>
 
-                    
+                    <button type="submit" id="btnSubmitOrder" class="btn-pay" disabled style="width: 100%; padding: 15px; font-weight: bold; background: #28a745; color: white; border-radius: 8px; border: none; margin-top: 20px;">
+                        Подтвердить заказ
+                    </button>
                 </div>
             </div>
 
@@ -223,6 +272,91 @@
         });
     }
 
+            // Скрываем/показываем адрес в 
+        function toggleDelivery() {
+            const isPickup = document.getElementById('delPickup').checked;
+            const addressBlock = document.getElementById('addressFieldsBlock');
+            const summaryDelivery = document.getElementById('summaryDeliveryText');
+
+            if (isPickup) {
+                addressBlock.style.display = 'none';
+                summaryDelivery.textContent = 'Самовывоз (Бесплатно)';
+                document.getElementById('FinalAddress').value = 'Самовывоз'; 
+            } else {
+                addressBlock.style.display = 'block';
+                summaryDelivery.textContent = 'Курьер';
+                updateFinalAddress(); 
+            }
+        }
+
+        // Скрываем/показываем карту 
+        function togglePayment() {
+            const isCash = document.getElementById('payCash').checked;
+            const paymentBlock = document.getElementById('onlinePaymentFields');
+            const summaryPayment = document.getElementById('summaryPaymentText');
+            const btnSubmit = document.getElementById('btnSubmitOrder');
+
+
+
+            const cardInputs = paymentBlock.querySelectorAll('input');
+
+            if (isCash) {
+                paymentBlock.style.display = 'none';
+                summaryPayment.textContent = 'При получении';
+                summaryPayment.classList.replace('text-success', 'text-warning');
+                btnSubmit.textContent = 'Оформить заказ';
+
+                cardInputs.forEach(input => {
+                    input.disabled = true;
+                    input.value = ""; 
+                });
+            } else {
+                paymentBlock.style.display = 'block';
+                summaryPayment.textContent = 'Онлайн';
+                summaryPayment.classList.replace('text-warning', 'text-success');
+                btnSubmit.textContent = 'Оплатить заказ';
+
+                cardInputs.forEach(input => {
+                    input.disabled = false;
+                });
+            }
+        }
+
+        // Собираем адрес из кусочков перед отправкой формы
+        function updateFinalAddress() {
+            const city = document.getElementById('CityInput').value;
+            const street = document.getElementById('StreetInput').value;
+            const house = document.getElementById('HouseInput').value;
+            const apt = document.getElementById('AptInput').value;
+
+            let fullAddress = "";
+            if (city) fullAddress += "г. " + city + ", ";
+            if (street) fullAddress += "ул. " + street + ", ";
+            if (house) fullAddress += "д. " + house;
+            if (apt) fullAddress += ", кв./оф. " + apt;
+
+            document.getElementById('FinalAddress').value = fullAddress;
+        }
+
+        document.querySelectorAll('.address-part').forEach(input => {
+            input.addEventListener('input', updateFinalAddress);
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            toggleDelivery();
+            togglePayment();
+        });
+
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+            if (document.getElementById('delCourier').checked) {
+                updateFinalAddress();
+                if (document.getElementById('FinalAddress').value.length < 10) {
+                    e.preventDefault();
+                    alert("Пожалуйста, заполните адрес доставки полностью.");
+                }
+            }
+        });
+
     // номер карты
     const cardInput = document.getElementById('CardNumber');
     if (cardInput) {
@@ -237,6 +371,57 @@
             }
         });
     }
+
+            function checkPromo() {
+            const code = document.getElementById('promoInput').value;
+            const statusText = document.getElementById('promoStatus');
+
+            if(!code) return;
+
+            statusText.textContent = "Промокод будет применен при расчете итоговой суммы";
+            statusText.className = "d-block mt-1 text-success";
+        }
+
+            async function applyPromoCode() {
+            const codeInput = document.getElementById('promoInput');
+            const statusElement = document.getElementById('promoStatus');
+            const totalElement = document.getElementById('totalAmount');
+
+            const code = codeInput.value.trim();
+            if (!code) {
+                statusElement.innerText = "Введите код";
+                statusElement.className = "text-warning";
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Order/ApplyPromo?code=${encodeURIComponent(code)}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                     let currentTotal = parseFloat(totalElement.innerText.replace(',', '.'));
+                     let discountPercent = result.discount;
+                     let newTotal = currentTotal - (currentTotal * (discountPercent / 100));
+
+                    totalElement.innerHTML = `<del class="text-muted" style="font-size: 0.8em;">${currentTotal}</del> <strong>${newTotal.toFixed(2)}</strong>`;
+
+                    statusElement.innerText = `Скидка ${discountPercent}% применена!`;
+                    statusElement.className = "text-success";
+
+                    codeInput.readOnly = true;
+                        document.getElementById('appliedPromoCode').value = code;
+                } else {
+                    statusElement.innerText = result.message || "Промокод не найден";
+                    statusElement.className = "text-danger";
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                statusElement.innerText = "Ошибка при проверке промокода";
+                statusElement.className = "text-danger";
+            }
+        }
     </script>
 
  }

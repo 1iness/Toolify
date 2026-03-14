@@ -1,0 +1,64 @@
+﻿@{
+    ViewData["Title"] = "Помощник в подборе товара";
+}
+
+<div class="container" style="padding: 40px 0; max-width: 800px; margin: 0 auto;">
+    <h1 style="text-align: center; margin-bottom: 30px;">Умный подбор товара</h1>
+
+    <div style="background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+        
+        <form method="get" action="@Url.Action("SmartSelection", "Home")" id="categoryForm" style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+            <label style="font-weight: bold; margin-bottom: 10px; display: block;">1. Что вы ищете?</label>
+            <select name="categoryId" onchange="document.getElementById('categoryForm').submit();" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc;">
+                <option value="">-- Выберите тип товара --</option>
+                @if (ViewBag.Categories != null)
+                {
+                    foreach (var cat in ViewBag.Categories)
+                    {
+                        <option value="@cat.Id"
+                                selected="@(ViewBag.SelectedCategoryId != null && (int)ViewBag.SelectedCategoryId == cat.Id)">
+                            @cat.Name
+                        </option>
+                    }
+                }
+            </select>
+        </form>
+
+        @if (ViewBag.SelectedCategoryId != null)
+        {
+            <form method="get" action="@Url.Action("SmartSelectionResults", "Home")">
+                <input type="hidden" name="CategoryId" value="@ViewBag.SelectedCategoryId" />
+
+                <label style="font-weight: bold; margin-bottom: 10px; display: block;">2. Ваш бюджет (₽)</label>
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <input type="number" name="MinPrice" placeholder="От" style="width: 50%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;" />
+                    <input type="number" name="MaxPrice" placeholder="До" style="width: 50%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;" />
+                </div>
+
+                <label style="font-weight: bold; margin-bottom: 10px; display: block;">3. Важные параметры</label>
+                @if (ViewBag.CategoryFilters != null)
+                {
+                    var filters = (List<Toolify.ProductService.Models.CategoryFilterDto>)ViewBag.CategoryFilters;
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px;">
+                        @foreach (var f in filters)
+                        {
+                            <div style="flex: 1; min-width: 200px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+                                <h4 style="font-size: 15px; margin-top: 0;">@f.FeatureName</h4>
+                                @foreach (var val in f.AvailableValues)
+                                {
+                                    <label style="display: block; margin-bottom: 5px; cursor: pointer; font-size: 14px;">
+                                        <input type="checkbox" name="SelectedFeatures[@f.FeatureId]" value="@val" /> @val
+                                    </label>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                <button type="submit" style="width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                    Подобрать варианты
+                </button>
+            </form>
+        }
+    </div>
+</div>

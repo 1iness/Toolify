@@ -1,0 +1,80 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+    }
+
+.card-header {
+    font-weight: 600;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 15px 20px;
+}
+
+.chart-container {
+    position: relative;
+    padding: 10px;
+}
+
+.table-responsive {
+    border-radius: 8px;
+}
+
+.table {
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+    .table thead th {
+        background-color: #fcfcfc;
+        border-top: none;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #777;
+        padding: 12px 15px;
+    }
+
+    .table tbody td {
+        padding: 15px;
+        font-size: 0.95rem;
+        border-color: #f4f4f4;
+    }
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.text-primary {
+    color: #0d6efd !important;
+}
+
+.btn-outline-primary {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 16px;
+}
+
+.btn-success {
+    border-radius: 8px;
+    font-weight: 500;
+}

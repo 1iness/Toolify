@@ -1,0 +1,120 @@
+﻿@model List<Toolify.ProductService.Models.Product>
+
+@{
+    ViewData["Title"] = "Сравнение товаров";
+}
+<style>
+    .smart-selection-card {
+        background: #fff;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        border: 1px solid #f0f0f0;
+    }
+
+    input[type="number"]:focus, select:focus {
+        border-color: #28a745 !important;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+    }
+
+    .btn-submit:hover {
+        background: #218838 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-hover-effect:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15) !important;
+        filter: brightness(1.1);
+        color: white !important;
+    }
+</style>
+
+<div class="container" style="padding: 40px 0; max-width: 1200px; margin: 0 auto;">
+    <h1 style="margin-bottom: 30px;">Сравнительная таблица</h1>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div style="padding: 40px; text-align: center; background: #f8f9fa; border-radius: 15px; border: 1px dashed #ccc;">
+            <i class="bi bi-exclamation-circle" style="font-size: 48px; color: #6c757d; display: block; margin-bottom: 15px;"></i>
+            <h3 style="font-weight: 600;">По вашим критериям ничего не найдено</h3>
+            <p style="color: #666; margin-bottom: 25px;">Попробуйте смягчить условия поиска или выбрать другую категорию.</p>
+
+            <a href="@Url.Action("SmartSelection", "Home")"
+               class="btn-hover-effect"
+               style="background: #28a745; color: white; padding: 12px 30px; border-radius: 50px; text-decoration: none; display: inline-block; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);">
+                <i class="bi bi-arrow-left-short"></i> Вернуться к подбору
+            </a>
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+                <thead>
+                    <tr style="background: #f8f9fa;">
+                        <th style="padding: 15px; border: 1px solid #dee2e6; width: 200px; text-align: left;">Параметры</th>
+                        @foreach (var p in Model)
+                        {
+                            <th style="padding: 15px; border: 1px solid #dee2e6; text-align: center; width: auto; min-width: 200px; max-width: 300px;">
+                                <div style="height: 200px; width: 100%; max-width: 250px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                    <img id="compare-img-@p.Id"
+                                         src="https://localhost:7188/api/Product/@p.Id/image"
+                                         alt="@p.Name"
+                                         style="max-height: 100%; max-width: 100%; object-fit: contain; width: auto;"
+                                         onerror="this.src='/images/no-image.png'" />
+                                </div>
+                                <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 10px; min-height: 40px; display: flex; align-items: center; justify-content: center;">@p.Name</h4>
+                                <strong style="color: #e74c3c; font-size: 18px; display: block;">@p.Price руб</strong>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.UniqueFeatures != null)
+                    {
+                        foreach (string featureName in ViewBag.UniqueFeatures)
+                        {
+                            <tr>
+                                <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-weight: bold; background: #fdfdfd;">@featureName</td>
+                                @foreach (var p in Model)
+                                {
+                                    var configVal = p.Configurations?.FirstOrDefault(c => c.FeatureName == featureName)?.FeatureValue ?? "—";
+                                    <td style="padding: 12px 15px; border: 1px solid #dee2e6; text-align: center; color: #555;">@configVal</td>
+                                }
+                            </tr>
+                        }
+                    }
+
+                    <tr>
+                        <td style="padding: 15px; border: 1px solid #dee2e6; font-weight: bold; background: #fdfdfd; vertical-align: middle;">Оформление</td>
+                        @foreach (var p in Model)
+                        {
+                            <td style="padding: 15px; border: 1px solid #dee2e6; text-align: center; vertical-align: top;">
+                                <div class="product-card" style="display: inline-block; width: 100%; border: none; padding: 0; box-shadow: none; background: transparent;">
+                                    <button onclick="addToCartAnimated(event, @p.Id, this)"
+                                            style="background: #28a745; color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s;">
+                                        <i class="bi bi-cart-plus"></i> В корзину
+                                    </button>
+                                    <div style="margin-top: 10px; line-height: 1.2;">
+                                        <small style="color: #888; font-size: 12px;">Выбор доставки доступен</small>
+                                    </div>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 40px; text-align: center; padding-bottom: 20px;">
+            <a href="@Url.Action("SmartSelection", "Home")"
+               class="btn-hover-effect"
+               style="background: #6c757d; color: white; padding: 12px 30px; border-radius: 50px; text-decoration: none; display: inline-block; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <i class="bi bi-arrow-left"></i> Подобрать другие варианты
+            </a>
+        </div>
+    }
+</div>

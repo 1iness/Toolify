@@ -23,7 +23,7 @@
         <nav class="menu">
             <a asp-controller="Home" asp-action="About">О Нас</a>
             <a asp-controller="Home" asp-action="Index">Главная</a>
-            <a asp-controller="Home" asp-action="Index">Каталог</a>
+            <a href="@Url.Action("SmartSelection", "Home")" class="nav-link">Помощник подбора</a>
         </nav>
 
         <div class="header-icons">

@@ -288,19 +288,19 @@ namespace Toolify.ProductService.Data
             await command.ExecuteNonQueryAsync();
         }
 
-        public async Task<int> CreateOrderAsync(Order order, string guestId, string? promoCode = null)
+        public async Task<int> CreateOrderAsync(Order order, string? guestId, string? promoCode)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_CreateOrder", connection) { CommandType = CommandType.StoredProcedure };
 
-            command.Parameters.AddWithValue("@UserId", (object?)order.UserId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@GuestFirstName", order.GuestFirstName ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("@GuestLastName", order.GuestLastName ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("@GuestEmail", order.GuestEmail ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("@GuestPhone", order.GuestPhone ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("@Address", order.Address ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("@GuestId", guestId);
-            command.Parameters.AddWithValue("@PromoCode", promoCode ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@UserId", (object)order.UserId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@GuestId", (object)guestId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@GuestFirstName", (object)order.GuestFirstName ?? DBNull.Value);
+            command.Parameters.AddWithValue("@GuestLastName", (object)order.GuestLastName ?? DBNull.Value);
+            command.Parameters.AddWithValue("@GuestEmail", (object)order.GuestEmail ?? DBNull.Value);
+            command.Parameters.AddWithValue("@GuestPhone", (object)order.GuestPhone ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Address", order.Address);
+            command.Parameters.AddWithValue("@PromoCode", (object)promoCode ?? DBNull.Value);
 
             await connection.OpenAsync();
             return Convert.ToInt32(await command.ExecuteScalarAsync());
@@ -315,9 +315,10 @@ namespace Toolify.ProductService.Data
 
             await connection.OpenAsync();
             using var reader = await command.ExecuteReaderAsync();
+
             while (await reader.ReadAsync())
             {
-                int orderId = reader.GetInt32(0);
+                int orderId = reader.GetInt32(reader.GetOrdinal("Id"));
                 var order = orders.FirstOrDefault(o => o.OrderId == orderId);
 
                 if (order == null)
@@ -325,18 +326,19 @@ namespace Toolify.ProductService.Data
                     order = new OrderHistoryDto
                     {
                         OrderId = orderId,
-                        OrderDate = reader.GetDateTime(1),
-                        TotalAmount = reader.GetDecimal(2),
-                        Status = reader.GetString(3)
+                        OrderDate = reader.GetDateTime(reader.GetOrdinal("OrderDate")),
+                        TotalAmount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
+                        Status = reader.GetString(reader.GetOrdinal("Status"))
                     };
                     orders.Add(order);
                 }
 
                 order.Items.Add(new OrderItemDto
                 {
-                    Quantity = reader.GetInt32(4),
-                    Price = reader.GetDecimal(5),
-                    ProductName = reader.GetString(6)
+                    Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                    Price = reader.GetDecimal(reader.GetOrdinal("HistoricalPrice")),
+                    ProductName = reader.GetString(reader.GetOrdinal("Name")),
+                    ProductId = reader.GetInt32(reader.GetOrdinal("ProductId"))
                 });
             }
             return orders;
@@ -533,6 +535,143 @@ namespace Toolify.ProductService.Data
             }
             return filters;
         }
+
+
+        public async Task<List<PromoCode>> GetAllPromoCodesAsync()
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetAllPromoCodes", connection) { CommandType = CommandType.StoredProcedure };
+            await connection.OpenAsync();
+
+            var promos = new List<PromoCode>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                promos.Add(new PromoCode
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Code = reader.GetString(reader.GetOrdinal("Code")),
+                    DiscountPercent = reader.GetInt32(reader.GetOrdinal("DiscountPercent")),
+                    StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                    EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
+                });
+            }
+            return promos;
+        }
+
+        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_AddPromoCode", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@Code", code);
+            command.Parameters.AddWithValue("@DiscountPercent", discount);
+            command.Parameters.AddWithValue("@StartDate", start);
+            command.Parameters.AddWithValue("@EndDate", end);
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<Order>> GetAllOrdersAsync()
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetAllOrders", connection) { CommandType = CommandType.StoredProcedure };
+
+            await connection.OpenAsync();
+            var orders = new List<Order>();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                orders.Add(new Order
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
+                    OrderDate = reader.GetDateTime(reader.GetOrdinal("OrderDate")),
+                    TotalAmount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
+                    Status = reader.GetString(reader.GetOrdinal("Status")),
+                    Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
+                    GuestFirstName = reader.IsDBNull(reader.GetOrdinal("GuestFirstName")) ? null : reader.GetString(reader.GetOrdinal("GuestFirstName")),
+                    GuestLastName = reader.IsDBNull(reader.GetOrdinal("GuestLastName")) ? null : reader.GetString(reader.GetOrdinal("GuestLastName")),
+                    GuestEmail = reader.IsDBNull(reader.GetOrdinal("GuestEmail")) ? null : reader.GetString(reader.GetOrdinal("GuestEmail")),
+                    GuestPhone = reader.IsDBNull(reader.GetOrdinal("GuestPhone")) ? null : reader.GetString(reader.GetOrdinal("GuestPhone")),
+                    PromoCodeId = reader.IsDBNull(reader.GetOrdinal("PromoCodeId")) ? null : reader.GetInt32(reader.GetOrdinal("PromoCodeId")),
+                });
+            }
+            return orders;
+        }
+        public async Task UpdateOrderStatusAsync(int orderId, string newStatus)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_UpdateOrderStatus", connection) { CommandType = CommandType.StoredProcedure };
+
+            command.Parameters.AddWithValue("@OrderId", orderId);
+            command.Parameters.AddWithValue("@NewStatus", newStatus);
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<OrderStatusReport>> GetOrdersByStatusReportAsync()
+        {
+            var result = new List<OrderStatusReport>();
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_Report_OrdersByStatus", connection) { CommandType = CommandType.StoredProcedure };
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new OrderStatusReport
+                {
+                    Status = reader.IsDBNull(0) ? "Неизвестно" : reader.GetString(0),
+                    OrderCount = reader.GetInt32(1)
+                });
+            }
+            return result;
+        }
+
+        public async Task<List<CategoryProductReport>> GetProductsByCategoryReportAsync()
+        {
+            var result = new List<CategoryProductReport>();
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_Report_ProductsByCategory", connection) { CommandType = CommandType.StoredProcedure };
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new CategoryProductReport
+                {
+                    CategoryName = reader.IsDBNull(0) ? "Без категории" : reader.GetString(0),
+                    ProductCount = reader.GetInt32(1)
+                });
+            }
+            return result;
+        }
+
+        public async Task<List<ClientHistoryReport>> GetClientHistoryReportAsync()
+        {
+            var result = new List<ClientHistoryReport>();
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_Report_ClientHistory", connection) { CommandType = CommandType.StoredProcedure };
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new ClientHistoryReport
+                {
+                    ClientEmail = reader.GetString(0),
+                    ClientName = reader.GetString(1),
+                    TotalOrders = reader.GetInt32(2),
+                    TotalSpent = reader.GetDecimal(3),
+                    LastOrderDate = reader.GetDateTime(4)
+                });
+            }
+            return result;
+        }
+
+
+
         private Product MapProduct(SqlDataReader reader)
         {
             return new Product

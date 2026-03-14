@@ -162,5 +162,41 @@ namespace HouseholdStore.Services
             if (!response.IsSuccessStatusCode) return new List<dynamic>();
             return await response.Content.ReadFromJsonAsync<List<dynamic>>(jsonOptions);
         }
+        public async Task<List<PromoCode>> GetAllPromoCodesAsync()
+        {
+            var response = await _http.GetAsync("/api/admin/promocodes");
+            if (!response.IsSuccessStatusCode) return new List<PromoCode>();
+
+            return await response.Content.ReadFromJsonAsync<List<PromoCode>>(jsonOptions)
+                   ?? new List<PromoCode>();
+        }
+
+        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end)
+        {
+            var data = new { Code = code, DiscountPercent = discount, StartDate = start, EndDate = end };
+            await _http.PostAsJsonAsync("/api/admin/promocodes", data);
+        }
+        public async Task<int?> GetPromoDiscountAsync(string code)
+        {
+            var response = await _http.GetAsync($"/api/admin/promocodes/validate/{code}");
+            if (!response.IsSuccessStatusCode) return null;
+
+            var data = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return data.GetProperty("discountPercent").GetInt32();
+        }
+        public async Task<List<Order>> GetAllOrdersAsync()
+        {
+            var response = await _http.GetAsync("/api/admin/orders");
+            if (!response.IsSuccessStatusCode) return new List<Order>();
+
+            return await response.Content.ReadFromJsonAsync<List<Order>>(jsonOptions) ?? new List<Order>();
+        }
+        public async Task UpdateOrderStatusAsync(int orderId, string status)
+        {
+            var content = JsonContent.Create(status);
+            var response = await _http.PostAsync($"/api/admin/orders/{orderId}/status", content);
+
+            response.EnsureSuccessStatusCode();
+        }
     }
 }

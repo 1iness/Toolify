@@ -176,6 +176,57 @@ namespace HouseholdStore.Controllers
             return View(products);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SmartSelection(int? categoryId)
+        {
+            ViewBag.Categories = await _productApi.GetCategoriesAsync();
+            if (categoryId.HasValue)
+            {
+                ViewBag.SelectedCategoryId = categoryId.Value;
+                ViewBag.CategoryFilters = await _productApi.GetCategoryFiltersAsync(categoryId.Value);
+            }
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SmartSelectionResults(CatalogFilterViewModel filter)
+        {
+            var products = await _productApi.GetAllAsync();
+
+            if (filter.CategoryId.HasValue)
+                products = products.Where(p => p.CategoryId == filter.CategoryId.Value).ToList();
+
+            if (filter.MinPrice.HasValue)
+                products = products.Where(p => p.Price >= filter.MinPrice.Value).ToList();
+
+            if (filter.MaxPrice.HasValue)
+                products = products.Where(p => p.Price <= filter.MaxPrice.Value).ToList();
+
+            if (filter.SelectedFeatures != null && filter.SelectedFeatures.Any())
+            {
+                products = products.Where(p =>
+                    filter.SelectedFeatures.All(selected =>
+                        p.Configurations != null &&
+                        p.Configurations.Any(c => c.FeatureId == selected.Key && selected.Value.Contains(c.FeatureValue))
+                    )
+                ).ToList();
+            }
+            var topProducts = products.OrderByDescending(p => p.StockQuantity).Take(4).ToList();
+
+            var uniqueFeatures = topProducts
+                .SelectMany(p => p.Configurations ?? new List<ProductConfiguration>())
+                .Select(c => c.FeatureName)
+                .Distinct()
+                .ToList();
+
+            ViewBag.UniqueFeatures = uniqueFeatures;
+
+            return View("Compare", topProducts);
+        }
+
+
+
         [Authorize(Roles = "Admin")]
         public IActionResult AdminOnly()
         {

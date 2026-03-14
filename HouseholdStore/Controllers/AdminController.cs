@@ -3,6 +3,8 @@ using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Text;
+using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -13,10 +15,14 @@ namespace HouseholdStore.Controllers
     public class AdminController : Controller
     {
         private readonly ProductApiService _api;
+        private readonly AuthApiService _authApi;
+        private readonly ProductRepository _repo; 
 
-        public AdminController(ProductApiService api)
+        public AdminController(ProductApiService api, AuthApiService authApi, ProductRepository repo)
         {
             _api = api;
+            _authApi = authApi;
+            _repo = repo;
         }
 
         public async Task<IActionResult> Index()
@@ -154,6 +160,100 @@ namespace HouseholdStore.Controllers
         {
             var features = await _api.GetFeaturesByCategoryAsync(categoryId);
             return Json(features);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PromoCodes()
+        {
+            var promos = await _api.GetAllPromoCodesAsync();
+            return View(promos); 
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreatePromoCode(string code, int discountPercent, DateTime startDate, DateTime endDate)
+        {
+            if (!string.IsNullOrEmpty(code) && discountPercent > 0)
+            {
+                await _api.CreatePromoCodeAsync(code, discountPercent, startDate, endDate);
+                TempData["Success"] = "Промокод успешно добавлен";
+            }
+            return RedirectToAction("PromoCodes");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Clients()
+        {
+            var users = await _authApi.GetAllUsersAsync();
+            return View(users);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Orders()
+        {
+            var orders = await _api.GetAllOrdersAsync();
+            return View(orders);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateOrderStatus(int orderId, string status)
+        {
+            await _api.UpdateOrderStatusAsync(orderId, status);
+            TempData["Success"] = $"Статус заказа #{orderId} успешно изменен на '{status}'";
+            return RedirectToAction("Orders");
+        }
+
+
+
+
+
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> Dashboard()
+        {
+            var model = new DashboardViewModel
+            {
+                OrdersByStatus = await _repo.GetOrdersByStatusReportAsync(),
+                ProductsByCategory = await _repo.GetProductsByCategoryReportAsync(),
+                ClientHistory = await _repo.GetClientHistoryReportAsync()
+            };
+            return View(model);
+        }
+
+        private FileResult GenerateCsv(string csvContent, string fileName)
+        {
+            var bom = new byte[] { 0xEF, 0xBB, 0xBF }; 
+            var bytes = Encoding.UTF8.GetBytes(csvContent);
+            var finalBytes = bom.Concat(bytes).ToArray();
+            return File(finalBytes, "text/csv", fileName);
+        }
+
+        public async Task<IActionResult> ExportOrdersByStatus()
+        {
+            var data = await _repo.GetOrdersByStatusReportAsync();
+            var sb = new StringBuilder();
+            sb.AppendLine("Статус,Количество заказов");
+            foreach (var item in data) sb.AppendLine($"\"{item.Status}\",{item.OrderCount}");
+            return GenerateCsv(sb.ToString(), "OrdersByStatus.csv");
+        }
+
+        public async Task<IActionResult> ExportProductsByCategory()
+        {
+            var data = await _repo.GetProductsByCategoryReportAsync();
+            var sb = new StringBuilder();
+            sb.AppendLine("Категория,Количество товаров");
+            foreach (var item in data) sb.AppendLine($"\"{item.CategoryName}\",{item.ProductCount}");
+            return GenerateCsv(sb.ToString(), "ProductsByCategory.csv");
+        }
+
+        public async Task<IActionResult> ExportClientHistory()
+        {
+            var data = await _repo.GetClientHistoryReportAsync();
+            var sb = new StringBuilder();
+            sb.AppendLine("Клиент,Email,Всего заказов,Общая сумма (руб),Дата последнего заказа");
+            foreach (var item in data) sb.AppendLine($"\"{item.ClientName}\",\"{item.ClientEmail}\",{item.TotalOrders},{item.TotalSpent.ToString("F2")},{item.LastOrderDate.ToShortDateString()}");
+            return GenerateCsv(sb.ToString(), "ClientHistory.csv");
         }
     }
 }

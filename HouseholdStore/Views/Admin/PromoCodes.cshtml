@@ -1,0 +1,118 @@
+﻿@model IEnumerable<Toolify.ProductService.Models.PromoCode>
+
+@{
+    ViewData["Title"] = "Управление промокодами";
+    Layout = null;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0 text-gray-800">Управление промокодами</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Создать новый промокод</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreatePromoCode" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Код</label>
+                            <input type="text" name="Code" class="form-control" placeholder="Например: prize" required style="text-transform: uppercase;" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Скидка (%)</label>
+                            <input type="number" name="DiscountPercent" class="form-control" min="1" max="100" placeholder="От 1 до 100" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Дата начала</label>
+                            <input type="datetime-local" name="StartDate" class="form-control" id="startDate" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Дата окончания</label>
+                            <input type="datetime-local" name="EndDate" class="form-control" id="endDate" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Создать промокод</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Список активных кодов</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Код</th>
+                                    <th>Скидка</th>
+                                    <th>Период действия</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null && Model.Any())
+                                {
+                                    @foreach (var promo in Model)
+                                    {
+                                        bool isActive = promo.IsActive && promo.EndDate >= DateTime.Now && promo.StartDate <= DateTime.Now;
+                                        <tr>
+                                            <td class="font-weight-bold text-dark">@promo.Code</td>
+                                            <td><span class="badge bg-success" style="font-size: 0.9rem;">-@promo.DiscountPercent%</span></td>
+                                            <td style="font-size: 0.85rem;">
+                                                @promo.StartDate.ToString("dd.MM.yyyy HH:mm") <br />
+                                                <span class="text-muted">до</span> @promo.EndDate.ToString("dd.MM.yyyy HH:mm")
+                                            </td>
+                                            <td>
+                                                @if (isActive)
+                                                {
+                                                    <span class="text-success"><i class="bi bi-check-circle-fill"></i> Активен</span>
+                                                }
+                                                else if (promo.StartDate > DateTime.Now)
+                                                {
+                                                    <span class="text-warning"><i class="bi bi-clock"></i> Ожидает</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-danger"><i class="bi bi-x-circle-fill"></i> Истек</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">Промокоды пока не созданы</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
+
+            document.getElementById('startDate').value = localISOTime;
+
+            const nextMonth = new Date(now.setMonth(now.getMonth() + 1));
+            const nextMonthISO = (new Date(nextMonth - offset)).toISOString().slice(0, 16);
+            document.getElementById('endDate').value = nextMonthISO;
+        });
+    </script>
+}
