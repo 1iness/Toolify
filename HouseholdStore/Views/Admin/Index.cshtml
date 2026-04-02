@@ -3,13 +3,58 @@
     Layout = null;
 }
 
+<style>
+    body {
+        font-family: 'Montserrat', sans-serif;
+        padding: 40px;
+        background-color: #f8f9fa;
+        color: #333;
+    }
+
+    h1 {
+        margin-bottom: 30px;
+        font-weight: 300;
+    }
+
+    .admin-menu {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap; 
+        gap: 15px;
+    }
+
+        .admin-menu li a {
+            display: inline-block;
+            text-decoration: none;
+            padding: 12px 25px;
+            background-color: #ffffff;
+            color: #218838;
+            border: 2px solid #218838;
+            border-radius: 50px; 
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+            .admin-menu li a:hover {
+                background-color: #218838;
+                color: #ffffff;
+                transform: translateY(-2px); 
+                box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+            }
+
+            .admin-menu li a:active {
+                transform: translateY(0);
+            }
+</style>
+
 <h1>Добро пожаловать в Админ-панель</h1>
 
-<ul>
+<ul class="admin-menu">
     <li><a href="/Admin/List">Список товаров</a></li>
     <li><a href="/Admin/Create">Добавить товар</a></li>
     <li><a href="/Admin/PromoCodes">Создать промокод</a></li>
     <li><a href="/Admin/Orders">Учёт заказов</a></li>
     <li><a href="/Admin/Dashboard">Общая статистика</a></li>
-    
 </ul>

@@ -1,0 +1,93 @@
+﻿/* Контейнер страницы */
+.admin-list-container {
+    padding: 30px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+    .admin-list-container h1 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+/* Кнопка добавления */
+.btn-create {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-bottom: 25px;
+    transition: background-color 0.2s;
+}
+
+    .btn-create:hover {
+        background-color: #0056b3;
+        color: white;
+    }
+
+/* Таблица */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    .admin-table thead {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .admin-table th {
+        padding: 15px;
+        text-align: left;
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .admin-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+    }
+
+/* Изображение товара */
+.product-img-preview {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+/* Скидка */
+.discount-badge {
+    color: #dc3545;
+    font-weight: bold;
+    display: block;
+    text-align: center;
+}
+
+.no-discount {
+    color: #adb5bd;
+    display: block;
+    text-align: center;
+}
+
+/* Действия (ссылки) */
+.action-links a {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 14px;
+}
+
+    .action-links a:hover {
+        text-decoration: underline;
+    }
+
+.delete-link {
+    color: #dc3545 !important;
+}

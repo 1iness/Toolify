@@ -2,49 +2,49 @@
 
 @{
     ViewData["Title"] = "Добавить товар";
-    Layout = null; 
+    Layout = null;
 }
 
-<link rel="stylesheet" href="~/css/site.css" />
+<link rel="stylesheet" href="~/css/create-product.css" />
 
-<div style="padding: 20px;">
+<div class="admin-form-wrapper">
     <h1>Добавить товар</h1>
 
-    <div asp-validation-summary="All" style="color:red"></div>
+    <div asp-validation-summary="All" style="color:red; margin-bottom: 15px;"></div>
 
     <form method="post" enctype="multipart/form-data" asp-action="Create">
 
-        <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
-            <p><strong>Категория:</strong></p>
-            <select name="CategoryId" asp-items="ViewBag.Categories" style="width: 200px; padding: 5px;">
-                <option value="">-- Выберите из списка --</option>
-            </select>
+        <div class="category-box">
+            <div class="form-group">
+                <p>Категория:</p>
+                <select name="CategoryId" asp-items="ViewBag.Categories" class="form-select" style="max-width: 300px;">
+                    <option value="">-- Выберите из списка --</option>
+                </select>
+            </div>
 
-            <p style="margin: 5px 0;"><em>--- ИЛИ создайте новую ---</em></p>
+            <p style="margin: 10px 0; color: #888; font-size: 12px;"><em>--- ИЛИ создайте новую ---</em></p>
 
-            <input type="text" name="NewCategoryName" placeholder="Название новой категории" style="width: 200px;" />
+            <div class="form-group">
+                <input type="text" name="NewCategoryName" placeholder="Название новой категории" class="form-input" style="max-width: 300px;" />
+            </div>
         </div>
 
-        <div id="features-section" style="display:none; margin-top: 20px; border: 1px solid #eee; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
-            <h3 style="font-size: 16px; margin-bottom: 15px;">Характеристики для выбранной категории</h3>
+        <div id="features-section" class="features-section" style="display:none;">
+            <h3 style="font-size: 16px; margin-top: 0; margin-bottom: 15px;">Характеристики для выбранной категории</h3>
             <div id="features-container">
-                @if (Model.Configurations != null && Model.Configurations.Any())
+                @if (Model?.Configurations != null && Model.Configurations.Any())
                 {
                     for (int i = 0; i < Model.Configurations.Count; i++)
                     {
                         var config = Model.Configurations[i];
-                        <div class="feature-row" style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <div class="feature-row">
                             <div style="flex-grow: 1;">
-                                <label style="display:block; font-weight:500;">@config.FeatureName:</label>
+                                <label style="display:block; font-weight:500; margin-bottom: 5px;">@config.FeatureName:</label>
                                 <input type="hidden" name="Configurations[@i].FeatureId" value="@config.FeatureId" />
                                 <input type="hidden" name="Configurations[@i].FeatureName" value="@config.FeatureName" />
-                                <input type="text" name="Configurations[@i].FeatureValue" value="@config.FeatureValue"
-                                       style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                                <input type="text" name="Configurations[@i].FeatureValue" value="@config.FeatureValue" class="form-input" />
                             </div>
-                            <button type="button" onclick="removeFeature(this)"
-                                    style="margin-left: 10px; margin-top: 20px; background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
-                                ✕
-                            </button>
+                            <button type="button" onclick="removeFeature(this)" class="btn btn-danger" style="margin-top: 22px;">✕</button>
                         </div>
                     }
                 }
@@ -52,34 +52,52 @@
         </div>
 
         <div id="custom-features-container"></div>
-        <button type="button" onclick="addCustomFeature()" style="margin-top: 10px; background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-            + Добавить свое поле
-        </button>
 
-        <p>Название:</p>
-        <input type="text" name="Name" value="@Model?.Name" required />
+        <div class="form-group" style="margin-top: 10px; margin-bottom: 25px;">
+            <button type="button" onclick="addCustomFeature()" class="btn btn-secondary">
+                + Добавить свое поле
+            </button>
+        </div>
 
-        <p>Описание (краткое):</p>
-        <input type="text" name="ShortDescription" value="@Model?.ShortDescription" />
+        <div class="form-group">
+            <p>Название:</p>
+            <input type="text" name="Name" value="@Model?.Name" class="form-input" required />
+        </div>
 
-        <p>Описание (полное):</p>
-        <textarea name="FullDescription" rows="4" cols="50">@Model?.FullDescription</textarea>
+        <div class="form-group">
+            <p>Описание (краткое):</p>
+            <input type="text" name="ShortDescription" value="@Model?.ShortDescription" class="form-input" />
+        </div>
 
-        <p>Цена:</p>
-        <input type="number" name="Price" value="@Model?.Price" step="0.01" required />
+        <div class="form-group">
+            <p>Описание (полное):</p>
+            <textarea name="FullDescription" rows="4" class="form-textarea">@Model?.FullDescription</textarea>
+        </div>
 
-        <p>Количество на складе:</p>
-        <input type="number" name="StockQuantity" value="@(Model?.StockQuantity ?? 0)" min="0" required />
+        <div class="form-group">
+            <p>Цена:</p>
+            <input type="number" name="Price" value="@Model?.Price" step="0.01" class="form-input" required />
+        </div>
 
-        <p>Изображение:</p>
-        <input type="file" name="image" />
+        <div class="form-group">
+            <p>Количество на складе:</p>
+            <input type="number" name="StockQuantity" value="@(Model?.StockQuantity ?? 0)" min="0" class="form-input" required />
+        </div>
 
-        <p>Скидка (%):</p>
-        <input type="number" name="Discount" value="@(Model?.Discount ?? 0)" min="0" max="100" />
+        <div class="form-group">
+            <p>Изображение:</p>
+            <input type="file" name="image" class="form-input" style="padding: 7px 15px;" />
+        </div>
 
-        <br /><br />
-        <button type="submit">Добавить</button>
-        <a href="/Admin/Index">Отмена</a>
+        <div class="form-group">
+            <p>Скидка (%):</p>
+            <input type="number" name="Discount" value="@(Model?.Discount ?? 0)" min="0" max="100" class="form-input" />
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button type="submit" class="btn btn-primary">Добавить</button>
+            <a href="/Admin/Index" class="btn btn-cancel">Отмена</a>
+        </div>
     </form>
 </div>
 
@@ -88,7 +106,7 @@
         const categoryId = this.value;
         const container = document.getElementById('features-container');
         const section = document.getElementById('features-section');
-        container.innerHTML = ''; 
+        container.innerHTML = '';
 
         if (!categoryId) {
             section.style.display = 'none';
@@ -103,27 +121,20 @@
                 section.style.display = 'block';
                 data.forEach((feature, index) => {
                     const div = document.createElement('div');
-                    div.className = 'feature-row'; 
-                    div.style = "display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 4px;";
-
+                    div.className = 'feature-row';
                     div.innerHTML = `
-                        <div style="flex-grow: 1; display: flex; gap: 10px;">
+                        <div style="flex-grow: 1; display: flex; gap: 15px;">
                             <div style="flex-grow: 1;">
-                                <label style="display:block; font-size: 12px; color: gray;">Характеристика:</label>
-                                <input type="text" name="Configurations[${index}].FeatureName" value="${feature.name}" readonly
-                                       style="width: 100%; background: #f0f0f0; border: 1px solid #ccc; padding: 5px;" />
+                                <label style="display:block; font-size: 12px; color: gray; margin-bottom: 5px;">Характеристика:</label>
+                                <input type="text" name="Configurations[${index}].FeatureName" value="${feature.name}" readonly class="form-input" style="background: #f0f0f0;" />
                             </div>
                             <div style="flex-grow: 1;">
-                                <label style="display:block; font-size: 12px; color: gray;">Значение:</label>
-                                <input type="text" name="Configurations[${index}].FeatureValue" placeholder="Введите значение..." required
-                                       style="width: 100%; border: 1px solid #ccc; padding: 5px;" />
+                                <label style="display:block; font-size: 12px; color: gray; margin-bottom: 5px;">Значение:</label>
+                                <input type="text" name="Configurations[${index}].FeatureValue" placeholder="Введите значение..." required class="form-input" />
                             </div>
                             <input type="hidden" name="Configurations[${index}].FeatureId" value="${feature.id}" />
                         </div>
-                        <button type="button" onclick="removeFeature(this)"
-                                style="margin-top: 18px; background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
-                            ✕
-                        </button>
+                        <button type="button" onclick="removeFeature(this)" class="btn btn-danger" style="margin-top: 22px;">✕</button>
                     `;
                     container.appendChild(div);
                 });
@@ -135,40 +146,33 @@
         }
     });
 
-           function addCustomFeature() {
+    function addCustomFeature() {
         const container = document.getElementById('features-container');
         const section = document.getElementById('features-section');
         section.style.display = 'block';
 
         const div = document.createElement('div');
         div.className = 'feature-row';
-        div.style = "display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px;";
-
         div.innerHTML = `
-            <div style="flex-grow: 1; display: flex; gap: 10px;">
+            <div style="flex-grow: 1; display: flex; gap: 15px;">
                 <div style="flex-grow: 1;">
-                    <input type="text" placeholder="Название (напр. Вес)" name="Configurations[X].FeatureName" required
-                           style="width: 100%; border: 1px solid #ccc; padding: 5px;" />
+                    <input type="text" placeholder="Название (напр. Вес)" name="Configurations[X].FeatureName" required class="form-input" />
                 </div>
                 <div style="flex-grow: 1;">
-                    <input type="text" placeholder="Значение" name="Configurations[X].FeatureValue" required
-                           style="width: 100%; border: 1px solid #ccc; padding: 5px;" />
+                    <input type="text" placeholder="Значение" name="Configurations[X].FeatureValue" required class="form-input" />
                 </div>
                 <input type="hidden" name="Configurations[X].FeatureId" value="0" />
             </div>
-            <button type="button" onclick="removeFeature(this)"
-                    style="background: #ff4d4d; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
-                ✕
-            </button>
+            <button type="button" onclick="removeFeature(this)" class="btn btn-danger">✕</button>
         `;
         container.appendChild(div);
-        reindexFeatures(); 
+        reindexFeatures();
     }
 
     function removeFeature(btn) {
         const row = btn.closest('.feature-row');
         row.remove();
-        reindexFeatures(); 
+        reindexFeatures();
 
         const container = document.getElementById('features-container');
         if (container.children.length === 0) {
@@ -190,5 +194,4 @@
             });
         }
     }
-
 </script>

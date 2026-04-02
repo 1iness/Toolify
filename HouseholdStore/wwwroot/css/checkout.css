@@ -392,6 +392,34 @@
             animation: spin 1s linear infinite;
         }
 
+
+.btn-apply-promo {
+    background-color: #218838; 
+    color: #ffffff;
+    border-radius:13px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    border:none;
+    margin-top:10px;
+}
+
+.btn-apply-promo:hover {
+    background-color: #343a40;
+    color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.btn-apply-promo:active {
+    transform: scale(0.98);
+    background-color: #1a1e21;
+}
+
+.btn-apply-promo:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
 @keyframes spin {
     to {
         transform: rotate(360deg);

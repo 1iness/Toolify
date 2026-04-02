@@ -1,0 +1,103 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.orders-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.25rem;
+}
+
+.table-responsive {
+    border-radius: 0 0 12px 12px;
+}
+
+.table {
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+    .table thead th {
+        background-color: #fcfcfc;
+        color: #666;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        border-bottom: 2px solid #eee;
+        padding: 1rem;
+    }
+
+    .table tbody td {
+        padding: 1rem;
+        color: #444;
+        font-size: 0.95rem;
+    }
+
+.client-info {
+    line-height: 1.4;
+}
+
+.client-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.client-email {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* выпадающий списка статусов */
+.status-select {
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: none !important;
+}
+
+/* Раскраска select в зависимости от выбранного статуса */
+.status-Новый {
+    background-color: #e0f7fa;
+    color: #00838f;
+    border-color: #b2ebf2;
+}
+
+.status-В.обработке {
+    background-color: #fff3e0;
+    color: #e65100;
+    border-color: #ffe0b2;
+}
+
+.status-Доставляется {
+    background-color: #e8eaf6;
+    color: #283593;
+    border-color: #c5cae9;
+}
+
+.status-Доставлен, .status-Завершен {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-color: #c8e6c9;
+}
+
+.status-Отменен {
+    background-color: #ffebee;
+    color: #c62828;
+    border-color: #ffcdd2;
+}

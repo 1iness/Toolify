@@ -2,23 +2,28 @@
 
 @{
     ViewData["Title"] = "Список товаров";
-    Layout = null;
+    Layout = null; 
 }
 
 <link rel="stylesheet" href="~/css/site.css" />
+<link rel="stylesheet" href="~/css/list.css" />
 
-<div style="padding: 20px;">
+<div class="admin-list-container">
     <h1>Список товаров</h1>
-    <p><a href="/Admin/Create" class="btn btn-primary">Добавить новый товар</a></p>
+    <p>
+        <a href="/Admin/Create" class="btn-create">
+            <i class="bi bi-plus-lg"></i> Добавить новый товар
+        </a>
+    </p>
 
-    <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+    <table class="admin-table">
         <thead>
-            <tr style="background-color: #f2f2f2;">
+            <tr>
                 <th>Id</th>
                 <th>Фото</th>
                 <th>Название</th>
                 <th>Цена</th>
-                <th>Скидка</th>
+                <th style="text-align: center;">Скидка</th>
                 <th>Кол-во</th>
                 <th>Действия</th>
             </tr>
@@ -29,30 +34,28 @@
                 <tr>
                     <td>@item.Id</td>
                     <td>
-                            <img src="https://localhost:7188/api/Product/@(item.Id)/image"
-                                 width="50"
-                                 height="50"
-                                 style="object-fit: cover; border-radius: 4px;"
-                                 onerror="this.onerror=null; this.src='/image/no-image.png';" />
- 
+                        <img src="https://localhost:7188/api/Product/@(item.Id)/image"
+                             class="product-img-preview"
+                             onerror="this.onerror=null; this.src='/image/no-image.png';" />
                     </td>
-                    <td>@item.Name</td>
+                    <td><strong>@item.Name</strong></td>
                     <td>@item.Price.ToString("C")</td>
-                    <td style="text-align: center;">
+                    <td>
                         @if (item.Discount > 0)
                         {
-                            <span style="color: red; font-weight: bold;">-@item.Discount%</span>
+                            <span class="discount-badge">-@item.Discount%</span>
                         }
                         else
                         {
-                            <span style="color: gray;">Нет</span>
+                            <span class="no-discount">Нет</span>
                         }
                     </td>
-
                     <td>@item.StockQuantity шт.</td>
-                    <td>
+                    <td class="action-links">
                         <a href="/Admin/Edit/@item.Id">Редактировать</a> |
-                        <a href="/Admin/Delete/@item.Id" onclick="return confirm('Удалить товар?');">Удалить</a>
+                        <a href="/Admin/Delete/@item.Id"
+                           class="delete-link"
+                           onclick="return confirm('Удалить товар?');">Удалить</a>
                     </td>
                 </tr>
             }

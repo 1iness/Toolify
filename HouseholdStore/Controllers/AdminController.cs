@@ -188,9 +188,32 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Orders()
+        public async Task<IActionResult> Orders(DateTime? startDate, DateTime? endDate)
         {
             var orders = await _api.GetAllOrdersAsync();
+
+            if (startDate.HasValue && endDate.HasValue && startDate.Value > endDate.Value)
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Начальная дата не может быть больше конечной.";
+
+                startDate = null;
+                endDate = null;
+            }
+
+            if (startDate.HasValue)
+            {
+                orders = orders.Where(o => o.OrderDate.Date >= startDate.Value.Date).ToList();
+            }
+
+            if (endDate.HasValue)
+            {
+                orders = orders.Where(o => o.OrderDate.Date <= endDate.Value.Date).ToList();
+            }
+
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+
             return View(orders);
         }
 
@@ -198,15 +221,12 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> UpdateOrderStatus(int orderId, string status)
         {
             await _api.UpdateOrderStatusAsync(orderId, status);
-            TempData["Success"] = $"Статус заказа #{orderId} успешно изменен на '{status}'";
+
+            TempData["ToastType"] = "success";
+            TempData["ToastMessage"] = $"Статус заказа #{orderId} изменен на '{status}'";
+
             return RedirectToAction("Orders");
         }
-
-
-
-
-
-
 
 
         [HttpGet]

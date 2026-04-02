@@ -1,0 +1,74 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+.promo-container {
+    font-family: 'Montserrat', sans-serif;
+}
+
+.promo-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    margin-bottom: 1.5rem;
+}
+
+.promo-card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1rem 1.25rem;
+}
+
+.promo-card-title {
+    margin: 0;
+    font-weight: 700;
+    color: #4e73df;
+    font-size: 1rem;
+}
+
+/* Стилизация таблицы */
+.promo-table {
+    margin-bottom: 0;
+}
+
+    .promo-table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: #858796;
+        border-bottom: 2px solid #e3e6f0;
+        padding: 1rem;
+    }
+
+    .promo-table td {
+        vertical-align: middle; 
+        color: #5a5c69;
+        padding: 1rem;
+        font-size: 0.95rem;
+    }
+
+/* Красивые бейджи для статусов */
+.promo-badge {
+    padding: 0.4em 0.8em;
+    font-size: 0.85em;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.promo-badge-active {
+    background-color: #e3fdfd;
+    color: #0dcaf0;
+    border: 1px solid #0dcaf0;
+}
+
+.promo-badge-expired {
+    background-color: #fce4e4;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+/* Поле ввода промокода (заглавные буквы) */
+.input-promo-code {
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
