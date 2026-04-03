@@ -266,6 +266,29 @@ namespace HouseholdStore.Controllers
 
             return Ok();
         }
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile(UserProfileViewModel model)
+        {
+            var userEmail = User.Identity?.Name;
 
+            if (string.IsNullOrEmpty(userEmail))
+                return RedirectToAction("Login");
+
+            var success = await _auth.UpdateProfileAsync(userEmail, model.FirstName, model.LastName, model.Phone);
+
+            if (success)
+            {
+                TempData["ToastMessage"] = "Профиль успешно обновлён";
+                TempData["ToastType"] = "success";
+            }
+            else
+            {
+                TempData["ToastMessage"] = "Ошибка при сохранении";
+                TempData["ToastType"] = "error";
+            }
+
+            return RedirectToAction("Profile");
+        }
     }
 }

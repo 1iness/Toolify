@@ -77,19 +77,21 @@
 <section class="products-section scroll-animate">
     <h2 style="text-align:center; margin-bottom: 20px;">Товары</h2>
 
-    <div class="products-grid">
-        @foreach (var product in Model)
+    <div id="products-grid" class="products-grid">
+        @{
+            var allProducts = Model.ToList();
+        }
+        @foreach (var product in allProducts)
         {
             bool hasDiscount = product.Discount > 0;
             bool isOutOfStock = product.StockQuantity <= 0;
             decimal finalPrice = product.Price;
-
             if (hasDiscount)
             {
                 finalPrice = product.Price - (product.Price * product.Discount / 100m);
             }
 
-            <div class="product-card">
+            <div class="product-card page-item" style="display:none;">
                 <div class="card-top">
                     @if (hasDiscount)
                     {
@@ -108,7 +110,6 @@
                     <span class="price" style="color: #333;">
                         @finalPrice.ToString("N2") <span class="price-currency">руб.</span>
                     </span>
-
                     @if (hasDiscount)
                     {
                         <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">
@@ -117,7 +118,7 @@
                     }
                 </div>
 
-                <div class="rating-wrapper" style="color: #ffc107; font-size: 18px; margin-bottom: 5px;" title="Рейтинг: @product.AverageRating.ToString("F1")">
+                <div class="rating-wrapper" style="color: #ffc107; font-size: 18px; margin-bottom: 5px;">
                     @for (int i = 1; i <= 5; i++)
                     {
                         if (product.AverageRating >= i)
@@ -133,39 +134,27 @@
                             <i class="bi bi-star"></i>
                         }
                     }
-                    <span style="color: #999; font-size: 12px; margin-left: 5px;"></span>
                 </div>
 
-                <h3 class="title" style="margin-bottom: 10px; height: 40px; overflow: hidden;">
-                    @product.Name
-                </h3>
-
-                <span style="font-weight: normal; font-size: 0.85em; color: #777;">
-                    арт. @product.ArticleNumber
-                </span>
+                <h3 class="title" style="margin-bottom: 10px; height: 40px; overflow: hidden;">@product.Name</h3>
+                <span style="font-weight: normal; font-size: 0.85em; color: #777;">арт. @product.ArticleNumber</span>
 
                 @if (isOutOfStock)
                 {
-                    <div class="stock out" style="color: #dc3545; font-size: 0.9rem; margin-top: 5px;">Нет в наличии</div>
-                    <button class="btn-buy disabled" disabled>
-                        Скоро будет
-                    </button>
+                    <div class="stock out">Нет в наличии</div>
+                    <button class="btn-buy disabled" disabled>Скоро будет</button>
                 }
                 else
                 {
-                    <div class="stock in" style="color: #28a745; font-size: 0.9rem; margin-top: 5px;">
-                        В наличии: @product.StockQuantity шт.
-                    </div>
-
-                    <a href="javascript:void(0)"
-                       onclick="addToCartAnimated(event, @product.Id, this)"
-                       class="btn-buy">
+                    <div class="stock in">В наличии: @product.StockQuantity шт.</div>
+                    <a href="javascript:void(0)" onclick="addToCartAnimated(event, @product.Id, this)" class="btn-buy">
                         <i class="bi bi-cart-plus"></i> В корзину
                     </a>
                 }
             </div>
         }
     </div>
+    <div id="pagination" style="display:flex; justify-content:center; gap:8px; margin-top:30px; flex-wrap:wrap;"></div>
 </section>
 
 <!-- НАЧАЛО НОВОГО БАННЕРА -->
@@ -275,4 +264,57 @@
 
         console.log("Карусель инициализирована. Найдено слайдов: " + slides.length);
     });
+
+        (function () {
+        const PER_PAGE = 8;
+        const items = Array.from(document.querySelectorAll('.page-item'));
+        const pagination = document.getElementById('pagination');
+        let currentPage = 1;
+
+        const totalPages = Math.ceil(items.length / PER_PAGE);
+
+        function showPage(page) {
+            currentPage = page;
+            const start = (page - 1) * PER_PAGE;
+            const end = start + PER_PAGE;
+
+            items.forEach((el, i) => {
+                el.style.display = (i >= start && i < end) ? '' : 'none';
+            });
+
+            renderPagination();
+
+            document.querySelector('.products-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderPagination() {
+            if (totalPages <= 1) return;
+            pagination.innerHTML = '';
+
+            const prev = document.createElement('button');
+            prev.textContent = '←';
+            prev.disabled = currentPage === 1;
+            prev.className = 'page-btn' + (currentPage === 1 ? ' disabled' : '');
+            prev.onclick = () => showPage(currentPage - 1);
+            pagination.appendChild(prev);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+                btn.onclick = () => showPage(i);
+                pagination.appendChild(btn);
+            }
+
+            const next = document.createElement('button');
+            next.textContent = '→';
+            next.disabled = currentPage === totalPages;
+            next.className = 'page-btn' + (currentPage === totalPages ? ' disabled' : '');
+            next.onclick = () => showPage(currentPage + 1);
+            pagination.appendChild(next);
+        }
+
+        showPage(1);
+    })();
+
 </script>

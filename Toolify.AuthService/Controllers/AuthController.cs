@@ -206,5 +206,16 @@ public class AuthController : ControllerBase
         var users = await _repo.GetAllUsersAsync();
         return Ok(users);
     }
+
+    [HttpPut("update-profile")]
+    public IActionResult UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        var user = _repo.GetUserByEmail(request.Email);
+        if (user == null)
+            return NotFound("User not found");
+
+        _repo.UpdateUserProfile(request.Email, request.FirstName, request.LastName, request.Phone);
+        return Ok();
+    }
 }
 

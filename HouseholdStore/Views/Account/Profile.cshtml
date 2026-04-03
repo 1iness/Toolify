@@ -35,25 +35,65 @@
     <main class="profile-content">
         <section id="tab-personal" class="profile-section">
             <h2 class="section-title">Личные данные</h2>
-            <div class="personal-grid">
-                <div class="info-group">
-                    <label>Имя</label>
-                    <input type="text" value="@Model.FirstName" class="form-input" readonly>
+
+            @*просмотр*@
+            <div id="view-mode">
+                <div class="personal-grid">
+                    <div class="info-group">
+                        <label>Имя</label>
+                        <input type="text" value="@Model.FirstName" class="form-input" readonly>
+                    </div>
+                    <div class="info-group">
+                        <label>Фамилия</label>
+                        <input type="text" value="@Model.LastName" class="form-input" readonly>
+                    </div>
+                    <div class="info-group">
+                        <label>Электронная почта</label>
+                        <input type="email" value="@Model.Email" class="form-input" readonly>
+                    </div>
+                    <div class="info-group">
+                        <label>Телефон</label>
+                        <input type="text" value="@Model.Phone" class="form-input" readonly>
+                    </div>
                 </div>
-                <div class="info-group">
-                    <label>Фамилия</label>
-                    <input type="text" value="@Model.LastName" class="form-input" readonly>
-                </div>
-                <div class="info-group">
-                    <label>Электронная почта</label>
-                    <input type="email" value="@Model.Email" class="form-input" readonly>
-                </div>
-                <div class="info-group">
-                    <label>Телефон</label>
-                    <input type="text" value="@Model.Phone" class="form-input" readonly>
-                </div>
+                <button type="button" class="save-changes-btn" onclick="enableEdit()">
+                    Редактировать данные
+                </button>
             </div>
-            <button class="save-changes-btn">Редактировать данные</button>
+
+            @*редактирование личных данных *@
+            <div id="edit-mode" style="display:none;">
+                <form asp-action="UpdateProfile" method="post">
+                    <div class="personal-grid">
+                        <div class="info-group">
+                            <label>Имя</label>
+                            <input type="text" name="FirstName" value="@Model.FirstName" class="form-input" required>
+                        </div>
+                        <div class="info-group">
+                            <label>Фамилия</label>
+                            <input type="text" name="LastName" value="@Model.LastName" class="form-input" required>
+                        </div>
+                        <div class="info-group">
+                            <label>Электронная почта</label>
+                            <input type="email" value="@Model.Email" class="form-input" readonly
+                                   title="Email изменить нельзя">
+                        </div>
+                        <div class="info-group">
+                            <label>Телефон</label>
+                            <input type="text" name="Phone" value="@Model.Phone" class="form-input"
+                                   placeholder="+375(__) ___-__-__">
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:15px; margin-top:10px;">
+                        <button type="submit" class="save-changes-btn">Сохранить</button>
+                        <button type="button" class="save-changes-btn"
+                                style="background:#fff; color:#333; border:1px solid #ddd;"
+                                onclick="cancelEdit()">
+                            Отмена
+                        </button>
+                    </div>
+                </form>
+            </div>
         </section>
 
         <section id="tab-orders" class="profile-section" style="display: none;">

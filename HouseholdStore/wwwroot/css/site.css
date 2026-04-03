@@ -1331,6 +1331,33 @@ body {
     }
 }
 
+.header {
+    transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.3s ease;
+    max-height: 120px;
+    overflow: hidden;
+    opacity: 1;
+}
+
+    .header.hidden {
+        max-height: 0;
+        opacity: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+.sub-header {
+    position: sticky;
+    top: 0;
+    border-radius:23px;
+    z-index: 1000;
+    background-color: #fff;
+    transition: box-shadow 0.3s ease;
+}
+
+    .sub-header.is-sticky {
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
 /* Маленькие мобильные устройства (до 576px) */
 @media (max-width: 576px) {
     .header {

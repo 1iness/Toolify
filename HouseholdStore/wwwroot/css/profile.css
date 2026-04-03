@@ -291,3 +291,20 @@
     font-weight: 600;
     color: #333 !important; 
 }
+
+.personal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.info-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #999;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

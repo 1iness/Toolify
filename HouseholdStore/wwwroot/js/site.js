@@ -362,3 +362,21 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 });
+
+(function () {
+    const header = document.querySelector('.header');
+    const subHeader = document.querySelector('.sub-header');
+    if (!header || !subHeader) return;
+
+    const headerHeight = header.offsetHeight;
+
+    window.addEventListener('scroll', function () {
+        if (window.scrollY > headerHeight) {
+            header.classList.add('hidden');
+            subHeader.classList.add('is-sticky');
+        } else {
+            header.classList.remove('hidden');
+            subHeader.classList.remove('is-sticky');
+        }
+    }, { passive: true });
+})();

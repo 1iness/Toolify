@@ -188,6 +188,23 @@ public class UserRepository
         return users;
     }
 
+    public void UpdateUserProfile(string email, string firstName, string lastName, string phone)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand("usp_UpdateUserProfile", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@Email", email);
+        cmd.Parameters.AddWithValue("@FirstName", firstName);
+        cmd.Parameters.AddWithValue("@LastName", lastName);
+        cmd.Parameters.AddWithValue("@Phone", phone);
+
+        cmd.ExecuteNonQuery();
+    }
+
     private User MapUserFromReader(SqlDataReader reader)
     {
         return new User

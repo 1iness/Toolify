@@ -107,4 +107,21 @@ public class AuthApiService
 
         return new List<User>();
     }
+
+    public async Task<bool> UpdateProfileAsync(string email, string firstName, string lastName, string phone)
+    {
+        var token = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
+        if (!string.IsNullOrEmpty(token))
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _http.PutAsJsonAsync($"{BASE_URL}/update-profile", new
+        {
+            Email = email,
+            FirstName = firstName,
+            LastName = lastName,
+            Phone = phone
+        });
+
+        return response.IsSuccessStatusCode;
+    }
 }
