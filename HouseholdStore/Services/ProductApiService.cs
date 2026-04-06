@@ -198,5 +198,33 @@ namespace HouseholdStore.Services
 
             response.EnsureSuccessStatusCode();
         }
+        public async Task AddFavouriteAsync(int userId, int productId)
+        {
+            await _http.PostAsync(
+                $"/api/Product/favourites/add?userId={userId}&productId={productId}", null);
+        }
+
+        public async Task RemoveFavouriteAsync(int userId, int productId)
+        {
+            await _http.PostAsync(
+                $"/api/Product/favourites/remove?userId={userId}&productId={productId}", null);
+        }
+
+        public async Task<List<Product>> GetFavouritesAsync(int userId)
+        {
+            var response = await _http.GetAsync($"/api/Product/favourites/{userId}");
+            if (!response.IsSuccessStatusCode) return new List<Product>();
+            return await response.Content.ReadFromJsonAsync<List<Product>>(jsonOptions)
+                   ?? new List<Product>();
+        }
+
+        public async Task<bool> IsFavouriteAsync(int userId, int productId)
+        {
+            var response = await _http.GetAsync(
+                $"/api/Product/favourites/check?userId={userId}&productId={productId}");
+            if (!response.IsSuccessStatusCode) return false;
+            var data = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return data.GetProperty("isFavourite").GetBoolean();
+        }
     }
 }

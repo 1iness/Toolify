@@ -165,7 +165,7 @@
 }
 
 .logout-btn {
-    margin-top: 20px;
+    margin-top: 10px;
     width: 100%;
     padding: 14px;
     border: 1px solid #ff4d4f;
@@ -308,3 +308,27 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
+.admin-panel-btn {
+    display: block;
+    width: 100%;
+    margin-top:10px;
+
+    padding: 14px;
+    background: #28a745;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 15px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+
+}
+
+    .admin-panel-btn:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        color: #fff;
+    }

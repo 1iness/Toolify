@@ -132,5 +132,34 @@ namespace Toolify.ProductService.Controllers
             var filters = await _repo.GetCategoryFiltersAsync(categoryId); 
             return Ok(filters);
         }
+
+
+        [HttpPost("favourites/add")]
+        public async Task<IActionResult> AddFavourite([FromQuery] int userId, [FromQuery] int productId)
+        {
+            await _repo.AddFavouriteAsync(userId, productId);
+            return Ok();
+        }
+
+        [HttpPost("favourites/remove")]
+        public async Task<IActionResult> RemoveFavourite([FromQuery] int userId, [FromQuery] int productId)
+        {
+            await _repo.RemoveFavouriteAsync(userId, productId);
+            return Ok();
+        }
+
+        [HttpGet("favourites/{userId}")]
+        public async Task<IActionResult> GetFavourites(int userId)
+        {
+            var products = await _repo.GetFavouritesAsync(userId);
+            return Ok(products);
+        }
+
+        [HttpGet("favourites/check")]
+        public async Task<IActionResult> IsFavourite([FromQuery] int userId, [FromQuery] int productId)
+        {
+            var result = await _repo.IsFavouriteAsync(userId, productId);
+            return Ok(new { isFavourite = result });
+        }
     }
 }

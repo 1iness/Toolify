@@ -13,6 +13,16 @@
             <div class="user-avatar-large"></div>
             <div class="brief-name">@Model.FirstName @Model.LastName</div>
             <div class="brief-email">@Model.Email</div>
+            @if (User.IsInRole("Admin"))
+            {
+                <div style="margin-top: 10px;">
+                    <span style="background:#fff3cd; color:#856404; font-size:12px;
+                                 font-weight:700; padding:4px 12px; border-radius:20px;
+                                 border:1px solid #ffc107;">
+                        Администратор
+                    </span>
+                </div>
+            }
         </div>
 
         <ul class="profile-menu">
@@ -25,7 +35,18 @@
             <li class="menu-item" data-tab="history">
                 <span class="menu-icon"></span> История заказов
             </li>
+            <li class="menu-item" data-tab="favourites">
+                <span class="menu-icon"></span> Избранное
+            </li>
         </ul>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-controller="Admin" asp-action="Index" class="admin-panel-btn">
+                Админ панель
+            </a>
+        }
+
 
         <form asp-action="Logout" method="post">
             <button type="submit" class="logout-btn">Выйти из аккаунта</button>
@@ -194,6 +215,14 @@
                     <p>История заказов пуста</p>
                 </div>
             }
+        </section>
+        <section id="tab-favourites" class="profile-section" style="display:none;">
+            <h2 class="section-title">Избранное</h2>
+            <div id="favourites-grid" class="products-grid">
+                <div style="text-align:center; padding:40px; color:#aaa;">
+                    <p></p>
+                </div>
+            </div>
         </section>
     </main>
 </div>

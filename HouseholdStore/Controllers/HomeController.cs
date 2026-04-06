@@ -76,8 +76,17 @@ namespace HouseholdStore.Controllers
             var starCounts = new int[6]; 
             foreach (var r in reviews) starCounts[r.Rating]++;
 
-            ViewBag.StarCounts = starCounts; 
+            ViewBag.StarCounts = starCounts;
 
+
+            bool isFavourite = false;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("id");
+                if (int.TryParse(idStr, out int uid))
+                    isFavourite = await _productApi.IsFavouriteAsync(uid, id);
+            }
+            ViewBag.IsFavourite = isFavourite;
             return View(product);
         }
 
@@ -224,7 +233,6 @@ namespace HouseholdStore.Controllers
 
             return View("Compare", topProducts);
         }
-
 
 
         [Authorize(Roles = "Admin")]

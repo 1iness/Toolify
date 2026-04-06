@@ -670,6 +670,51 @@ namespace Toolify.ProductService.Data
             }
             return result;
         }
+        public async Task AddFavouriteAsync(int userId, int productId)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_AddFavourite", connection)
+            { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@UserId", userId);
+            command.Parameters.AddWithValue("@ProductId", productId);
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task RemoveFavouriteAsync(int userId, int productId)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_RemoveFavourite", connection)
+            { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@UserId", userId);
+            command.Parameters.AddWithValue("@ProductId", productId);
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<Product>> GetFavouritesAsync(int userId)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetFavourites", connection)
+            { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@UserId", userId);
+            await connection.OpenAsync();
+            var products = new List<Product>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) products.Add(MapProduct(reader));
+            return products;
+        }
+
+        public async Task<bool> IsFavouriteAsync(int userId, int productId)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_IsFavourite", connection)
+            { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@UserId", userId);
+            command.Parameters.AddWithValue("@ProductId", productId);
+            await connection.OpenAsync();
+            return Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+        }
 
 
 

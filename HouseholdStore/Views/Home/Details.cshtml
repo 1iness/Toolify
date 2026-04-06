@@ -45,12 +45,25 @@
         </div>
 
         <div class="action-buttons-row">
-            <button class="btn-text-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-                В избранное
-            </button>
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <button class="btn-favourite btn-text-icon"
+                        data-product-id="@Model.Id"
+                        data-is-fav="@ViewBag.IsFavourite.ToString().ToLower()">
+                    <i class="@(ViewBag.IsFavourite ? "bi bi-heart-fill" : "bi bi-heart")"
+                       style="font-size:20px; color:@(ViewBag.IsFavourite ? "#ff4d4f" : "currentColor");"></i>
+                    <span>@(ViewBag.IsFavourite ? "В избранном" : "В избранное")</span>
+                </button>
+            }
+            else
+            {
+                <a href="/Account/Login" class="btn-text-icon" title="Войдите чтобы добавить в избранное">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    В избранное
+                </a>
+            }
 
             <button class="btn-text-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -276,4 +289,5 @@
 
 @section Scripts {
     <script src="~/js/product-reviews.js" asp-append-version="true"></script>
+    <script src="~/js/product-favorite.js" asp-append-version="true"></script>
 }
