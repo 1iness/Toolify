@@ -600,6 +600,57 @@ namespace Toolify.ProductService.Data
                     PromoCode = reader.IsDBNull(reader.GetOrdinal("PromoCodeText")) ? null : reader.GetString(reader.GetOrdinal("PromoCodeText"))
                 });
             }
+            if (await reader.NextResultAsync())
+            {
+                static int? TryGetOrdinal(IDataRecord r, string name)
+                {
+                    try 
+                    { 
+                        return r.GetOrdinal(name); 
+                    }
+                    catch (IndexOutOfRangeException) 
+                    {
+                        return null; 
+                    }
+                }
+
+                while (await reader.ReadAsync())
+                {
+                    var orderIdOrd = TryGetOrdinal(reader, "OrderId");
+                    if (orderIdOrd == null || reader.IsDBNull(orderIdOrd.Value)) continue;
+                    int orderId = reader.GetInt32(orderIdOrd.Value);
+                    var order = orders.FirstOrDefault(o => o.Id == orderId);
+                    if (order == null) continue;
+
+                    decimal price = 0m;
+                    var histPriceOrd = TryGetOrdinal(reader, "HistoricalPrice");
+                    var priceOrd = TryGetOrdinal(reader, "Price");
+                    if (histPriceOrd != null && !reader.IsDBNull(histPriceOrd.Value))
+                        price = reader.GetDecimal(histPriceOrd.Value);
+                    else if (priceOrd != null && !reader.IsDBNull(priceOrd.Value))
+                        price = reader.GetDecimal(priceOrd.Value);
+
+                    string? name = null;
+                    var nameOrd = TryGetOrdinal(reader, "Name");
+                    var productNameOrd = TryGetOrdinal(reader, "ProductName");
+                    if (nameOrd != null && !reader.IsDBNull(nameOrd.Value))
+                        name = reader.GetString(nameOrd.Value);
+                    else if (productNameOrd != null && !reader.IsDBNull(productNameOrd.Value))
+                        name = reader.GetString(productNameOrd.Value);
+
+                    var productIdOrd = TryGetOrdinal(reader, "ProductId");
+                    var qtyOrd = TryGetOrdinal(reader, "Quantity");
+
+                    order.Items.Add(new OrderItem
+                    {
+                        OrderId = orderId,
+                        ProductId = productIdOrd == null || reader.IsDBNull(productIdOrd.Value) ? 0 : reader.GetInt32(productIdOrd.Value),
+                        Quantity = qtyOrd == null || reader.IsDBNull(qtyOrd.Value) ? 0 : reader.GetInt32(qtyOrd.Value),
+                        Price = price,
+                        ProductName = name
+                    });
+                }
+            }
             return orders;
         }
         public async Task UpdateOrderStatusAsync(int orderId, string newStatus)

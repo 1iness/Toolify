@@ -3,6 +3,7 @@ using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Toolify.AuthService.Services;
 using System.Text;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
@@ -16,13 +17,15 @@ namespace HouseholdStore.Controllers
     {
         private readonly ProductApiService _api;
         private readonly AuthApiService _authApi;
-        private readonly ProductRepository _repo; 
+        private readonly ProductRepository _repo;
+        private readonly EmailService _email;
 
-        public AdminController(ProductApiService api, AuthApiService authApi, ProductRepository repo)
+        public AdminController(ProductApiService api, AuthApiService authApi, ProductRepository repo, EmailService email)
         {
             _api = api;
             _authApi = authApi;
             _repo = repo;
+            _email = email;
         }
 
         public async Task<IActionResult> Index()
@@ -220,10 +223,56 @@ namespace HouseholdStore.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateOrderStatus(int orderId, string status)
         {
+            var allOrders = await _api.GetAllOrdersAsync();
+            var order = allOrders.FirstOrDefault(o => o.Id == orderId);
+            var previousStatus = order?.Status;
+
+            if (order != null && string.Equals(previousStatus, status, StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ToastType"] = "info";
+                TempData["ToastMessage"] = $"Статус заказа #{orderId} уже установлен: '{status}'";
+                return RedirectToAction("Orders");
+            }
+
             await _api.UpdateOrderStatusAsync(orderId, status);
 
             TempData["ToastType"] = "success";
             TempData["ToastMessage"] = $"Статус заказа #{orderId} изменен на '{status}'";
+
+            try
+            {
+                string? toEmail = order?.GuestEmail;
+
+                if (string.IsNullOrWhiteSpace(toEmail) && order?.UserId != null)
+                {
+                    var users = await _authApi.GetAllUsersAsync();
+                    toEmail = users.FirstOrDefault(u => u.Id == order.UserId.Value)?.Email;
+                }
+
+                if (!string.IsNullOrWhiteSpace(toEmail))
+                {
+                    var lines = (order?.Items ?? new List<OrderItem>())
+                        .Select(i => new OrderLine
+                        {
+                            Name = i.ProductName,
+                            Quantity = i.Quantity,
+                            Price = i.Price
+                        })
+                        .ToList();
+
+                    await _email.SendOrderStatusChangedAsync(
+                        toEmail,
+                        orderId,
+                        previousStatus,
+                        status,
+                        order?.Address,
+                        order?.TotalAmount ?? 0m,
+                        lines);
+                }
+            }
+            catch
+            {
+            }
 
             return RedirectToAction("Orders");
         }
