@@ -272,24 +272,23 @@
 .order-card-item {
     background: #fff;
     border: 1px solid #eee;
-    border-radius: 12px;
-    margin-bottom: 20px;
+    border-radius: 16px;
     padding: 20px;
-    transition: transform 0.2s;
+    margin-bottom: 14px;
+    transition: box-shadow 0.2s;
 }
 
     .order-card-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        transform: none;
     }
 
 /* Статусы заказа */
 .status-badge, .badge {
-    padding: 6px 12px;
-    border-radius: 8px;
+    padding: 5px 14px;
+    border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
-    color: #333 !important; 
 }
 
 .personal-grid {
@@ -332,3 +331,239 @@
         transform: translateY(-2px);
         color: #fff;
     }
+
+
+
+/* ===== СКРОЛЛ-КОНТЕЙНЕР ЗАКАЗОВ ===== */
+.orders-scroll-container {
+    max-height: 570px;
+    overflow-y: auto;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #28a745 #f0f0f0;
+}
+
+    .orders-scroll-container::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .orders-scroll-container::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 10px;
+    }
+
+    .orders-scroll-container::-webkit-scrollbar-thumb {
+        background: #28a745;
+        border-radius: 10px;
+    }
+
+/* ===== ШАПКА КАРТОЧКИ ЗАКАЗА ===== */
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.order-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.order-number {
+    font-weight: 700;
+    font-size: 15px;
+    color: #222;
+}
+
+.order-date {
+    font-size: 12px;
+    color: #bbb;
+}
+
+.order-status-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* ===== ПРОГРЕСС-БАР ===== */
+.order-progress {
+    display: flex;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+    .progress-step span {
+        font-size: 10px;
+        color: #ccc;
+        white-space: nowrap;
+    }
+
+    .progress-step.done span {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+.step-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.progress-step.done .step-dot {
+    background: #28a745;
+    color: #fff;
+}
+
+.progress-line {
+    flex: 1;
+    height: 2px;
+    background: #f0f0f0;
+    margin: 0 4px 18px;
+}
+
+    .progress-line.done {
+        background: #28a745;
+    }
+
+/* ===== ТОВАРЫ ВНУТРИ ЗАКАЗА ===== */
+.order-items-list {
+    max-height: 150px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #eee #fff;
+}
+
+    .order-items-list::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .order-items-list::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 4px;
+    }
+
+.order-item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    background: #fafafa;
+    border-radius: 10px;
+}
+
+    .order-item-row img {
+        width: 44px;
+        height: 44px;
+        object-fit: contain;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        background: #fff;
+        flex-shrink: 0;
+    }
+
+.order-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.order-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.order-item-qty {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+.order-item-total {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ===== ФУТЕР КАРТОЧКИ ===== */
+.order-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #f5f5f5;
+    font-size: 13px;
+    color: #999;
+}
+
+.order-total-price {
+    font-size: 18px;
+    font-weight: 800;
+    color: #222;
+}
+
+/* ===== ИЗБРАННОЕ ===== */
+.favourites-scroll-container {
+    max-height: 570px;
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: #28a745 #f0f0f0;
+}
+
+    .favourites-scroll-container::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .favourites-scroll-container::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 10px;
+    }
+
+    .favourites-scroll-container::-webkit-scrollbar-thumb {
+        background: #28a745;
+        border-radius: 10px;
+    }
+
+.favourites-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    padding: 2px;
+}
+
+.fav-loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px 20px;
+    color: #ccc;
+}
