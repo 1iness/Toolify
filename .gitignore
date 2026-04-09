@@ -65,3 +65,20 @@ coverage/
 *.resharper
 *.suo
 *.DotSettings
+
+# Sensitive configuration / secrets
+**/appsettings.json
+**/appsettings.*.json
+!**/appsettings.Example.json
+!**/appsettings.Template.json
+
+# Local secrets
+.env
+.env.*
+secrets.json
+**/secrets.json
+
+# Certificates / keys
+*.pfx
+*.p12
+*.key
