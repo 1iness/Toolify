@@ -9,6 +9,7 @@ namespace HouseholdStore.Controllers
 {
     public class ChatController : Controller
     {
+        private const string ChatGuestCookieName = "ChatGuestId";
         private readonly ChatApiService _chatApi;
         private readonly AuthApiService _authApi;
         private readonly EmailService _emailService;
@@ -119,13 +120,26 @@ namespace HouseholdStore.Controllers
 
         private string EnsureGuestIdCookie()
         {
-            var guestId = Request.Cookies["GuestId"];
+            var guestId = Request.Cookies[ChatGuestCookieName];
+            if (!string.IsNullOrWhiteSpace(guestId)) return guestId;
+
+            guestId = Request.Cookies["GuestId"];
+            if (!string.IsNullOrWhiteSpace(guestId))
+            {
+                Response.Cookies.Append(ChatGuestCookieName, guestId, new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddDays(60),
+                    HttpOnly = true,
+                    IsEssential = true
+                });
+                return guestId;
+            }
             if (!string.IsNullOrWhiteSpace(guestId)) return guestId;
 
             guestId = Guid.NewGuid().ToString("N");
-            Response.Cookies.Append("GuestId", guestId, new CookieOptions
+            Response.Cookies.Append(ChatGuestCookieName, guestId, new CookieOptions
             {
-                Expires = DateTimeOffset.UtcNow.AddDays(30),
+                Expires = DateTimeOffset.UtcNow.AddDays(60),
                 HttpOnly = true,
                 IsEssential = true
             });
