@@ -20,6 +20,7 @@ namespace HouseholdStore
                 client.BaseAddress = new Uri("https://localhost:7152/api/auth/");
             });
             builder.Services.AddHttpClient<ProductApiService>();
+            builder.Services.AddHttpClient<ChatApiService>();
             builder.Services.AddScoped<EmailService>();
 
 

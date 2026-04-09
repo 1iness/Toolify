@@ -1,0 +1,95 @@
+﻿@model List<HouseholdStore.Models.ChatMessageVm>
+@{
+    ViewData["Title"] = "Диалог";
+    Layout = null;
+    var conversations = ViewBag.Conversations as List<HouseholdStore.Models.ChatConversationVm> ?? new List<HouseholdStore.Models.ChatConversationVm>();
+    var selected = ViewBag.SelectedConversation as HouseholdStore.Models.ChatConversationVm;
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .chat-shell {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        min-height: 80vh;
+        gap: 16px;
+    }
+
+    .chat-list {
+        border: 1px solid #eee;
+        border-radius: 12px;
+        overflow: auto;
+    }
+
+    .chat-main {
+        border: 1px solid #eee;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 16px;
+        overflow: auto;
+        background: #fafafa;
+    }
+
+    .msg {
+        max-width: 75%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        white-space: pre-wrap;
+    }
+
+        .msg.user {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+        }
+
+        .msg.admin {
+            background: #daf5e4;
+            margin-left: auto;
+        }
+</style>
+
+<div class="container py-3">
+    <a class="btn btn-outline-secondary mb-3" href="@Url.Action("Admin", "Chat")">Назад к списку</a>
+    <div class="chat-shell">
+        <div class="chat-list list-group">
+            @foreach (var c in conversations)
+            {
+                <a href="@Url.Action("AdminConversation", "Chat", new { id = c.Id })"
+                   class="list-group-item list-group-item-action @(selected?.Id == c.Id ? "active" : "")">
+                    <div class="fw-semibold">#@c.Id - @c.Subject</div>
+                    <small>@(c.UserId.HasValue ? $"User {c.UserId}" : $"Guest {c.GuestId}")</small>
+                </a>
+            }
+        </div>
+        <div class="chat-main">
+            <div class="p-3 border-bottom">
+                <h5 class="mb-0">Чат #@selected?.Id - @selected?.Subject</h5>
+            </div>
+            <div class="chat-messages" id="chatAdminMessages">
+                @foreach (var m in Model)
+                {
+                    <div class="msg @(m.SenderType == "admin" ? "admin" : "user")">
+                        <div>@m.MessageText</div>
+                        <small class="text-muted">@m.CreatedAt.ToLocalTime()</small>
+                    </div>
+                }
+            </div>
+            <form method="post" asp-action="AdminReply" asp-controller="Chat" class="p-3 border-top d-flex gap-2">
+                <input type="hidden" name="conversationId" value="@selected?.Id" />
+                <textarea class="form-control" name="messageText" rows="2" placeholder="Введите ответ..." required></textarea>
+                <button class="btn btn-success" type="submit">Отправить</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const box = document.getElementById("chatAdminMessages");
+    if (box) box.scrollTop = box.scrollHeight;
+</script>

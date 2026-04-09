@@ -25,6 +25,7 @@ namespace Toolify.ProductService
             });
 
             builder.Services.AddScoped<ProductRepository>();
+            builder.Services.AddScoped<ChatRepository>();
             builder.Services.AddScoped<ProductManager>();
 
             var app = builder.Build();

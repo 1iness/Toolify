@@ -143,6 +143,32 @@ namespace Toolify.AuthService.Services
             message.To.Add(toEmail);
             await smtp.SendMailAsync(message);
         }
+        public async Task SendChatReplyAsync(string toEmail, string? subject, string replyText, int conversationId)
+        {
+            if (string.IsNullOrWhiteSpace(toEmail)) return;
+
+            var smtp = CreateClient();
+            var safeSubject = string.IsNullOrWhiteSpace(subject) ? "Вопрос по сайту" : subject.Trim();
+
+            var message = new MailMessage
+            {
+                From = new MailAddress(_email, "Toolify Store"),
+                Subject = $"Ответ администратора по чату #{conversationId}",
+                Body = $@"
+                    <div style=""font-family:Montserrat,Arial,sans-serif;line-height:1.6;color:#222;"">
+                      <h2 style=""margin:0 0 12px;"">Вы получили ответ от администратора</h2>
+                      <p style=""margin:0 0 12px;""><b>Тема:</b> {WebUtility.HtmlEncode(safeSubject)}</p>
+                      <div style=""background:#f7f7f7;border:1px solid #eee;border-radius:12px;padding:14px;"">
+                        {WebUtility.HtmlEncode(replyText).Replace("\n", "<br/>")}
+                      </div>
+                      <p style=""margin:16px 0 0;color:#666;"">С уважением,<br/>Toolify Store</p>
+                    </div>",
+                IsBodyHtml = true
+            };
+
+            message.To.Add(toEmail);
+            await smtp.SendMailAsync(message);
+        }
     }
     public class OrderLine
     {

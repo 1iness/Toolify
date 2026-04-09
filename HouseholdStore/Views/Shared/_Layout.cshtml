@@ -7,6 +7,7 @@
     <title>@ViewData["Title"]</title>
 
     <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/chat-widget.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/product.css"/>
@@ -130,6 +131,33 @@
         @RenderBody()
     </main>
 
+    <div id="chatWidgetRoot" class="chat-widget-root">
+        <button id="chatToggleBtn" type="button" class="chat-toggle-btn" aria-label="Открыть чат с админом">
+            <img src="~/image/admin-chat.png" alt="Chat with admin" />
+        </button>
+
+        <div id="chatPanel" class="chat-panel d-none">
+            <div class="chat-panel-header">
+                <div>
+                    <strong>Чат с администратором</strong>
+                    <div class="chat-subtitle">Ответим как можно быстрее</div>
+                </div>
+                <button id="chatCloseBtn" type="button" class="chat-close-btn">x</button>
+            </div>
+
+            <div id="chatMessages" class="chat-messages"></div>
+
+            <div id="chatGuestEmailWrap" class="chat-guest-email-wrap d-none">
+                <input id="chatGuestEmailInput" type="email" placeholder="Email для ответа (необязательно)" />
+            </div>
+
+            <div class="chat-input-row">
+                <textarea id="chatMessageInput" rows="2" placeholder="Напишите вопрос..."></textarea>
+                <button id="chatSendBtn" type="button">Отправить</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ОСТАВЬТЕ ТОЛЬКО ЭТОТ ФУТЕР -->
     <footer class="main-footer scroll-animate">
         <div class="footer-content-top">
@@ -188,6 +216,7 @@
 
 
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/chat-widget.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @if (TempData["ToastMessage"] != null)
