@@ -61,6 +61,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Admin()
         {
             var conversations = await _chatApi.GetAdminConversationsAsync();
+            ViewBag.UserEmailMap = await GetUserEmailMapAsync();
             return View(conversations);
         }
 
@@ -74,6 +75,7 @@ namespace HouseholdStore.Controllers
 
             ViewBag.Conversations = conversations;
             ViewBag.SelectedConversation = selected;
+            ViewBag.UserEmailMap = await GetUserEmailMapAsync();
             var messages = await _chatApi.GetMessagesAsync(id);
             return View(messages);
         }
@@ -144,6 +146,21 @@ namespace HouseholdStore.Controllers
                 IsEssential = true
             });
             return guestId;
+        }
+        private async Task<Dictionary<int, string>> GetUserEmailMapAsync()
+        {
+            try
+            {
+                var users = await _authApi.GetAllUsersAsync();
+                return users
+                    .Where(u => u.Id > 0 && !string.IsNullOrWhiteSpace(u.Email))
+                    .GroupBy(u => u.Id)
+                    .ToDictionary(g => g.Key, g => g.First().Email);
+            }
+            catch
+            {
+                return new Dictionary<int, string>();
+            }
         }
     }
 }

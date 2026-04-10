@@ -207,18 +207,70 @@ public class UserRepository
 
     private User MapUserFromReader(SqlDataReader reader)
     {
+        string ReadString(string columnName, string fallback = "")
+        {
+            try
+            {
+                var value = reader[columnName];
+                return value == DBNull.Value ? fallback : value.ToString() ?? fallback;
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return fallback;
+            }
+        }
+
+        string? ReadNullableString(string columnName)
+        {
+            try
+            {
+                var value = reader[columnName];
+                return value == DBNull.Value ? null : value.ToString();
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
+        }
+
+        bool ReadBool(string columnName, bool fallback = false)
+        {
+            try
+            {
+                var value = reader[columnName];
+                return value != DBNull.Value && (bool)value;
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return fallback;
+            }
+        }
+
+        DateTime? ReadDateTime(string columnName)
+        {
+            try
+            {
+                var value = reader[columnName];
+                return value == DBNull.Value ? null : (DateTime)value;
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
+        }
+
         return new User
         {
             Id = (int)reader["Id"],
-            FirstName = reader["FirstName"].ToString()!,
-            LastName = reader["LastName"].ToString()!,
-            Email = reader["Email"].ToString()!,
-            Phone = reader["Phone"].ToString()!,
-            Password = reader["PasswordHash"].ToString()!,
-            Role = reader["Role"].ToString()!,
-            EmailConfirmed = reader["EmailConfirmed"] != DBNull.Value && (bool)reader["EmailConfirmed"],
-            EmailConfirmCode = reader["EmailConfirmCode"]?.ToString(),
-            EmailConfirmExpires = reader["EmailConfirmExpires"] == DBNull.Value ? null : (DateTime)reader["EmailConfirmExpires"]
+            FirstName = ReadString("FirstName"),
+            LastName = ReadString("LastName"),
+            Email = ReadString("Email"),
+            Phone = ReadString("Phone"),
+            Password = ReadString("PasswordHash"),
+            Role = ReadString("Role", "User"),
+            EmailConfirmed = ReadBool("EmailConfirmed"),
+            EmailConfirmCode = ReadNullableString("EmailConfirmCode"),
+            EmailConfirmExpires = ReadDateTime("EmailConfirmExpires")
         };
     }
 }

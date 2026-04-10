@@ -2,42 +2,105 @@
 @{
     ViewData["Title"] = "Чаты с клиентами";
     Layout = null;
+    var userEmailMap = ViewBag.UserEmailMap as Dictionary<int, string>
+                       ?? new Dictionary<int, string>();
+
+    string GetConversationPerson(HouseholdStore.Models.ChatConversationVm c)
+    {
+        if (c.UserId.HasValue)
+            return userEmailMap.TryGetValue(c.UserId.Value, out var e) && !string.IsNullOrWhiteSpace(e)
+                ? e : $"Пользователь {c.UserId.Value}";
+        if (!string.IsNullOrWhiteSpace(c.GuestEmail))
+            return $"Гость · {c.GuestEmail}";
+        return !string.IsNullOrWhiteSpace(c.GuestId) ? $"Гость · {c.GuestId}" : "Гость";
+    }
+
+    string GetAvatarLetter(HouseholdStore.Models.ChatConversationVm c)
+    {
+        var person = GetConversationPerson(c);
+        return person.Length > 0 ? person[0].ToString().ToUpper() : "?";
+    }
+
+    bool IsGuest(HouseholdStore.Models.ChatConversationVm c)
+        => !c.UserId.HasValue;
 }
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<div class="container py-4">
-    <h2 class="mb-4">Чаты с клиентами</h2>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="~/css/chat-admin.css" asp-append-version="true" />
+
+<div class="chat-admin-page">
+
+    <a href="/Admin/Index" class="btn-back-chat">
+        <i class="bi bi-arrow-left"></i> Назад в панель
+    </a>
+
+    <div class="chat-page-header">
+        <div>
+            <h2 class="chat-page-title">
+                <i class="bi bi-chat-dots" style="color:#28a745; margin-right:10px;"></i>
+                Чаты с клиентами
+            </h2>
+            <div class="chat-page-subtitle">
+                @Model.Count диалог@(Model.Count == 1 ? "" : Model.Count is >= 2 and <= 4 ? "а" : "ов")
+                · @Model.Count(c => c.HasUnreadForAdmin) непрочитанных
+            </div>
+        </div>
+    </div>
 
     @if (!Model.Any())
     {
-        <div class="alert alert-info">Пока нет обращений в чат.</div>
+        <div class="chat-list-card">
+            <div class="chat-empty">
+                <i class="bi bi-chat-square-text"></i>
+                <p>Пока нет обращений в чат</p>
+            </div>
+        </div>
     }
     else
     {
-        <div class="list-group">
-            @foreach (var c in Model)
+        <div class="chat-list-card">
+            @foreach (var c in Model.OrderByDescending(x => x.LastMessageAt))
             {
-                <a href="@Url.Action("AdminConversation", "Chat", new { id = c.Id })" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">#@c.Id - @c.Subject</h6>
-                            <small class="text-muted">
-                                @(c.UserId.HasValue ? $"Пользователь ID: {c.UserId}" : $"Гость: {c.GuestId}")
-                                @if (!string.IsNullOrWhiteSpace(c.GuestEmail))
-                                {
-                                    <span> | Email: @c.GuestEmail</span>
-                                }
-                            </small>
-                            <div class="text-truncate mt-1">@c.LastMessagePreview</div>
-                        </div>
-                        <div class="text-end">
-                            <small class="text-muted d-block">@c.LastMessageAt.ToLocalTime()</small>
-                            @if (c.HasUnreadForAdmin)
-                            {
-                                <span class="badge text-bg-danger mt-1">Новые</span>
-                            }
-                        </div>
+                var person = GetConversationPerson(c);
+                var letter = GetAvatarLetter(c);
+                var isGuest = IsGuest(c);
+
+                <a href="@Url.Action("AdminConversation", "Chat", new { id = c.Id })"
+                   class="chat-list-item">
+
+                    <div class="chat-avatar @(isGuest ? "guest" : "")">
+                        @letter
                     </div>
+
+                    <div class="chat-item-body">
+                        <div class="chat-item-subject">#@c.Id · @c.Subject</div>
+                        <div class="chat-item-person">
+                            <i class="bi @(isGuest ? "bi-person-dash" : "bi-person-check")"
+                               style="margin-right:4px;"></i>@person
+                        </div>
+                        <div class="chat-item-preview">@c.LastMessagePreview</div>
+                    </div>
+
+                    <div class="chat-item-meta">
+                        <span class="chat-item-time">
+                            @c.LastMessageAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                        </span>
+                        @if (c.HasUnreadForAdmin)
+                        {
+                            <span class="badge-unread">
+                                <i class="bi bi-circle-fill" style="font-size:8px;"></i> Новые
+                            </span>
+                        }
+                        else
+                        {
+                            <span style="font-size:12px; color:#ccc;">
+                                <i class="bi bi-check2-all"></i>
+                            </span>
+                        }
+                    </div>
+
                 </a>
             }
         </div>
