@@ -10,7 +10,7 @@
 
     if (!toggleBtn || !panel || !messagesBox || !sendBtn || !input) return;
 
-    let loaded = false;
+    let loadGeneration = 0;
 
     const esc = (str) => (str || "")
         .replace(/&/g, "&amp;")
@@ -45,21 +45,23 @@
             return;
         }
 
-        let prevDat = null;
+        let prevDay = null;
         messagesBox.innerHTML = messages.map(m => {
-            const mine = m.senderType === "user";
+            const mine = String(m.senderType || "").toLowerCase() === "user";
             const cls = mine ? "mine" : "admin";
-            const currentDay = dayKey(m.createdAt);
+            const at = m.createdAt ?? m.CreatedAt;
+            const currentDay = dayKey(at);
             const dateDivider = currentDay !== prevDay
-                ? `<div class="chat-day-divider"><span>${formatDay(m.createdAt)}</span></div>`
+                ? `<div class="chat-day-divider"><span>${formatDay(at)}</span></div>`
                 : "";
             prevDay = currentDay;
 
-            const safeText = withLinks(esc((m.messageText || "").trim()));
+            const safeText = withLinks(esc((m.messageText || m.MessageText || "").trim()));
+            const timeStr = formatTime(at);
             return `${dateDivider}<div class="chat-msg-row ${cls}">
                         <div class="chat-msg ${cls}">
                             <div class="chat-msg-text">${safeText}</div>
-                            <div class="chat-msg-time">${formatTime(m.createdAt)}</div>
+                            <div class="chat-msg-time">${timeStr}</div>
                         </div>
                     </div>`;
         }).join("");
@@ -68,14 +70,22 @@
     }
 
     async function loadChat() {
-        const resp = await fetch("/Chat/WidgetData");
-        if (!resp.ok) return;
-        const data = await resp.json();
-        renderMessages(data.messages || []);
-        if (!data.isAuthenticated && guestEmailWrap) {
-            guestEmailWrap.classList.remove("d-none");
+        const gen = ++loadGeneration;
+        try {
+            const resp = await fetch("/Chat/WidgetData", { cache: "no-store" });
+            if (gen !== loadGeneration) return;
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (gen !== loadGeneration) return;
+            const list = data.messages || data.Messages || [];
+            renderMessages(Array.isArray(list) ? list : []);
+            if (!data.isAuthenticated && guestEmailWrap) {
+                guestEmailWrap.classList.remove("d-none");
+            }
+        } catch {
+            if (gen === loadGeneration) {
+            }
         }
-        loaded = true;
     }
 
     async function sendMessage() {
@@ -106,7 +116,7 @@
     toggleBtn.addEventListener("click", async () => {
         panel.classList.toggle("d-none");
         toggleBtn.classList.add("d-none");
-        if (!panel.classList.contains("d-none") && !loaded) {
+        if (!panel.classList.contains("d-none")) {
             await loadChat();
         }
     });
