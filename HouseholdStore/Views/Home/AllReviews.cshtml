@@ -1,4 +1,5 @@
 ﻿@model Toolify.ProductService.Models.Product
+@using System.Globalization
 @{
     var reviews = ViewBag.Reviews as List<HouseholdStore.Models.ReviewViewModel> ?? new List<HouseholdStore.Models.ReviewViewModel>();
     var reviewsCount = reviews.Count;
@@ -27,16 +28,13 @@
         @foreach (var review in reviews)
         {
             <div class="review-item"
-                 data-rating="@review.Rating"
+                 data-rating="@review.Rating.ToString("0.0", CultureInfo.InvariantCulture)"
                  data-date="@(((DateTimeOffset)review.CreatedAt).ToUnixTimeMilliseconds())">
 
                 <div class="review-header">
                     <span class="user-name" style="font-weight:bold;">@review.UserName</span>
                     <div class="stars-green">
-                        @for (int i = 0; i < review.Rating; i++)
-                        {
-                            <span>★</span>
-                        }
+                        <partial name="_ReviewStars" model="review.Rating" />
                     </div>
                     <span style="color: #999; margin-left: auto;">@review.CreatedAt.ToString("dd.MM.yyyy")</span>
                 </div>

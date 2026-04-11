@@ -1,64 +1,76 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
     const modal = document.getElementById('reviewModal');
     const starContainer = document.getElementById('starContainer');
-
-    // если на странице нет модального окна выйдет 
     if (!modal || !starContainer) return;
 
-    const stars = starContainer.querySelectorAll('.star-item');
     const ratingInput = document.getElementById('ratingInput');
-    let currentRating = parseInt(ratingInput.value) || 5;
+    let currentRating = parseFloat(ratingInput.value) || 5;
 
-    // --- опен/клоуз ---
     window.openReviewModal = function () {
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
-    }
+        renderStars(currentRating);
+    };
 
     window.closeReviewModal = function () {
         modal.style.display = 'none';
         document.body.style.overflow = 'auto';
-    }
+    };
 
-    // если нажать вне модалки, то модалка закроется
-    modal.addEventListener('click', (e) => {
+    modal.addEventListener('click', e => {
         if (e.target === modal) closeReviewModal();
     });
 
-    // --- логика работы звезд ---
-    stars.forEach(star => {
-        star.addEventListener('mouseover', () => {
-            const val = parseInt(star.getAttribute('data-value'));
-            fillStars(val, 'hover');
-        });
+    const wraps = Array.from(starContainer.querySelectorAll('.star-wrap'));
 
-        star.addEventListener('mouseout', () => {
-            fillStars(currentRating, 'active');
-        });
+    function renderStars(val) {
+        wraps.forEach(wrap => {
+            const full = parseFloat(wrap.dataset.full);
+            const half = parseFloat(wrap.dataset.half);
+            const svgHalf = wrap.querySelector('.star-half');
+            const svgFull = wrap.querySelector('.star-full');
+            const svgBg = wrap.querySelector('.star-bg');
 
-        star.addEventListener('click', () => {
-            currentRating = parseInt(star.getAttribute('data-value'));
-            ratingInput.value = currentRating;
-            fillStars(currentRating, 'active');
-        });
-    });
-
-    function fillStars(value, className) {
-        stars.forEach(s => {
-            const sVal = parseInt(s.getAttribute('data-value'));
-            s.classList.remove('hover', 'active');
-            if (sVal <= value) {
-                s.classList.add(className);
+            if (val >= full) {
+                // полная жёлтая
+                svgFull.style.display = '';
+                svgHalf.style.display = 'none';
+                svgBg.style.display = 'none';
+            } else if (val >= half) {
+                // половина жёлтая
+                svgFull.style.display = 'none';
+                svgHalf.style.display = '';
+                svgBg.style.display = '';
+            } else {
+                // серая
+                svgFull.style.display = 'none';
+                svgHalf.style.display = 'none';
+                svgBg.style.display = '';
             }
         });
-
-        if (className === 'hover') {
-        } else {
-            stars.forEach(s => {
-                if (parseInt(s.getAttribute('data-value')) <= currentRating) s.classList.add('active');
-            });
-        }
     }
+
+    // Hover
+    starContainer.addEventListener('mousemove', function (e) {
+        const zone = e.target.closest('.star-zone-left, .star-zone-right');
+        if (!zone) return;
+        renderStars(parseFloat(zone.dataset.value));
+    });
+
+    starContainer.addEventListener('mouseleave', function () {
+        renderStars(currentRating);
+    });
+
+    // Клик
+    starContainer.addEventListener('click', function (e) {
+        const zone = e.target.closest('.star-zone-left, .star-zone-right');
+        if (!zone) return;
+        currentRating = parseFloat(zone.dataset.value);
+        ratingInput.value = currentRating;
+        renderStars(currentRating);
+    });
+
+    renderStars(currentRating);
 });
 
 let isDesc = true;
@@ -88,11 +100,11 @@ function sortReviews(criteria) {
         let valA, valB;
 
         if (criteria === 'date') {
-            valA = parseInt(a.getAttribute('data-date'));
-            valB = parseInt(b.getAttribute('data-date'));
+            valA = parseInt(a.getAttribute('data-date'), 10);
+            valB = parseInt(b.getAttribute('data-date'), 10);
         } else {
-            valA = parseInt(a.getAttribute('data-rating'));
-            valB = parseInt(b.getAttribute('data-rating'));
+            valA = parseFloat(a.getAttribute('data-rating'));
+            valB = parseFloat(b.getAttribute('data-rating'));
         }
 
         if (isDesc) {

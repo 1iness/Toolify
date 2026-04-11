@@ -721,21 +721,98 @@
 /* Звезды в модалке */
 .star-rating-input {
     display: flex;
-    gap: 10px;
+    gap: 4px;
     justify-content: center;
     margin-bottom: 10px;
 }
-
-.star-item {
-    font-size: 32px;
-    color: #ddd;
+.star-wrap {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 40px;
     cursor: pointer;
-    transition: color 0.2s;
+    user-select: none;
 }
 
-    .star-item.active, .star-item.hover {
-        color: #ffc107;
+.star-svg {
+    width: 40px;
+    height: 40px;
+    display: block;
+}
+
+.star-zone-left,
+.star-zone-right {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    z-index: 10;
+}
+
+.star-zone-left {
+    left: 0;
+}
+
+.star-zone-right {
+    right: 0;
+}
+
+.star-item {
+    position: relative;
+    font-size: 36px;
+    cursor: pointer;
+    display: inline-block;
+    color: #ddd;
+    transition: color 0.15s;
+    line-height: 1;
+    user-select: none;
+}
+
+    /* Пустая звезда */
+    .star-item::before {
+        content: '★';
     }
+
+    /* Закрашенный слой поверх — ширина регулируется классом */
+    .star-item::after {
+        content: '★';
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: block;
+        color: #ffc107;
+        overflow: hidden;
+        width: 0%;
+        transition: width 0.1s;
+        white-space: nowrap;
+    }
+
+    /* Половина */
+    .star-item.half::after {
+        width: 50%;
+    }
+
+    /* Полная */
+    .star-item.full::after {
+        width: 100%;
+    }
+
+.star-half-left,
+.star-half-right {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    z-index: 2;
+}
+
+.star-half-left {
+    left: 0;
+}
+
+.star-half-right {
+    right: 0;
+}
 
 /* Кнопка отправки */
 .btn-submit-review {

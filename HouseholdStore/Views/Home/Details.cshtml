@@ -153,10 +153,7 @@
                                 <span class="user-name">@review.UserName</span>
 
                                 <div class="stars-green">
-                                    @for (int i = 1; i <= 5; i++)
-                                    {
-                                        <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star")"></i>
-                                    }
+                                    <partial name="_ReviewStars" model="review.Rating" />
                                 </div>
 
                                 <span style="font-size: 12px; color: #999; margin-left: auto;">
@@ -246,11 +243,37 @@
                 <label class="form-label">Общая оценка</label>
                 <input type="hidden" name="Rating" id="ratingInput" value="5" />
                 <div class="star-rating-input" id="starContainer">
-                    <span class="star-item active" data-value="1">★</span>
-                    <span class="star-item active" data-value="2">★</span>
-                    <span class="star-item active" data-value="3">★</span>
-                    <span class="star-item active" data-value="4">★</span>
-                    <span class="star-item active" data-value="5">★</span>
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        var halfVal = (i - 0.5).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+                        <span class="star-wrap" data-full="@i" data-half="@halfVal">
+                            <svg class="star-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <clipPath id="half-clip-@i">
+                                        <rect x="0" y="0" width="12" height="24" />
+                                    </clipPath>
+                                </defs>
+                                <!-- серая звезда (фон) -->
+                                <polygon class="star-bg"
+                                         points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                                         fill="#ddd" stroke="none" />
+                                <!-- жёлтая половина -->
+                                <polygon class="star-half"
+                                         points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                                         fill="#ffc107" stroke="none"
+                                         clip-path="url(#half-clip-@i)"
+                                         style="display:none;" />
+                                <!-- жёлтая полная -->
+                                <polygon class="star-full"
+                                         points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                                         fill="#ffc107" stroke="none"
+                                         style="display:none;" />
+                            </svg>
+                            <!-- зоны нажатия -->
+                            <span class="star-zone-left" data-value="@halfVal"></span>
+                            <span class="star-zone-right" data-value="@i"></span>
+                        </span>
+                    }
                 </div>
             </div>
 

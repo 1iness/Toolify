@@ -370,7 +370,7 @@ namespace Toolify.ProductService.Data
                 UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
                 UserName = reader.GetString(reader.GetOrdinal("UserName")),
                 UserEmail = reader.GetString(reader.GetOrdinal("UserEmail")),
-                Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                Rating = reader.GetInt32(reader.GetOrdinal("Rating")) / 2.0,
                 Pros = reader.IsDBNull(reader.GetOrdinal("Pros")) ? null : reader.GetString(reader.GetOrdinal("Pros")),
                 Cons = reader.IsDBNull(reader.GetOrdinal("Cons")) ? null : reader.GetString(reader.GetOrdinal("Cons")),
                 Comment = reader.IsDBNull(reader.GetOrdinal("Comment")) ? null : reader.GetString(reader.GetOrdinal("Comment")),
@@ -388,7 +388,7 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@UserId", (object?)review.UserId ?? DBNull.Value);
             command.Parameters.AddWithValue("@UserName", review.UserName);
             command.Parameters.AddWithValue("@UserEmail", review.UserEmail);
-            command.Parameters.AddWithValue("@Rating", review.Rating);
+            command.Parameters.AddWithValue("@Rating", (int)Math.Round(review.Rating * 2));
             command.Parameters.AddWithValue("@Pros", (object?)review.Pros ?? DBNull.Value);
             command.Parameters.AddWithValue("@Cons", (object?)review.Cons ?? DBNull.Value);
             command.Parameters.AddWithValue("@Comment", (object?)review.Comment ?? DBNull.Value);

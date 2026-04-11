@@ -161,20 +161,24 @@ window.addEventListener('load', () => {
     const leaf1 = document.querySelector('.leaf1');
     const leaf2 = document.querySelector('.leaf2');
 
-    leaf1.addEventListener('animationend', () => {
-        leaf1.classList.add('float1');
-    });
+    if (leaf1) {
+        leaf1.addEventListener('animationend', () => {
+            leaf1.classList.add('float1');
+        });
+    }
 
-    leaf2.addEventListener('animationend', () => {
-        leaf2.classList.add('float2');
-    });
+    if (leaf2) {
+        leaf2.addEventListener('animationend', () => {
+            leaf2.classList.add('float2');
+        });
+    }
 });
-
 
 // ДЛЯ ПОИСКА
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("searchInput");
         const resultsBox = document.getElementById("searchResults");
+        if (!searchInput || !resultsBox) return;
         let debounceTimer;
 
         searchInput.addEventListener("input", function () {

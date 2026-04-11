@@ -3,6 +3,7 @@ using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Globalization;
 using System.Security.Claims;
 using Toolify.ProductService.Models;
 
@@ -73,8 +74,13 @@ namespace HouseholdStore.Controllers
             ViewBag.ReviewsCount = reviews.Count;
             ViewBag.AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
 
-            var starCounts = new int[6]; 
-            foreach (var r in reviews) starCounts[r.Rating]++;
+            var starCounts = new int[6];
+            foreach (var r in reviews)
+            {
+                var b = (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero);
+                b = Math.Clamp(b, 1, 5);
+                starCounts[b]++;
+            }
 
             ViewBag.StarCounts = starCounts;
 
@@ -93,6 +99,13 @@ namespace HouseholdStore.Controllers
         [HttpPost]
         public async Task<IActionResult> LeaveReview(ReviewViewModel model)
         {
+            var ratingRaw = Request.Form["Rating"].ToString();
+            if (!string.IsNullOrEmpty(ratingRaw) &&
+                double.TryParse(ratingRaw, NumberStyles.Float, CultureInfo.InvariantCulture, out var ratingParsed))
+            {
+                model.Rating = ratingParsed;
+            }
+
             if (User.Identity.IsAuthenticated)
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
