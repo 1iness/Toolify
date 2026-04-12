@@ -149,19 +149,39 @@
                     {
                         <div class="review-item">
                             <div class="review-header">
-                                <div class="user-avatar"></div>
-                                <span class="user-name">@review.UserName</span>
-
-                                <div class="stars-green">
-                                    <partial name="_ReviewStars" model="review.Rating" />
+                                <div class="user-avatar" aria-hidden="true">
+                                    @(string.IsNullOrWhiteSpace(review.UserName) ? "?" : review.UserName.Trim().Substring(0, 1).ToUpperInvariant())
                                 </div>
-
-                                <span style="font-size: 12px; color: #999; margin-left: auto;">
-                                    @review.CreatedAt.ToString("dd.MM.yyyy")
-                                </span>
+                                <div class="review-header-main">
+                                    <span class="user-name">@review.UserName</span>
+                                    <div class="stars-green" aria-label="Оценка @review.Rating.ToString("0.0") из 5">
+                                        <partial name="_ReviewStars" model="review.Rating" />
+                                    </div>
+                                </div>
+                                <span class="review-date">@review.CreatedAt.ToString("dd.MM.yyyy")</span>
                             </div>
                             <div class="review-body">
-                                <p>@review.Comment</p>
+                                @if (!string.IsNullOrEmpty(review.Pros))
+                                {
+                                    <div class="review-snippet review-snippet--pros">
+                                        <div class="review-snippet-label">Достоинства</div>
+                                        <p>@review.Pros</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(review.Cons))
+                                {
+                                    <div class="review-snippet review-snippet--cons">
+                                        <div class="review-snippet-label">Недостатки</div>
+                                        <p>@review.Cons</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(review.Comment))
+                                {
+                                    <div class="review-comment">
+                                        <div class="review-comment-label">Комментарий</div>
+                                        <p>@review.Comment</p>
+                                    </div>
+                                }
                             </div>
                         </div>
                     }
