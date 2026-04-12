@@ -429,7 +429,7 @@
     width: 380px;
     flex-shrink: 0;
     align-self: flex-start;
-    padding-top: calc(28px * 1.35 + 48px);
+    padding-top: calc(28px * 1.35 + 37px);
 }
 
 /* заголовки */

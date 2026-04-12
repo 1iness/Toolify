@@ -25,7 +25,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> AddToCart(int id)
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
-            _productRepo.AddToCartAsync(id, userId, guestId);
+            await _productRepo.AddToCartAsync(id, userId, guestId);
 
             TempData["ToastMessage"] = "Товар добавлен в корзину";
             TempData["ToastType"] = "success";
@@ -65,7 +65,7 @@ namespace HouseholdStore.Controllers
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
 
-            _productRepo.AddToCartAsync(id, userId, guestId);
+            await _productRepo.AddToCartAsync(id, userId, guestId);
             var cartItems = await _productRepo.GetCartItemsAsync(userId, guestId);
             var totalCount = cartItems.Sum(x => x.Quantity);
             return Json(new { success = true, count = totalCount });
