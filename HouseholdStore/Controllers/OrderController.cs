@@ -66,6 +66,21 @@ namespace HouseholdStore.Controllers
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
 
+            model.DeliveryType = model.DeliveryType?.Trim() ?? "Courier";
+            model.PaymentMethod = model.PaymentMethod?.Trim() ?? "CardOnDelivery";
+
+            if (model.DeliveryType != "Courier" && model.DeliveryType != "Pickup")
+                ModelState.AddModelError(nameof(model.DeliveryType), "Некорректный способ доставки");
+            if (model.PaymentMethod != "CardOnDelivery" && model.PaymentMethod != "CashOnDelivery")
+                ModelState.AddModelError(nameof(model.PaymentMethod), "Некорректный способ оплаты");
+
+            if (model.DeliveryType == "Pickup")
+            {
+                model.Address = "Самовывоз";
+                ModelState.Remove(nameof(model.Address));
+            }
+
+
             if (!ModelState.IsValid)
             {
                 model.CartItems = await _productRepo.GetCartItemsAsync(userId, guestId);
@@ -80,7 +95,10 @@ namespace HouseholdStore.Controllers
                 GuestEmail = model.Email,
                 GuestPhone = model.Phone,
                 Address = model.Address,
-                PromoCode = model.PromoCode
+                PromoCode = model.PromoCode,
+                DeliveryType = model.DeliveryType,
+                PaymentMethod = model.PaymentMethod
+
             };
 
             int orderId = await _productRepo.CreateOrderAsync(order, guestId, model.PromoCode);

@@ -26,6 +26,19 @@ namespace HouseholdStore.Models
         [Required(ErrorMessage = "Введите адрес доставки")]
         public string Address { get; set; }
 
+        //Порог бесплатной доставки курьером 
+        public const decimal FreeDeliveryThreshold = 50m;
+
+        //Доплата за курьера, 
+        public const decimal CourierDeliveryFee = 4.50m;
+
+        [Required(ErrorMessage = "Выберите способ доставки")]
+        public string DeliveryType { get; set; } = "Courier";
+
+        [Required(ErrorMessage = "Выберите способ оплаты")]
+        public string PaymentMethod { get; set; } = "CardOnDelivery";
+
+
         //[Required(ErrorMessage = "Введите номер карты")]
         public string? CardNumber { get; set; }
 

@@ -17,33 +17,32 @@
                 <div class="checkout-card checkout-card--order">
                     <h4 class="checkout-order-title">Заказ</h4>
                     <div class="checkout-order-preview @(Model.CartItems.Count > 3 ? "is-collapsed checkout-order-preview--many" : "")" id="checkoutOrderPreview" data-order-total="@Model.CartItems.Count">
-                            <div class="checkout-order-list-wrap">
-                                <div class="checkout-order-list" id="checkoutOrderList">
-                                    @foreach (var item in Model.CartItems)
-                                    {
-                                        <div class="order-item-row">
-                                            <img src="https://localhost:7188/api/Product/@(item.ProductId)/image"
-                                                 alt="@item.ProductName"
-                                                 class="item-img"
-                                                 style="width: 60px; height: 60px; border-radius: 4px; margin-right: 15px;"
-                                                 onerror="this.onerror=null; this.src='/image/no-image.png';" />
+                        <div class="checkout-order-list-wrap">
+                            <div class="checkout-order-list" id="checkoutOrderList">
+                                @foreach (var item in Model.CartItems)
+                                {
+                                    <div class="order-item-row">
+                                        <img src="https://localhost:7188/api/Product/@(item.ProductId)/image"
+                                             alt="@item.ProductName"
+                                             class="item-img"
+                                             style="width: 60px; height: 60px; border-radius: 4px; margin-right: 15px;"
+                                             onerror="this.onerror=null; this.src='/image/no-image.png';" />
 
-                                <div class="item-details">
-                                    <div class="item-name">@item.ProductName</div>
-                                    <div class="item-meta">Арт. @(string.IsNullOrEmpty(item.ArticleNumber) ? "---" : item.ArticleNumber) &bull; @item.Quantity шт.</div>
-                                </div>
+                                        <div class="item-details">
+                                            <div class="item-name">@item.ProductName</div>
+                                            <div class="item-meta">Арт. @(string.IsNullOrEmpty(item.ArticleNumber) ? "---" : item.ArticleNumber) &bull; @item.Quantity шт.</div>
+                                        </div>
 
-                                <div class="item-price-block">
-                                    <span class="current-price">@item.TotalPrice.ToString("N2") руб</span>
-                                    @if (item.OldPrice.HasValue)
-                                    {
-                                        <span class="old-price">@((item.OldPrice * item.Quantity)?.ToString("N2")) руб</span>
-                                    }
-                                </div>
+                                        <div class="item-price-block">
+                                            <span class="current-price">@item.TotalPrice.ToString("N2") руб</span>
+                                            @if (item.OldPrice.HasValue)
+                                            {
+                                                <span class="old-price">@((item.OldPrice * item.Quantity)?.ToString("N2")) руб</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
                             </div>
-
-                            }
-                        </div>
                             @if (Model.CartItems.Count > 3)
                             {
                                 <div class="checkout-order-fade" id="checkoutOrderFade"></div>
@@ -60,6 +59,7 @@
                         }
                     </div>
                 </div>
+
                 <div class="checkout-card checkout-card--customer">
                     <h4 class="checkout-order-title">Ваши данные</h4>
                     <div class="checkout-customer-grid">
@@ -94,14 +94,15 @@
                     <h4>Способ доставки</h4>
                     <div class="mb-4">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="DeliveryType" id="delCourier" value="Courier" checked onchange="toggleDelivery()">
+                            <input class="form-check-input" type="radio" asp-for="DeliveryType" id="delCourier" value="Courier" onchange="toggleDelivery(); recalcCheckoutTotals();">
                             <label class="form-check-label" for="delCourier">Курьером до двери</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="DeliveryType" id="delPickup" value="Pickup" onchange="toggleDelivery()">
+                            <input class="form-check-input" type="radio" asp-for="DeliveryType" id="delPickup" value="Pickup" onchange="toggleDelivery(); recalcCheckoutTotals();">
                             <label class="form-check-label" for="delPickup">Самовывоз (из пункта выдачи)</label>
                         </div>
                     </div>
+                    <p class="text-muted small mb-0">Бесплатная доставка курьером при сумме товаров (со скидкой по промокоду) свыше @CheckoutViewModel.FreeDeliveryThreshold.ToString("N0") руб. Иначе доплата @CheckoutViewModel.CourierDeliveryFee.ToString("N2") руб.</p>
 
                     <div id="addressFieldsBlock">
                         <h5 style="font-size: 16px; margin-bottom: 15px;">Адрес доставки</h5>
@@ -130,40 +131,15 @@
 
                 <div class="checkout-card">
                     <h4>Способ оплаты</h4>
-                    <div class="mb-4">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="PaymentType" id="payOnline" value="Online" checked onchange="togglePayment()">
-                            <label class="form-check-label" for="payOnline">Картой онлайн</label>
+                    <p class="text-muted small mb-3">Оплата при получении заказа</p>
+                    <div class="mb-2">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" asp-for="PaymentMethod" id="payCardDelivery" value="CardOnDelivery" onchange="recalcCheckoutTotals()">
+                            <label class="form-check-label" for="payCardDelivery">Картой при получении</label>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="PaymentType" id="payCash" value="Cash" onchange="togglePayment()">
-                            <label class="form-check-label" for="payCash">При получении</label>
-                        </div>
-                    </div>
-
-                    <div id="onlinePaymentFields">
-                        <div class="payment-icons mb-3">
-                            <span class="badge bg-light text-dark border">VISA</span>
-                            <span class="badge bg-light text-dark border">MasterCard</span>
-                            <span class="badge bg-light text-dark border">Белкарт</span>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label">Номер карты</label>
-                                <input asp-for="CardNumber" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" />
-                                <span asp-validation-for="CardNumber" class="text-danger"></span>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">Срок (ММ/ГГ)</label>
-                                <input asp-for="CardExpiry" class="form-control" placeholder="12/25" maxlength="5" />
-                                <span asp-validation-for="CardExpiry" class="text-danger"></span>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">CVC/CVV</label>
-                                <input asp-for="CardCvv" type="password" class="form-control" placeholder="•••" maxlength="3" />
-                                <span asp-validation-for="CardCvv" class="text-danger"></span>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="PaymentMethod" id="payCashDelivery" value="CashOnDelivery" onchange="recalcCheckoutTotals()">
+                            <label class="form-check-label" for="payCashDelivery">Наличными при получении</label>
                         </div>
                     </div>
                 </div>
@@ -174,27 +150,40 @@
                 <div class="checkout-card summary-card" style="position: sticky; top: 20px;">
                     <h4>Ваш заказ</h4>
 
+                    <div id="checkoutPricing"
+                         data-base-goods="@Model.TotalAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                         data-threshold="@CheckoutViewModel.FreeDeliveryThreshold.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                         data-fee="@CheckoutViewModel.CourierDeliveryFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                         data-qty="@Model.CartItems.Sum(x => x.Quantity)"
+                         hidden></div>
+                    <input type="hidden" id="appliedPromoPercent" value="0" />
+
                     <div class="summary-row">
-                        <span>Товары, @Model.CartItems.Sum(x => x.Quantity) шт.</span>
-                        <span>@Model.TotalAmount.ToString("N2") руб</span>
+                        <span>Товары, <span id="summaryQtyLabel">@Model.CartItems.Sum(x => x.Quantity)</span> шт.</span>
+                        <span id="summaryGoodsAmount">@Model.TotalAmount.ToString("N2") руб</span>
                     </div>
 
                     @if (Model.CartItems.Any(x => x.TotalOldPrice.HasValue))
                     {
                         <div class="summary-row text-danger" style="text-decoration: line-through;">
-                            <span>Без скидки</span>
+                            <span>Без скидки на товары</span>
                             <span>@Model.CartItems.Sum(x => x.TotalOldPrice ?? x.TotalPrice).ToString("N2") руб</span>
                         </div>
                     }
 
+                    <div class="summary-row" id="summaryPromoRow" style="display: none;">
+                        <span>Скидка по промокоду</span>
+                        <span id="summaryPromoText" class="text-success"></span>
+                    </div>
+
                     <div class="summary-row">
                         <span>Доставка</span>
-                        <span id="summaryDeliveryText">Курьер</span>
+                        <span id="summaryDeliveryDetail">—</span>
                     </div>
 
                     <div class="summary-row">
                         <span>Оплата</span>
-                        <span id="summaryPaymentText" class="text-success">Онлайн</span>
+                        <span id="summaryPaymentText" class="text-muted">Картой при получении</span>
                     </div>
 
                     <hr />
@@ -205,16 +194,14 @@
                             <input type="text" id="promoInput" class="form-control" placeholder="Введите промокод">
                             <button type="button" onclick="applyPromoCode()" class="btn-apply-promo">Применить</button>
                             <input type="hidden" asp-for="PromoCode" id="appliedPromoCode" />
-                            <small id="promoStatus" class="d-block mt-1"></small>
                         </div>
-                        <small id="promoStatus" class="text-muted d-block mt-1"></small>
+                        <small id="promoStatus" class="d-block mt-1 text-muted"></small>
                     </div>
 
                     <div class="summary-total">
                         <span>Итого:</span>
-                        <span id="totalAmount" class=" total-price-large">@Model.TotalAmount.ToString("N2") руб</span>
+                        <span id="totalAmount" class="total-price-large">@Model.TotalAmount.ToString("N2") руб</span>
                     </div>
-
 
                     <button type="submit" id="btnSubmitOrder" class="btn-pay" style="width: 100%; padding: 15px; font-weight: bold; background: #28a745; color: white; border-radius: 8px; border: none; margin-top: 20px;">
                         Подтвердить заказ
@@ -232,111 +219,109 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
 
     <script>
-   
 
-    // Маски ввода  
-    // тел
-    const phoneInput = document.getElementById('phoneInput');
-    const submitBtn = document.getElementById('btnSubmitOrder');
-    const statusText = document.getElementById('phoneStatus');
 
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function (e) {
-            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
-            if (!e.target.value.startsWith('+375')) {
-                e.target.value = '+375 ';
-                return;
-            }
-            e.target.value = !x[2] ? x[1] : '+375 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
-        });
-    }
+        // Маски ввода
+        // тел
+        const phoneInput = document.getElementById('phoneInput');
+        const submitBtn = document.getElementById('btnSubmitOrder');
+        const statusText = document.getElementById('phoneStatus');
 
-    //карта
-    const expiryInput = document.getElementById('CardExpiry');
-    if (expiryInput) {
-        expiryInput.addEventListener('input', function(e) {
-            let input = e.target.value.replace(/\D/g, '');
-            if (input.length > 4) input = input.substring(0, 4);
-
-            if (input.length > 2) {
-                e.target.value = input.substring(0, 2) + '/' + input.substring(2);
-            } else {
-                e.target.value = input;
-            }
-        });
-    }
-
-            // Скрываем/показываем адрес в 
-        function toggleDelivery() {
-            const isPickup = document.getElementById('delPickup').checked;
-            const addressBlock = document.getElementById('addressFieldsBlock');
-            const summaryDelivery = document.getElementById('summaryDeliveryText');
-
-            if (isPickup) {
-                addressBlock.style.display = 'none';
-                summaryDelivery.textContent = 'Самовывоз (Бесплатно)';
-                document.getElementById('FinalAddress').value = 'Самовывоз'; 
-            } else {
-                addressBlock.style.display = 'block';
-                summaryDelivery.textContent = 'Курьер';
-                updateFinalAddress(); 
-            }
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function (e) {
+                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+                if (!e.target.value.startsWith('+375')) {
+                    e.target.value = '+375 ';
+                    return;
+                }
+                e.target.value = !x[2] ? x[1] : '+375 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+            });
         }
 
-        // Скрываем/показываем карту 
-        function togglePayment() {
-            const isCash = document.getElementById('payCash').checked;
-            const paymentBlock = document.getElementById('onlinePaymentFields');
-            const summaryPayment = document.getElementById('summaryPaymentText');
-            const btnSubmit = document.getElementById('btnSubmitOrder');
-
-
-
-            const cardInputs = paymentBlock.querySelectorAll('input');
-
-            if (isCash) {
-                paymentBlock.style.display = 'none';
-                summaryPayment.textContent = 'При получении';
-                summaryPayment.classList.replace('text-success', 'text-warning');
-                btnSubmit.textContent = 'Оформить заказ';
-
-                cardInputs.forEach(input => {
-                    input.disabled = true;
-                    input.value = ""; 
-                });
-            } else {
-                paymentBlock.style.display = 'block';
-                summaryPayment.textContent = 'Онлайн';
-                summaryPayment.classList.replace('text-warning', 'text-success');
-                btnSubmit.textContent = 'Оплатить заказ';
-
-                cardInputs.forEach(input => {
-                    input.disabled = false;
-                });
+            function formatCheckoutMoney(n) {
+                return n.toFixed(2).replace('.', ',') + ' руб';
             }
-        }
 
-        // Собираем адрес из кусочков перед отправкой формы
-        function updateFinalAddress() {
-            const city = document.getElementById('CityInput').value;
-            const street = document.getElementById('StreetInput').value;
-            const house = document.getElementById('HouseInput').value;
-            const apt = document.getElementById('AptInput').value;
+            function recalcCheckoutTotals() {
+                const cfg = document.getElementById('checkoutPricing');
+                if (!cfg) return;
+                const base = parseFloat(cfg.dataset.baseGoods || '0');
+                const threshold = parseFloat(cfg.dataset.threshold || '50');
+                const courierFee = parseFloat(cfg.dataset.fee || '4.5');
+                const promoEl = document.getElementById('appliedPromoPercent');
+                const promoPct = promoEl ? (parseFloat(promoEl.value) || 0) : 0;
+                const goodsAfterPromo = base * (1 - promoPct / 100);
+                const courier = document.getElementById('delCourier') && document.getElementById('delCourier').checked;
+                let deliveryFee = 0;
+                let deliveryDetail = '';
+                if (!courier) {
+                    deliveryDetail = 'Самовывоз — 0,00 руб';
+                } else if (goodsAfterPromo > threshold) {
+                    deliveryDetail = 'Курьер — бесплатно (сумма товаров свыше ' + threshold.toFixed(0) + ' руб)';
+                } else {
+                    deliveryFee = courierFee;
+                    deliveryDetail = 'Курьер — +' + courierFee.toFixed(2).replace('.', ',') + ' руб';
+                }
 
-            let fullAddress = "";
-            if (city) fullAddress += "г. " + city + ", ";
-            if (street) fullAddress += "ул. " + street + ", ";
-            if (house) fullAddress += "д. " + house;
-            if (apt) fullAddress += ", кв./оф. " + apt;
+                const goodsEl = document.getElementById('summaryGoodsAmount');
+                const delEl = document.getElementById('summaryDeliveryDetail');
+                const totalEl = document.getElementById('totalAmount');
+                if (goodsEl) goodsEl.textContent = formatCheckoutMoney(goodsAfterPromo);
+                if (delEl) delEl.textContent = deliveryDetail;
+                if (totalEl) totalEl.textContent = formatCheckoutMoney(goodsAfterPromo + deliveryFee);
 
-            document.getElementById('FinalAddress').value = fullAddress;
-        }
+                const promoRow = document.getElementById('summaryPromoRow');
+                const promoText = document.getElementById('summaryPromoText');
+                if (promoRow && promoText) {
+                    if (promoPct > 0) {
+                        promoRow.style.display = 'flex';
+                        promoText.textContent = '−' + promoPct + '%';
+                    } else {
+                        promoRow.style.display = 'none';
+                    }
+                }
 
-        document.querySelectorAll('.address-part').forEach(input => {
-            input.addEventListener('input', updateFinalAddress);
-        });
+                const payEl = document.getElementById('summaryPaymentText');
+                const cardPay = document.getElementById('payCardDelivery');
+                if (payEl && cardPay) {
+                    payEl.textContent = cardPay.checked ? 'Картой при получении' : 'Наличными при получении';
+                }
+            }
 
-                       function initCheckoutOrderToggle() {
+            function toggleDelivery() {
+                const isPickup = document.getElementById('delPickup').checked;
+                const addressBlock = document.getElementById('addressFieldsBlock');
+
+                if (isPickup) {
+                    addressBlock.style.display = 'none';
+                    document.getElementById('FinalAddress').value = 'Самовывоз';
+                } else {
+                    addressBlock.style.display = 'block';
+                    updateFinalAddress();
+                }
+            }
+
+            // Собираем адрес из кусочков перед отправкой формы
+            function updateFinalAddress() {
+                const city = document.getElementById('CityInput').value;
+                const street = document.getElementById('StreetInput').value;
+                const house = document.getElementById('HouseInput').value;
+                const apt = document.getElementById('AptInput').value;
+
+                let fullAddress = "";
+                if (city) fullAddress += "г. " + city + ", ";
+                if (street) fullAddress += "ул. " + street + ", ";
+                if (house) fullAddress += "д. " + house;
+                if (apt) fullAddress += ", кв./оф. " + apt;
+
+                document.getElementById('FinalAddress').value = fullAddress;
+            }
+
+            document.querySelectorAll('.address-part').forEach(input => {
+                input.addEventListener('input', updateFinalAddress);
+            });
+
+            function initCheckoutOrderToggle() {
                 const preview = document.getElementById('checkoutOrderPreview');
                 const btn = document.getElementById('checkoutOrderToggle');
                 if (!preview || !btn) return;
@@ -384,88 +369,55 @@
                 update();
             }
 
-
-        document.addEventListener("DOMContentLoaded", function() {
-            toggleDelivery();
-            togglePayment();
+            document.addEventListener("DOMContentLoaded", function() {
+                toggleDelivery();
+                recalcCheckoutTotals();
                 initCheckoutOrderToggle();
-        });
+            });
 
-        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-            if (document.getElementById('delCourier').checked) {
-                updateFinalAddress();
-                if (document.getElementById('FinalAddress').value.length < 10) {
-                    e.preventDefault();
-                    alert("Пожалуйста, заполните адрес доставки полностью.");
+            document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+                if (document.getElementById('delCourier').checked) {
+                    updateFinalAddress();
+                    if (document.getElementById('FinalAddress').value.length < 10) {
+                        e.preventDefault();
+                        alert("Пожалуйста, заполните адрес доставки полностью.");
+                    }
                 }
-            }
-        });
-
-    // номер карты
-    const cardInput = document.getElementById('CardNumber');
-    if (cardInput) {
-        cardInput.addEventListener('input', function (e) {
-            let input = e.target.value.replace(/\D/g, '');
-            input = input.substring(0, 16);
-            let sections = input.match(/.{1,4}/g);
-            if (sections) {
-                e.target.value = sections.join(' ');
-            } else {
-                e.target.value = input;
-            }
-        });
-    }
-
-            function checkPromo() {
-            const code = document.getElementById('promoInput').value;
-            const statusText = document.getElementById('promoStatus');
-
-            if(!code) return;
-
-            statusText.textContent = "Промокод будет применен при расчете итоговой суммы";
-            statusText.className = "d-block mt-1 text-success";
-        }
+            });
 
             async function applyPromoCode() {
-            const codeInput = document.getElementById('promoInput');
-            const statusElement = document.getElementById('promoStatus');
-            const totalElement = document.getElementById('totalAmount');
-
-            const code = codeInput.value.trim();
-            if (!code) {
-                statusElement.innerText = "Введите код";
-                statusElement.className = "text-warning";
-                return;
-            }
-
-            try {
-                const response = await fetch(`/Order/ApplyPromo?code=${encodeURIComponent(code)}`, {
-                    method: 'POST'
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                     let currentTotal = parseFloat(totalElement.innerText.replace(',', '.'));
-                     let discountPercent = result.discount;
-                     let newTotal = currentTotal - (currentTotal * (discountPercent / 100));
-
-                    totalElement.innerHTML = `<del class="text-muted" style="font-size: 0.8em;">${currentTotal}</del> <strong>${newTotal.toFixed(2)}</strong>`;
-
-                    statusElement.innerText = `Скидка ${discountPercent}% применена!`;
-                    statusElement.className = "text-success";
-
-                    codeInput.readOnly = true;
-                        document.getElementById('appliedPromoCode').value = code;
-                } else {
-                    statusElement.innerText = result.message || "Промокод не найден";
-                    statusElement.className = "text-danger";
+                const codeInput = document.getElementById('promoInput');
+                const statusElement = document.getElementById('promoStatus');
+                const code = codeInput.value.trim();
+                if (!code) {
+                    statusElement.innerText = "Введите код";
+                    statusElement.className = "d-block mt-1 text-warning";
+                    return;
                 }
-            } catch (error) {
-                console.error('Ошибка:', error);
-                statusElement.innerText = "Ошибка при проверке промокода";
-                statusElement.className = "text-danger";
+
+                try {
+                    const response = await fetch('/Order/ApplyPromo?code=' + encodeURIComponent(code), {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        document.getElementById('appliedPromoPercent').value = result.discount;
+                        document.getElementById('appliedPromoCode').value = code;
+                        codeInput.readOnly = true;
+                        statusElement.innerText = `Скидка ${result.discount}% применена`;
+                        statusElement.className = "d-block mt-1 text-success";
+                        recalcCheckoutTotals();
+                    } else {
+                        statusElement.innerText = result.message || "Промокод не найден";
+                        statusElement.className = "d-block mt-1 text-danger";
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    statusElement.innerText = "Ошибка при проверке промокода";
+                    statusElement.className = "d-block mt-1 text-danger";
+                }
             }
-        }
     </script>
 
- }
+}

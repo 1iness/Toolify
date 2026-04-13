@@ -301,6 +301,8 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@GuestPhone", (object)order.GuestPhone ?? DBNull.Value);
             command.Parameters.AddWithValue("@Address", order.Address);
             command.Parameters.AddWithValue("@PromoCode", (object)promoCode ?? DBNull.Value);
+            command.Parameters.AddWithValue("@DeliveryType", (object?)order.DeliveryType ?? DBNull.Value);
+            command.Parameters.AddWithValue("@PaymentMethod", (object?)order.PaymentMethod ?? DBNull.Value);
 
             await connection.OpenAsync();
             return Convert.ToInt32(await command.ExecuteScalarAsync());

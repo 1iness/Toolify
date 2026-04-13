@@ -14,6 +14,9 @@
         public string Status { get; set; } = "Новый";
         public string Address { get; set; } = string.Empty;
         public List<OrderItem> Items { get; set; } = new();
-        public string? PromoCode { get; set; } 
+        public string? PromoCode { get; set; }
+        public string? DeliveryType { get; set; }
+        public string? PaymentMethod { get; set; }
+        public decimal DeliveryFee { get; set; }
     }
 }
