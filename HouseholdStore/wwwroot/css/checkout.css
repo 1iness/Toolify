@@ -4,7 +4,20 @@
     margin: 0 auto;
     padding: 20px 15px 40px;
     font-family: 'Montserrat', sans-serif;
+    --bs-body-font-family: 'Montserrat', sans-serif;
+    --bs-font-sans-serif: 'Montserrat', sans-serif;
 }
+
+    .checkout-container .form-control,
+    .checkout-container .form-select,
+    .checkout-container .form-label,
+    .checkout-container .form-check-label,
+    .checkout-container .btn,
+    .checkout-container .input-group-text,
+    .checkout-container small,
+    .checkout-container .text-muted {
+        font-family: 'Montserrat', sans-serif;
+    }
 
 .checkout-grid {
     display: flex;
@@ -49,8 +62,9 @@
     }
 
 .checkout-card--order .checkout-order-title,
-.checkout-card--customer .checkout-order-title {
-    font-weight: 800;
+.checkout-card--customer .checkout-order-title,
+.checkout-card--delivery .checkout-order-title {
+    font-weight: 600;
     font-size: 24px;
     color: #1a1a1a;
     margin-bottom: 18px;
@@ -75,6 +89,17 @@
         outline: none;
     }
 
+
+.checkout-card--delivery .form-control {
+    border: 1px solid #ececec;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+    .checkout-card--delivery .form-control:focus {
+        border-color: #007bff;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 3px rgba(0, 123, 255, 0.12);
+        outline: none;
+    }
 
     /* общие стили для форм */
     .checkout-card .form-label {
@@ -248,18 +273,20 @@
     min-width: 120px;
 }
 
-.current-price {
+/* Только блок «Заказ»: актуальная цена и старая — заметные на фоне чёрного текста */
+.checkout-card--order .item-price-block .current-price {
     display: block;
     font-size: 18px;
-    font-weight: 600;
-    color: #000;
+    font-weight: 700;
+    color: #28a745;
     margin-bottom: 3px;
 }
 
-.old-price {
+.checkout-card--order .item-price-block .old-price {
     display: block;
     font-size: 14px;
-    color: #999;
+    color: #e53935;
+    font-weight: 800;
     text-decoration: line-through;
 }
 
@@ -313,15 +340,11 @@
             color: #00aaff !important;
         }
 
-/* стили для полей оплаты картой */
-.checkout-card:nth-child(3) .form-control {
-    font-family: 'Courier New', monospace;
+.checkout-card--delivery .form-label,
+.checkout-card--delivery .form-control,
+.checkout-card--delivery input.form-control {
+    font-family: 'Montserrat', sans-serif !important;
 }
-
-.checkout-card:nth-child(3) input#CardNumber {
-    letter-spacing: 1px;
-}
-
 
 
 .checkout-card--customer .form-label {
@@ -341,13 +364,84 @@
     background: #fff;
 }
 
+.checkout-summary-card .checkout-order-title {
+    margin-bottom: 6px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #eee;
+}
+
+
 .summary-row {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #f5f5f5;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
     font-size: 15px;
     color: #555;
+}
+.summary-row__label-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.summary-row__heading {
+    font-weight: 600;
+    color: #222;
+}
+
+.summary-row__sub {
+    font-size: 13px;
+    color: #888;
+}
+
+.summary-row__value {
+    text-align: right;
+    flex: 0 1 auto;
+    max-width: 58%;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.summary-row__value--goods {
+    font-weight: 700;
+    font-size: 16px;
+    color: #28a745;
+}
+
+.summary-row__value--promo {
+    font-weight: 700;
+    color: #28a745;
+}
+
+.summary-row__value--payment {
+    font-size: 14px;
+    color: #666;
+}
+
+.summary-row--strike .summary-row__value--old-price {
+    text-decoration: line-through;
+    color: #e53935;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.summary-row--delivery .summary-row__heading {
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.summary-delivery-value {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #333;
+    max-width: 100%;
 }
 
     .summary-row.text-danger {
@@ -535,7 +629,7 @@
         font-size: 15px;
     }
 
-    .current-price {
+    .checkout-card--order .item-price-block .current-price {
         font-size: 16px;
     }
 

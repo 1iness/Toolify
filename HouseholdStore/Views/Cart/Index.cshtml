@@ -1,4 +1,5 @@
 ﻿@model List<Toolify.ProductService.Models.CartItem>
+@using HouseholdStore.Models
 @{
     ViewData["Title"] = "Моя корзина";
     bool isEmpty = !Model.Any();
@@ -112,6 +113,9 @@
                         @grandTotal.ToString("N2") руб
                     </div>
                 </div>
+                <p class="cart-delivery-hint">
+                    Курьер бесплатно, если сумма товаров свыше @CheckoutViewModel.FreeDeliveryThreshold.ToString("N0") руб. (с учётом промокода). Иначе доплата @CheckoutViewModel.CourierDeliveryFee.ToString("N2") руб.
+                </p>
             </div>
         </div>
     }

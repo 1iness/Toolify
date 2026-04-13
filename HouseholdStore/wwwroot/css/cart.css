@@ -212,15 +212,16 @@ img[style*="display: none"] + .empty-emoji {
 }
 
 .current-price-sm {
-    font-weight: 700;
-    color: #28a745; 
+    font-weight: 600;
+    color: #1a1a1a;
     font-size: 1.1rem;
 }
 
 .old-price-sm {
     text-decoration: line-through;
-    color: #ff4d4f;
+    color: #c62828;
     font-size: 0.85rem;
+    font-weight: 700;
 }
 
 .price-label {
@@ -278,13 +279,14 @@ img[style*="display: none"] + .empty-emoji {
 .total-current {
     font-size: 1.3rem;
     font-weight: 800;
-    color: #333;
+    color: #218838;
 }
 
 .total-old {
     text-decoration: line-through;
-    color: #ff4d4f;
+    color: #c62828;
     font-size: 0.9rem;
+    font-weight: 700;
 }
 
 .total-count {
@@ -363,6 +365,23 @@ img[style*="display: none"] + .empty-emoji {
     .checkout-btn:hover {
         background: #218838;
     }
+
+.price-single-mobile .price-val {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.cart-delivery-hint {
+    margin: 18px 0 0;
+    padding: 12px 14px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #c62828;
+    font-weight: 600;
+    background: #fff5f5;
+    border: 1px solid #ffcdd2;
+    border-radius: 10px;
+}
 
 /* Адаптивность */
 @media (max-width: 900px) {

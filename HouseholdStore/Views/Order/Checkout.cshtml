@@ -90,8 +90,8 @@
                     </div>
                 </div>
 
-                <div class="checkout-card">
-                    <h4>Способ доставки</h4>
+                <div class="checkout-card checkout-card--delivery">
+                    <h4 class="checkout-order-title">Способ доставки</h4>
                     <div class="mb-4">
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" asp-for="DeliveryType" id="delCourier" value="Courier" onchange="toggleDelivery(); recalcCheckoutTotals();">
@@ -102,10 +102,7 @@
                             <label class="form-check-label" for="delPickup">Самовывоз (из пункта выдачи)</label>
                         </div>
                     </div>
-                    <p class="text-muted small mb-0">Бесплатная доставка курьером при сумме товаров (со скидкой по промокоду) свыше @CheckoutViewModel.FreeDeliveryThreshold.ToString("N0") руб. Иначе доплата @CheckoutViewModel.CourierDeliveryFee.ToString("N2") руб.</p>
-
                     <div id="addressFieldsBlock">
-                        <h5 style="font-size: 16px; margin-bottom: 15px;">Адрес доставки</h5>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Город / Нас. пункт</label>
@@ -147,8 +144,8 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="checkout-card summary-card" style="position: sticky; top: 20px;">
-                    <h4>Ваш заказ</h4>
+                <div class="checkout-card summary-card checkout-summary-card" style="position: sticky; top: 20px;">
+                    <h4 class="checkout-order-title">Ваш заказ</h4>
 
                     <div id="checkoutPricing"
                          data-base-goods="@Model.TotalAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
@@ -159,31 +156,34 @@
                     <input type="hidden" id="appliedPromoPercent" value="0" />
 
                     <div class="summary-row">
-                        <span>Товары, <span id="summaryQtyLabel">@Model.CartItems.Sum(x => x.Quantity)</span> шт.</span>
-                        <span id="summaryGoodsAmount">@Model.TotalAmount.ToString("N2") руб</span>
+                        <div class="summary-row__label-stack">
+                            <span class="summary-row__heading">Товары</span>
+                            <span class="summary-row__sub"><span id="summaryQtyLabel">@Model.CartItems.Sum(x => x.Quantity)</span> шт.</span>
+                        </div>
+                        <span id="summaryGoodsAmount" class="summary-row__value summary-row__value--goods">@Model.TotalAmount.ToString("N2") руб</span>
                     </div>
 
                     @if (Model.CartItems.Any(x => x.TotalOldPrice.HasValue))
                     {
-                        <div class="summary-row text-danger" style="text-decoration: line-through;">
-                            <span>Без скидки на товары</span>
-                            <span>@Model.CartItems.Sum(x => x.TotalOldPrice ?? x.TotalPrice).ToString("N2") руб</span>
+                        <div class="summary-row summary-row--strike">
+                            <span class="summary-row__heading">В каталоге без скидки</span>
+                            <span class="summary-row__value summary-row__value--old-price">@Model.CartItems.Sum(x => x.TotalOldPrice ?? x.TotalPrice).ToString("N2") руб</span>
                         </div>
                     }
 
                     <div class="summary-row" id="summaryPromoRow" style="display: none;">
-                        <span>Скидка по промокоду</span>
-                        <span id="summaryPromoText" class="text-success"></span>
+                        <span class="summary-row__heading">Промокод</span>
+                        <span id="summaryPromoText" class="summary-row__value summary-row__value--promo"></span>
+                    </div>
+
+                    <div class="summary-row summary-row--delivery">
+                        <span class="summary-row__heading">Доставка</span>
+                        <span id="summaryDeliverySummary" class="summary-row__value summary-delivery-value">—</span>
                     </div>
 
                     <div class="summary-row">
-                        <span>Доставка</span>
-                        <span id="summaryDeliveryDetail">—</span>
-                    </div>
-
-                    <div class="summary-row">
-                        <span>Оплата</span>
-                        <span id="summaryPaymentText" class="text-muted">Картой при получении</span>
+                        <span class="summary-row__heading">Оплата</span>
+                        <span id="summaryPaymentText" class="summary-row__value summary-row__payment">Картой при получении</span>
                     </div>
 
                     <hr />
@@ -253,22 +253,22 @@
                 const goodsAfterPromo = base * (1 - promoPct / 100);
                 const courier = document.getElementById('delCourier') && document.getElementById('delCourier').checked;
                 let deliveryFee = 0;
-                let deliveryDetail = '';
+                let deliverySummary = '';
                 if (!courier) {
-                    deliveryDetail = 'Самовывоз — 0,00 руб';
+                    deliverySummary = 'Самовывоз';
                 } else if (goodsAfterPromo > threshold) {
-                    deliveryDetail = 'Курьер — бесплатно (сумма товаров свыше ' + threshold.toFixed(0) + ' руб)';
+                    deliverySummary = 'Курьер, бесплатно';
                 } else {
                     deliveryFee = courierFee;
-                    deliveryDetail = 'Курьер — +' + courierFee.toFixed(2).replace('.', ',') + ' руб';
+                    deliverySummary = 'Курьер +' + courierFee.toFixed(2).replace('.', ',') + '\u00A0руб';
                 }
 
-                const goodsEl = document.getElementById('summaryGoodsAmount');
-                const delEl = document.getElementById('summaryDeliveryDetail');
-                const totalEl = document.getElementById('totalAmount');
-                if (goodsEl) goodsEl.textContent = formatCheckoutMoney(goodsAfterPromo);
-                if (delEl) delEl.textContent = deliveryDetail;
-                if (totalEl) totalEl.textContent = formatCheckoutMoney(goodsAfterPromo + deliveryFee);
+        const goodsEl = document.getElementById('summaryGoodsAmount');
+                        const delSummaryEl = document.getElementById('summaryDeliverySummary');
+                        const totalEl = document.getElementById('totalAmount');
+                        if (goodsEl) goodsEl.textContent = formatCheckoutMoney(goodsAfterPromo);
+                        if (delSummaryEl) delSummaryEl.textContent = deliverySummary;
+                        if (totalEl) totalEl.textContent = formatCheckoutMoney(goodsAfterPromo + deliveryFee);
 
                 const promoRow = document.getElementById('summaryPromoRow');
                 const promoText = document.getElementById('summaryPromoText');

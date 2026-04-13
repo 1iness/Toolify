@@ -107,7 +107,7 @@
                 </a>
 
                 <div class="price-block" style="margin-top: 10px; margin-bottom: 5px;">
-                    <span class="price" style="color: #333;">
+                    <span class="price @(hasDiscount ? "price--sale" : "")">
                         @finalPrice.ToString("N2") <span class="price-currency">руб.</span>
                     </span>
                     @if (hasDiscount)
