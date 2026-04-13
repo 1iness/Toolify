@@ -171,9 +171,9 @@ namespace HouseholdStore.Services
                    ?? new List<PromoCode>();
         }
 
-        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end)
+        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end, int? maxUses = null)
         {
-            var data = new { Code = code, DiscountPercent = discount, StartDate = start, EndDate = end };
+            var data = new { Code = code, DiscountPercent = discount, StartDate = start, EndDate = end, MaxUses = maxUses };
             await _http.PostAsJsonAsync("/api/admin/promocodes", data);
         }
         public async Task<int?> GetPromoDiscountAsync(string code)

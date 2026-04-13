@@ -28,7 +28,15 @@ namespace Toolify.ProductService.Controllers
             if (model == null || string.IsNullOrEmpty(model.Code))
                 return BadRequest("Некорректные данные промокода");
 
-            await _repo.CreatePromoCodeAsync(model.Code, model.DiscountPercent, model.StartDate, model.EndDate);
+            if (model.MaxUses.HasValue && model.MaxUses.Value < 1)
+                return BadRequest("Лимит использований должен быть не меньше 1");
+
+            await _repo.CreatePromoCodeAsync(
+                model.Code,
+                model.DiscountPercent,
+                model.StartDate,
+                model.EndDate,
+                model.MaxUses);
             return Ok();
         }
 
@@ -40,9 +48,10 @@ namespace Toolify.ProductService.Controllers
                 p.Code.Equals(code, StringComparison.OrdinalIgnoreCase) &&
                 p.IsActive &&
                 p.StartDate <= DateTime.Now &&
-                p.EndDate >= DateTime.Now);
+                 p.EndDate >= DateTime.Now &&
+                (!p.MaxUses.HasValue || p.UsedCount < p.MaxUses.Value));
 
-            if (promo == null) return NotFound("Промокод не найден или истек");
+            if (promo == null) return NotFound("Промокод не найден, истёк или исчерпан");
 
             return Ok(new { discountPercent = promo.DiscountPercent });
         }
@@ -50,9 +59,10 @@ namespace Toolify.ProductService.Controllers
 
     public class PromoCodeDto
     {
-        public string Code { get; set; }
+        public string Code { get; set; } = string.Empty;
         public int DiscountPercent { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public int? MaxUses { get; set; }
     }
 }

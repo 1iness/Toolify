@@ -173,11 +173,18 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePromoCode(string code, int discountPercent, DateTime startDate, DateTime endDate)
+        public async Task<IActionResult> CreatePromoCode(string code, int discountPercent, DateTime startDate, DateTime endDate, int? maxUses = null)
         {
             if (!string.IsNullOrEmpty(code) && discountPercent > 0)
             {
-                await _api.CreatePromoCodeAsync(code, discountPercent, startDate, endDate);
+                if (maxUses.HasValue && maxUses.Value < 1)
+                {
+                    TempData["Success"] = null;
+                    TempData["Error"] = "Лимит использований должен быть не меньше 1 или оставьте поле пустым.";
+                    return RedirectToAction("PromoCodes");
+                }
+
+                await _api.CreatePromoCodeAsync(code, discountPercent, startDate, endDate, maxUses);
                 TempData["Success"] = "Промокод успешно добавлен";
             }
             return RedirectToAction("PromoCodes");

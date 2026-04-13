@@ -15,6 +15,15 @@
         <a href="/Admin/Index" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> Назад в панель</a>
     </div>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
     <div class="row">
 
         <div class="col-lg-4 mb-4">
@@ -36,9 +45,14 @@
                             <label class="form-label fw-semibold">Начало действия</label>
                             <input type="datetime-local" name="StartDate" id="startDate" class="form-control" required />
                         </div>
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label class="form-label fw-semibold">Конец действия</label>
                             <input type="datetime-local" name="EndDate" id="endDate" class="form-control" required />
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Лимит использований</label>
+                            <input type="number" name="maxUses" class="form-control" min="1" max="999999999" step="1" placeholder="Необязательно" />
+                            <div class="form-text">Пусто — без лимита по числу заказов (действует только срок). Число — максимум успешных заказов с этим кодом за указанный период.</div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100 fw-bold">Добавить промокод</button>
                     </form>
@@ -59,6 +73,7 @@
                                     <th>Код</th>
                                     <th>Скидка</th>
                                     <th>Срок действия</th>
+                                    <th>Использования</th>
                                     <th>Статус</th>
                                 </tr>
                             </thead>
@@ -67,7 +82,7 @@
                                 {
                                     foreach (var promo in Model)
                                     {
-                                        var isActive = promo.IsActive && promo.EndDate >= DateTime.Now && promo.StartDate <= DateTime.Now;
+                                        var isActive = promo.IsValid;
                                         <tr>
                                             <td class="fw-bold text-dark">@promo.Code</td>
                                             <td><span class="badge bg-success" style="font-size: 0.9em;">-@promo.DiscountPercent%</span></td>
@@ -76,6 +91,16 @@
                                                 <i class="fas fa-long-arrow-alt-down"></i> <br />
                                                 @promo.EndDate.ToString("dd.MM.yyyy HH:mm")
                                             </td>
+                                            <td class="text-muted" style="font-size: 0.85rem;">
+                                                @if (promo.MaxUses.HasValue)
+                                                {
+                                                    <span>@promo.UsedCount / @promo.MaxUses.Value</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>—</span>
+                                                }
+                                            </td>
                                             <td>
                                                 @if (isActive)
                                                 {
@@ -83,7 +108,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <span class="promo-badge promo-badge-expired"><i class="fas fa-times-circle"></i> Истек</span>
+                                                    <span class="promo-badge promo-badge-expired"><i class="fas fa-times-circle"></i> Недоступен</span>
                                                 }
                                             </td>
                                         </tr>
@@ -92,7 +117,7 @@
                                 else
                                 {
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted py-5">
+                                        <td colspan="5" class="text-center text-muted py-5">
                                             <i class="fas fa-ticket-alt fa-3x mb-3 text-light"></i><br />
                                             Промокоды пока не созданы
                                         </td>

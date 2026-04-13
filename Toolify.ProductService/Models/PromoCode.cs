@@ -9,6 +9,14 @@
         public DateTime EndDate { get; set; }
         public bool IsActive { get; set; }
 
-        public bool IsValid => IsActive && DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate;
+        public int? MaxUses { get; set; }
+
+        public int UsedCount { get; set; }
+
+        public bool IsValid =>
+            IsActive
+            && DateTime.Now >= StartDate
+            && DateTime.Now <= EndDate
+            && (!MaxUses.HasValue || UsedCount < MaxUses.Value);
     }
 }

@@ -556,13 +556,15 @@ namespace Toolify.ProductService.Data
                     DiscountPercent = reader.GetInt32(reader.GetOrdinal("DiscountPercent")),
                     StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
                     EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    MaxUses = TryGetNullableInt32(reader, "MaxUses"),
+                    UsedCount = TryGetInt32(reader, "UsedCount", 0)
                 });
             }
             return promos;
         }
 
-        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end)
+        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end, int? maxUses = null)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_AddPromoCode", connection) { CommandType = CommandType.StoredProcedure };
@@ -570,9 +572,43 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@DiscountPercent", discount);
             command.Parameters.AddWithValue("@StartDate", start);
             command.Parameters.AddWithValue("@EndDate", end);
+            command.Parameters.AddWithValue("@MaxUses", (object?)maxUses ?? DBNull.Value);
 
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
+        }
+        private static int? TryGetNullableInt32(SqlDataReader reader, string columnName)
+        {
+            try
+            {
+                var ord = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ord) ? null : reader.GetInt32(ord);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
+
+        private static int TryGetInt32(SqlDataReader reader, string columnName, int defaultValue)
+        {
+            try
+            {
+                var ord = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ord) ? defaultValue : reader.GetInt32(ord);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return defaultValue;
+            }
+            catch (ArgumentException)
+            {
+                return defaultValue;
+            }
         }
 
         public async Task<List<Order>> GetAllOrdersAsync()
