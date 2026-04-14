@@ -100,7 +100,7 @@ namespace Toolify.AuthService.Services
             sb.AppendLine($"<div style=\"margin-bottom:8px;\"><span style=\"color:#666;\">Было:</span> <b>{WebUtility.HtmlEncode(safePrev)}</b></div>");
             sb.AppendLine($"<div style=\"margin-bottom:8px;\"><span style=\"color:#666;\">Стало:</span> <b>{WebUtility.HtmlEncode(safeNew)}</b></div>");
             sb.AppendLine($"<div style=\"margin-bottom:8px;\"><span style=\"color:#666;\">Адрес доставки:</span> <b>{WebUtility.HtmlEncode(safeAddress)}</b></div>");
-            sb.AppendLine($"<div><span style=\"color:#666;\">Сумма заказа:</span> <b>{totalAmount:N2} руб.</b></div>");
+            sb.AppendLine($"<div><span style=\"color:#666;\">Сумма заказа:</span> <b>{totalAmount:N2} BYN</b></div>");
             sb.AppendLine("</div>");
 
             if (lines != null)
@@ -121,7 +121,7 @@ namespace Toolify.AuthService.Services
                         sb.AppendLine("<tr>");
                         sb.AppendLine($"<td style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;\">{WebUtility.HtmlEncode(l.Name ?? "—")}</td>");
                         sb.AppendLine($"<td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;\">{l.Quantity}</td>");
-                        sb.AppendLine($"<td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;\">{l.Price:N2} руб.</td>");
+                        sb.AppendLine($"<td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;\">{l.Price:N2} BYN</td>");
                         sb.AppendLine("</tr>");
                     }
 

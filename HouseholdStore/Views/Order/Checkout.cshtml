@@ -34,10 +34,10 @@
                                         </div>
 
                                         <div class="item-price-block">
-                                            <span class="current-price">@item.TotalPrice.ToString("N2") руб</span>
+                                            <span class="current-price">@item.TotalPrice.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                                             @if (item.OldPrice.HasValue)
                                             {
-                                                <span class="old-price">@((item.OldPrice * item.Quantity)?.ToString("N2")) руб</span>
+                                                <span class="old-price">@((item.OldPrice * item.Quantity)?.ToString("N2")) <span class="nbrb-icon">&#xE901;</span></span>
                                             }
                                         </div>
                                     </div>
@@ -160,14 +160,14 @@
                             <span class="summary-row__heading">Товары</span>
                             <span class="summary-row__sub"><span id="summaryQtyLabel">@Model.CartItems.Sum(x => x.Quantity)</span> шт.</span>
                         </div>
-                        <span id="summaryGoodsAmount" class="summary-row__value summary-row__value--goods">@Model.TotalAmount.ToString("N2") руб</span>
+                        <span id="summaryGoodsAmount" class="summary-row__value summary-row__value--goods">@Model.TotalAmount.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                     </div>
 
                     @if (Model.CartItems.Any(x => x.TotalOldPrice.HasValue))
                     {
                         <div class="summary-row summary-row--strike">
-                            <span class="summary-row__heading">В каталоге без скидки</span>
-                            <span class="summary-row__value summary-row__value--old-price">@Model.CartItems.Sum(x => x.TotalOldPrice ?? x.TotalPrice).ToString("N2") руб</span>
+                            <span class="summary-row__heading">Цена без скидки</span>
+                            <span class="summary-row__value summary-row__value--old-price">@Model.CartItems.Sum(x => x.TotalOldPrice ?? x.TotalPrice).ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                         </div>
                     }
 
@@ -192,7 +192,6 @@
                         <label class="form-label" style="font-size: 14px; font-weight: 600;">Есть промокод?</label>
                         <div class="input-group">
                             <input type="text" id="promoInput" class="form-control" placeholder="Введите промокод">
-                            <button type="button" onclick="applyPromoCode()" class="btn-apply-promo">Применить</button>
                             <input type="hidden" asp-for="PromoCode" id="appliedPromoCode" />
                         </div>
                         <small id="promoStatus" class="d-block mt-1 text-muted"></small>
@@ -200,7 +199,7 @@
 
                     <div class="summary-total">
                         <span>Итого:</span>
-                        <span id="totalAmount" class="total-price-large">@Model.TotalAmount.ToString("N2") руб</span>
+                        <span id="totalAmount" class="total-price-large">@Model.TotalAmount.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                     </div>
 
                     <button type="submit" id="btnSubmitOrder" class="btn-pay" style="width: 100%; padding: 15px; font-weight: bold; background: #28a745; color: white; border-radius: 8px; border: none; margin-top: 20px;">
@@ -238,8 +237,9 @@
             });
         }
 
-            function formatCheckoutMoney(n) {
-                return n.toFixed(2).replace('.', ',') + ' руб';
+            const BYN_HTML = '<span class="nbrb-icon">&#xE901;</span>';
+            function formatCheckoutMoneyHtml(n) {
+                return n.toFixed(2).replace('.', ',') + ' ' + BYN_HTML;
             }
 
             function recalcCheckoutTotals() {
@@ -260,15 +260,15 @@
                     deliverySummary = 'Курьер, бесплатно';
                 } else {
                     deliveryFee = courierFee;
-                    deliverySummary = 'Курьер +' + courierFee.toFixed(2).replace('.', ',') + '\u00A0руб';
+                    deliverySummary = 'Курьер +' + courierFee.toFixed(2).replace('.', ',') + '\u00A0' + BYN_HTML;
                 }
 
         const goodsEl = document.getElementById('summaryGoodsAmount');
                         const delSummaryEl = document.getElementById('summaryDeliverySummary');
                         const totalEl = document.getElementById('totalAmount');
-                        if (goodsEl) goodsEl.textContent = formatCheckoutMoney(goodsAfterPromo);
-                        if (delSummaryEl) delSummaryEl.textContent = deliverySummary;
-                        if (totalEl) totalEl.textContent = formatCheckoutMoney(goodsAfterPromo + deliveryFee);
+                        if (goodsEl) goodsEl.innerHTML = formatCheckoutMoneyHtml(goodsAfterPromo);
+                        if (delSummaryEl) delSummaryEl.innerHTML = deliverySummary;
+                        if (totalEl) totalEl.innerHTML = formatCheckoutMoneyHtml(goodsAfterPromo + deliveryFee);
 
                 const promoRow = document.getElementById('summaryPromoRow');
                 const promoText = document.getElementById('summaryPromoText');
@@ -373,6 +373,7 @@
                 toggleDelivery();
                 recalcCheckoutTotals();
                 initCheckoutOrderToggle();
+                initPromoAutoApply();
             });
 
             document.getElementById('checkoutForm').addEventListener('submit', function(e) {
@@ -385,38 +386,93 @@
                 }
             });
 
-            async function applyPromoCode() {
+                       function setPromoUiState(state, payload) {
                 const codeInput = document.getElementById('promoInput');
                 const statusElement = document.getElementById('promoStatus');
-                const code = codeInput.value.trim();
-                if (!code) {
-                    statusElement.innerText = "Введите код";
-                    statusElement.className = "d-block mt-1 text-warning";
+                if (!codeInput || !statusElement) return;
+
+                codeInput.classList.remove('promo-input--valid', 'promo-input--invalid');
+
+                if (state === 'idle') {
+                    statusElement.textContent = '';
+                    statusElement.className = 'd-block mt-1 text-muted';
                     return;
                 }
 
+                if (state === 'valid') {
+                    const discount = payload?.discount ?? 0;
+                    codeInput.classList.add('promo-input--valid');
+                    statusElement.textContent = `Скидка ${discount}%`;
+                    statusElement.className = 'd-block mt-1 promo-status--valid';
+                    return;
+                }
+
+                if (state === 'invalid') {
+                    const code = payload?.code ?? '';
+                    codeInput.classList.add('promo-input--invalid');
+                    statusElement.textContent = code ? `${code} — промокод отсутствует или истёк.` : 'Промокод отсутствует или истёк.';
+                    statusElement.className = 'd-block mt-1 promo-status--invalid';
+                    return;
+                }
+            }
+
+            function clearAppliedPromo() {
+                const promoPct = document.getElementById('appliedPromoPercent');
+                const promoCodeHidden = document.getElementById('appliedPromoCode');
+                if (promoPct) promoPct.value = '0';
+                if (promoCodeHidden) promoCodeHidden.value = '';
+            }
+
+            let promoLastChecked = '';
+            async function applyPromoCodeIfNeeded() {
+                const codeInput = document.getElementById('promoInput');
+                const code = (codeInput?.value ?? '').trim();
+
+                if (!code) {
+                    promoLastChecked = '';
+                    clearAppliedPromo();
+                    setPromoUiState('idle');
+                    recalcCheckoutTotals();
+                    return;
+                }
+
+                if (code.toLowerCase() === promoLastChecked.toLowerCase()) return;
+                promoLastChecked = code;
+
                 try {
-                    const response = await fetch('/Order/ApplyPromo?code=' + encodeURIComponent(code), {
-                        method: 'POST'
-                    });
+                    const response = await fetch('/Order/ApplyPromo?code=' + encodeURIComponent(code), { method: 'POST' });
                     const result = await response.json();
 
                     if (result.success) {
                         document.getElementById('appliedPromoPercent').value = result.discount;
                         document.getElementById('appliedPromoCode').value = code;
-                        codeInput.readOnly = true;
-                        statusElement.innerText = `Скидка ${result.discount}% применена`;
-                        statusElement.className = "d-block mt-1 text-success";
+                        setPromoUiState('valid', { discount: result.discount });
                         recalcCheckoutTotals();
                     } else {
-                        statusElement.innerText = result.message || "Промокод не найден";
-                        statusElement.className = "d-block mt-1 text-danger";
+                        clearAppliedPromo();
+                        setPromoUiState('invalid', { code });
+                        recalcCheckoutTotals();
                     }
                 } catch (error) {
                     console.error('Ошибка:', error);
-                    statusElement.innerText = "Ошибка при проверке промокода";
-                    statusElement.className = "d-block mt-1 text-danger";
+                    clearAppliedPromo();
+                    setPromoUiState('invalid', { code });
+                    recalcCheckoutTotals();
                 }
+            }
+
+            function initPromoAutoApply() {
+                const codeInput = document.getElementById('promoInput');
+                if (!codeInput) return;
+
+                codeInput.addEventListener('blur', function () {
+                    applyPromoCodeIfNeeded();
+                });
+
+                codeInput.addEventListener('input', function () {
+                    promoLastChecked = '';
+                    setPromoUiState('idle');
+                });
             }
     </script>
 

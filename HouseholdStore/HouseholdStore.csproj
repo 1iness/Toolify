@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\fonts\nbrb.ttf" />
+    <Content Remove="wwwroot\fonts\nbrb.woff" />
+    <Content Remove="wwwroot\fonts\nbrb.woff2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
@@ -14,6 +20,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Toolify.AuthService\Toolify.AuthService.csproj" />
     <ProjectReference Include="..\Toolify.ProductService\Toolify.ProductService.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\fonts\nbrb.ttf" />
+    <None Include="wwwroot\fonts\nbrb.woff" />
+    <None Include="wwwroot\fonts\nbrb.woff2" />
   </ItemGroup>
 
 </Project>

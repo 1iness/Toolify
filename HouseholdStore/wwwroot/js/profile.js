@@ -52,10 +52,11 @@ document.querySelector('[data-tab="favourites"]')?.addEventListener('click', asy
     }
 
     grid.innerHTML = products.map(p => {
+        const BYN_HTML = '<span class="nbrb-icon">&#xE901;</span>';
         const price = p.discount > 0
-            ? `<span style="color:#e74c3c;font-weight:700;">${(p.price * (1 - p.discount / 100)).toFixed(2)} руб.</span>
-               <span style="text-decoration:line-through;color:#999;font-size:13px;margin-left:6px;">${p.price} руб.</span>`
-            : `<span style="font-weight:700;">${p.price} руб.</span>`;
+            ? `<span style="color:#e74c3c;font-weight:700;">${(p.price * (1 - p.discount / 100)).toFixed(2)} ${BYN_HTML}</span>
+               <span style="text-decoration:line-through;color:#999;font-size:13px;margin-left:6px;">${p.price} ${BYN_HTML}</span>`
+            : `<span style="font-weight:700;">${p.price} ${BYN_HTML}</span>`;
 
         return `
         <div class="product-card" style="border:1px solid #eee;border-radius:12px;padding:15px;">

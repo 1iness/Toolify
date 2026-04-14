@@ -327,7 +327,7 @@ namespace HouseholdStore.Controllers
         {
             var data = await _repo.GetClientHistoryReportAsync();
             var sb = new StringBuilder();
-            sb.AppendLine("Клиент,Email,Всего заказов,Общая сумма (руб),Дата последнего заказа");
+            sb.AppendLine("Клиент,Email,Всего заказов,Общая сумма (BYN),Дата последнего заказа");
             foreach (var item in data) sb.AppendLine($"\"{item.ClientName}\",\"{item.ClientEmail}\",{item.TotalOrders},{item.TotalSpent.ToString("F2")},{item.LastOrderDate.ToShortDateString()}");
             return GenerateCsv(sb.ToString(), "ClientHistory.csv");
         }

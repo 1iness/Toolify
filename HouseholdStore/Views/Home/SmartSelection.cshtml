@@ -29,7 +29,7 @@
             <form method="get" action="@Url.Action("SmartSelectionResults", "Home")">
                 <input type="hidden" name="CategoryId" value="@ViewBag.SelectedCategoryId" />
 
-                <label style="font-weight: bold; margin-bottom: 10px; display: block;">2. Ваш бюджет руб</label>
+                <label style="font-weight: bold; margin-bottom: 10px; display: block;">2. Ваш бюджет <span class="nbrb-icon">&#xE901;</span></label>
                 <div style="display: flex; gap: 15px; margin-bottom: 25px;">
                     <input type="number" name="MinPrice" placeholder="От" style="width: 50%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;" />
                     <input type="number" name="MaxPrice" placeholder="До" style="width: 50%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;" />

@@ -13,33 +13,33 @@
 <div class="catalog-page-container">
 
     <aside class="catalog-sidebar">
-       <form method="get" action="@Url.Action("Catalog", "Home")" id="filterForm">
-        <input type="hidden" name="CategoryId" value="@ViewBag.CategoryId" />
-        <input type="hidden" name="SpecialCategory" value="@ViewBag.SpecialCategory" />
-        <input type="hidden" name="Sort" value="@ViewBag.SelectedSort" />
+        <form method="get" action="@Url.Action("Catalog", "Home")" id="filterForm">
+            <input type="hidden" name="CategoryId" value="@ViewBag.CategoryId" />
+            <input type="hidden" name="SpecialCategory" value="@ViewBag.SpecialCategory" />
+            <input type="hidden" name="Sort" value="@ViewBag.SelectedSort" />
 
-        <div class="filter-group">
-            <h3>Цена, Руб</h3>
-            <div class="price-inputs">
-                <div class="input-wrapper">
-                    <span>от</span>
-                    <input type="number" name="minPrice" value="@min" placeholder="0" min="0">
-                </div>
-                <div class="input-wrapper">
-                    <span>до</span>
-                    <input type="number" name="maxPrice" value="@max" placeholder="99999" min="0">
+            <div class="filter-group">
+                <h3>Цена, Руб</h3>
+                <div class="price-inputs">
+                    <div class="input-wrapper">
+                        <span>от</span>
+                        <input type="number" name="minPrice" value="@min" placeholder="0" min="0">
+                    </div>
+                    <div class="input-wrapper">
+                        <span>до</span>
+                        <input type="number" name="maxPrice" value="@max" placeholder="99999" min="0">
+                    </div>
                 </div>
             </div>
-        </div>
 
-        @if (ViewBag.CategoryFilters != null)
-        {
-            var filters = (List<Toolify.ProductService.Models.CategoryFilterDto>)ViewBag.CategoryFilters;
-            foreach (var f in filters)
+            @if (ViewBag.CategoryFilters != null)
             {
-                <div class="filter-group">
-                    <h3>@f.FeatureName</h3>
-                    <div class="checkbox-options" style="max-height: 200px; overflow-y: auto;">
+                var filters = (List<Toolify.ProductService.Models.CategoryFilterDto>)ViewBag.CategoryFilters;
+                foreach (var f in filters)
+                {
+                    <div class="filter-group">
+                        <h3>@f.FeatureName</h3>
+                        <div class="checkbox-options" style="max-height: 200px; overflow-y: auto;">
                             @foreach (var val in f.AvailableValues)
                             {
                                 bool isChecked = ViewBag.SelectedFeatures != null &&
@@ -54,13 +54,13 @@
                                     @val
                                 </label>
                             }
+                        </div>
                     </div>
-                </div>
+                }
             }
-        }
 
-        <button type="submit" class="btn-apply-filters" style="margin-top: 20px;">Показать товары</button>
-    </form>
+            <button type="submit" class="btn-apply-filters" style="margin-top: 20px;">Показать товары</button>
+        </form>
     </aside>
 
 
@@ -110,12 +110,12 @@
 
                         <div class="price-block" style="margin-top: 10px; margin-bottom: 5px;">
                             <span class="price @(hasDiscount ? "price--sale" : "")">
-                                @finalPrice.ToString("N2") <span class="price-currency">руб.</span>
+                                @finalPrice.ToString("N2") <span class="nbrb-icon">&#xE901;</span>
                             </span>
                             @if (hasDiscount)
                             {
                                 <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">
-                                    @product.Price.ToString("N2") руб.
+                                    @product.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span>
                                 </span>
                             }
                         </div>
@@ -189,7 +189,7 @@
     }
 
     (function () {
-        const BATCH = 9;  
+        const BATCH = 9;
         const items = Array.from(document.querySelectorAll('.catalog-item'));
         const btn = document.getElementById('load-more-btn');
         let shown = 0;

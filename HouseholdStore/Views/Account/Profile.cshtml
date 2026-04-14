@@ -176,10 +176,10 @@
                                              onerror="this.src='/image/no-image.png'" />
                                         <div class="order-item-info">
                                             <div class="order-item-name">@item.ProductName</div>
-                                            <div class="order-item-qty">@item.Quantity шт. × @item.Price.ToString("N2") руб.</div>
+                                            <div class="order-item-qty nbrb-icon">@item.Quantity шт. × @item.Price.ToString("N2") &#xE901;</div>
                                         </div>
                                         <div class="order-item-total">
-                                            @((item.Quantity * item.Price).ToString("N2")) руб.
+                                            <span class="nbrb-icon">@((item.Quantity * item.Price).ToString("N2")) &#xE901;</span>
                                         </div>
                                     </div>
                                 }
@@ -187,7 +187,7 @@
 
                             <div class="order-card-footer">
                                 <span>Итого по заказу:</span>
-                                <span class="order-total-price">@order.TotalAmount.ToString("N2") руб.</span>
+                                <span class="order-total-price nbrb-icon">@order.TotalAmount.ToString("N2") &#xE901;</span>
                             </div>
 
                         </div>
@@ -244,7 +244,7 @@
                                         <div class="order-item-qty">@item.Quantity шт.</div>
                                     </div>
                                     <div class="order-item-total">
-                                        @item.Price.ToString("N2") руб.
+                                            @((item.Quantity * item.Price).ToString("N2")) <span class="nbrb-icon">&#xE901;</span>
                                     </div>
                                 </div>
                             }
@@ -252,7 +252,7 @@
 
                         <div class="order-card-footer">
                             <span>Сумма заказа:</span>
-                            <span class="order-total-price">@order.TotalAmount.ToString("N2") руб.</span>
+                                <span class="order-total-price">@order.TotalAmount.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                         </div>
 
                     </div>

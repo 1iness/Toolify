@@ -276,8 +276,8 @@
 /* Только блок «Заказ»: актуальная цена и старая — заметные на фоне чёрного текста */
 .checkout-card--order .item-price-block .current-price {
     display: block;
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 1.3rem;
+    font-weight: 800;
     color: #28a745;
     margin-bottom: 3px;
 }
@@ -285,8 +285,8 @@
 .checkout-card--order .item-price-block .old-price {
     display: block;
     font-size: 14px;
-    color: #e53935;
-    font-weight: 800;
+    color: #FF4848;
+    font-weight: 700;
     text-decoration: line-through;
 }
 
@@ -535,33 +535,48 @@
         }
 
 
-.btn-apply-promo {
-    background-color: #218838; 
-    color: #ffffff;
-    border-radius:13px;
-    padding: 0.5rem 1.5rem;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
-    border:none;
-    margin-top:10px;
+/* Промокод: авто-проверка по blur */
+.promo-input--valid {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15) !important;
 }
 
-.btn-apply-promo:hover {
-    background-color: #343a40;
-    color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-.btn-apply-promo:active {
-    transform: scale(0.98);
-    background-color: #1a1e21;
+.promo-input--invalid {
+    border-color: #FF4848 !important;
+    box-shadow: 0 0 0 3px rgba(255, 72, 72, 0.18) !important;
 }
 
-.btn-apply-promo:disabled {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    cursor: not-allowed;
-    transform: none;
+.promo-status--valid {
+    color: #28a745 !important;
+    font-weight: 600;
 }
+
+.promo-status--invalid {
+    color: #FF4848 !important;
+    font-weight: 600;
+}
+
+/* Промокод: авто-проверка по blur */
+.promo-input--valid {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15) !important;
+}
+
+.promo-input--invalid {
+    border-color: #FF4848 !important;
+    box-shadow: 0 0 0 3px rgba(255, 72, 72, 0.18) !important;
+}
+
+.promo-status--valid {
+    color: #28a745 !important;
+    font-weight: 600;
+}
+
+.promo-status--invalid {
+    color: #FF4848 !important;
+    font-weight: 600;
+}
+
 @keyframes spin {
     to {
         transform: rotate(360deg);

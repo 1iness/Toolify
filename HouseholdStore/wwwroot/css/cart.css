@@ -219,7 +219,7 @@ img[style*="display: none"] + .empty-emoji {
 
 .old-price-sm {
     text-decoration: line-through;
-    color: #c62828;
+    color: #FF4848;
     font-size: 0.85rem;
     font-weight: 700;
 }
@@ -279,12 +279,12 @@ img[style*="display: none"] + .empty-emoji {
 .total-current {
     font-size: 1.3rem;
     font-weight: 800;
-    color: #218838;
+    color: #28a745;
 }
 
 .total-old {
     text-decoration: line-through;
-    color: #c62828;
+    color: #FF4848;
     font-size: 0.9rem;
     font-weight: 700;
 }
@@ -376,7 +376,7 @@ img[style*="display: none"] + .empty-emoji {
     padding: 12px 14px;
     font-size: 0.82rem;
     line-height: 1.45;
-    color: #c62828;
+    color: #FF4848;
     font-weight: 600;
     background: #fff5f5;
     border: 1px solid #ffcdd2;

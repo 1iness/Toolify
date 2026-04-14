@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="~/css/cart.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
-<partial name="_Breadcrumbs"/>
+<partial name="_Breadcrumbs" />
 <div class="cart-page-container">
     <h1 class="page-title">Моя корзина</h1>
 
@@ -47,7 +47,7 @@
                         <div class="item-info">
                             <h3 class="item-name">@item.ProductName</h3>
                             <div class="item-id">Артикул: @item.ArticleNumber</div> <div class="price-single-mobile">
-                                <span class="price-val">@item.Price.ToString("N2") руб</span>
+                                <span class="price-val">@item.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                             </div>
                         </div>
                     </div>
@@ -57,9 +57,9 @@
                         <div class="col-price-per-item">
                             @if (item.OldPrice.HasValue)
                             {
-                                <div class="old-price-sm">@item.OldPrice.Value.ToString("N2") руб</div>
+                                <div class="old-price-sm">@item.OldPrice.Value.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
                             }
-                            <div class="current-price-sm">@item.Price.ToString("N2") руб</div>
+                            <div class="current-price-sm">@item.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
                             <div class="price-label">цена за 1 шт</div>
                         </div>
 
@@ -76,9 +76,9 @@
                         <div class="col-total">
                             @if (item.TotalOldPrice.HasValue)
                             {
-                                <div class="total-old">@item.TotalOldPrice.Value.ToString("N2") руб</div>
+                                <div class="total-old">@item.TotalOldPrice.Value.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
                             }
-                            <div class="total-current">@item.TotalPrice.ToString("N2") руб</div>
+                            <div class="total-current">@item.TotalPrice.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
                             <div class="total-count">@item.Quantity шт</div>
                         </div>
 
@@ -101,7 +101,7 @@
                 </div>
                 <div class="summary-row">
                     <span>Сумма заказа</span>
-                    <span>@grandTotal.ToString("N2") руб</span>
+                    <span>@grandTotal.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                 </div>
             </div>
 
@@ -110,11 +110,11 @@
                 <div class="total-block">
                     <a href="/Order/Checkout" class="checkout-btn">Оформить заказ</a>
                     <div class="final-price">
-                        @grandTotal.ToString("N2") руб
+                        <span>@grandTotal.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                     </div>
                 </div>
                 <p class="cart-delivery-hint">
-                    Курьер бесплатно, если сумма товаров свыше @CheckoutViewModel.FreeDeliveryThreshold.ToString("N0") руб. (с учётом промокода). Иначе доплата @CheckoutViewModel.CourierDeliveryFee.ToString("N2") руб.
+                    Курьер бесплатно, если сумма товаров свыше @CheckoutViewModel.FreeDeliveryThreshold.ToString("N0") <span class="nbrb-icon">&#xE901;</span> (с учётом промокода). Иначе доплата @CheckoutViewModel.CourierDeliveryFee.ToString("N2") <span class="nbrb-icon">&#xE901;</span>.
                 </p>
             </div>
         </div>

@@ -259,7 +259,8 @@ window.addEventListener('load', () => {
         }
 
         function formatMoney(amount) {
-            return amount.toLocaleString('by-BY', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 });
+            const formatted = amount.toLocaleString('by-BY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            return `${formatted} <span class="nbrb-icon">&#xE901;</span>`;
         }
 
         document.addEventListener("click", function (e) {

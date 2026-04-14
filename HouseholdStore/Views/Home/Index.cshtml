@@ -9,10 +9,10 @@
     <div class="custom-carousel">
         <div class="carousel-slides">
             <div class="slide active" style="display: block;">
-                <img src="/image/baner1.png" alt="Баннер 1"/>
+                <img src="/image/baner1.png" alt="Баннер 1" />
             </div>
             <div class="slide">
-                <img src="/image/baner2.png" alt="Баннер 2"/>
+                <img src="/image/baner2.png" alt="Баннер 2" />
             </div>
         </div>
 
@@ -108,12 +108,12 @@
 
                 <div class="price-block" style="margin-top: 10px; margin-bottom: 5px;">
                     <span class="price @(hasDiscount ? "price--sale" : "")">
-                        @finalPrice.ToString("N2") <span class="price-currency">руб.</span>
+                        @finalPrice.ToString("N2") <span class="nbrb-icon">&#xE901;</span>
                     </span>
                     @if (hasDiscount)
                     {
                         <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">
-                            @product.Price.ToString("N2") руб.
+                            @product.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span>
                         </span>
                     }
                 </div>
@@ -163,7 +163,7 @@
         <div class="delivery-text">
             <h2>Бесплатная доставка<br>до дверей</h2>
             <div class="delivery-subtext">
-                при заказе от <span class="price-pill">300</span> рублей
+                при заказе от <span class="price-pill">300</span> <span class="nbrb-icon">&#xE901;</span>
                 <br>скидка 10%
             </div>
         </div>
