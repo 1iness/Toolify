@@ -31,17 +31,21 @@ namespace Toolify.ProductService.Controllers
             if (model.MaxUses.HasValue && model.MaxUses.Value < 1)
                 return BadRequest("Лимит использований должен быть не меньше 1");
 
+            if (model.MinGoodsAmount.HasValue && model.MinGoodsAmount.Value < 0)
+                return BadRequest("Минимальная сумма должна быть >= 0");
+
             await _repo.CreatePromoCodeAsync(
                 model.Code,
                 model.DiscountPercent,
                 model.StartDate,
                 model.EndDate,
-                model.MaxUses);
+                model.MaxUses,
+                model.MinGoodsAmount);
             return Ok();
         }
 
         [HttpGet("validate/{code}")]
-        public async Task<IActionResult> Validate(string code)
+        public async Task<IActionResult> Validate(string code, [FromQuery] decimal? goodsTotal = null)
         {
             var allPromos = await _repo.GetAllPromoCodesAsync();
             var promo = allPromos.FirstOrDefault(p =>
@@ -52,6 +56,9 @@ namespace Toolify.ProductService.Controllers
                 (!p.MaxUses.HasValue || p.UsedCount < p.MaxUses.Value));
 
             if (promo == null) return NotFound("Промокод не найден, истёк или исчерпан");
+
+            if (promo.MinGoodsAmount.HasValue && goodsTotal.HasValue && goodsTotal.Value < promo.MinGoodsAmount.Value)
+                return NotFound($"Промокод действует от суммы {promo.MinGoodsAmount.Value:N2}");
 
             return Ok(new { discountPercent = promo.DiscountPercent });
         }
@@ -64,5 +71,6 @@ namespace Toolify.ProductService.Controllers
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public int? MaxUses { get; set; }
+        public decimal? MinGoodsAmount { get; set; }
     }
 }

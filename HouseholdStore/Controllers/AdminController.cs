@@ -189,6 +189,124 @@ namespace HouseholdStore.Controllers
             }
             return RedirectToAction("PromoCodes");
         }
+        [HttpGet]
+        public async Task<IActionResult> Discounts()
+        {
+            var campaigns = await _api.GetDiscountCampaignsAsync();
+            var rules = await _api.GetDiscountRulesAsync();
+            var categories = await _api.GetCategoriesAsync();
+            var users = await _authApi.GetAllUsersAsync();
+
+            ViewBag.Categories = new SelectList(categories, "Id", "Name");
+            ViewBag.Users = new SelectList(users, "Id", "Email");
+            ViewBag.CategoriesList = categories;
+            ViewBag.UsersList = users;
+
+            return View(new AdminDiscountsViewModel { Campaigns = campaigns, Rules = rules });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddDiscountCampaign(string name, string? description, DateTime startDate, DateTime endDate, bool isActive = true, int priority = 0)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                TempData["Error"] = "Укажите название акции";
+                return RedirectToAction("Discounts");
+            }
+
+            var campaign = new DiscountCampaign
+            {
+                Name = name.Trim(),
+                Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+                StartDate = startDate,
+                EndDate = endDate,
+                IsActive = isActive,
+                Priority = priority
+            };
+            var (ok, err) = await _api.UpsertDiscountCampaignAsync(false, campaign);
+            TempData[ok ? "Success" : "Error"] = ok ? "Акция добавлена" : (err ?? "Ошибка API");
+            return RedirectToAction("Discounts");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateDiscountCampaign(int id, string name, string? description, DateTime startDate, DateTime endDate, bool isActive, int priority)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                TempData["Error"] = "Укажите название акции";
+                return RedirectToAction("Discounts");
+            }
+
+            var campaign = new DiscountCampaign
+            {
+                Id = id,
+                Name = name.Trim(),
+                Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+                StartDate = startDate,
+                EndDate = endDate,
+                IsActive = isActive,
+                Priority = priority
+            };
+            var (ok, err) = await _api.UpsertDiscountCampaignAsync(true, campaign);
+            TempData[ok ? "Success" : "Error"] = ok ? "Акция обновлена" : (err ?? "Ошибка API");
+            return RedirectToAction("Discounts");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteDiscountCampaign(int id)
+        {
+            var (ok, err) = await _api.DeleteDiscountCampaignAsync(id);
+            TempData[ok ? "Success" : "Error"] = ok ? "Акция удалена" : (err ?? "Ошибка API");
+            return RedirectToAction("Discounts");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddDiscountRule(string scopeType, string discountMode, decimal discountValue, int? campaignId, int? categoryId, int? userId, decimal? minGoodsAmount, bool isActive = true)
+        {
+            var rule = new DiscountRule
+            {
+                ScopeType = scopeType,
+                DiscountMode = discountMode,
+                DiscountValue = discountValue,
+                CampaignId = campaignId,
+                CategoryId = scopeType == "Category" ? categoryId : null,
+                UserId = scopeType == "Client" ? userId : null,
+                MinGoodsAmount = minGoodsAmount,
+                IsActive = isActive
+            };
+            var (ok, err) = await _api.UpsertDiscountRuleAsync(false, rule);
+            TempData[ok ? "Success" : "Error"] = ok ? "Правило добавлено" : (err ?? "Ошибка API");
+            return RedirectToAction("Discounts");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateDiscountRule(int id, string scopeType, string discountMode, decimal discountValue, int? campaignId, int? categoryId, int? userId, decimal? minGoodsAmount, bool isActive)
+        {
+            var rule = new DiscountRule
+            {
+                Id = id,
+                ScopeType = scopeType,
+                DiscountMode = discountMode,
+                DiscountValue = discountValue,
+                CampaignId = campaignId,
+                CategoryId = scopeType == "Category" ? categoryId : null,
+                UserId = scopeType == "Client" ? userId : null,
+                MinGoodsAmount = minGoodsAmount,
+                IsActive = isActive
+            };
+            var (ok, err) = await _api.UpsertDiscountRuleAsync(true, rule);
+            TempData[ok ? "Success" : "Error"] = ok ? "Правило обновлено" : (err ?? "Ошибка API");
+            return RedirectToAction("Discounts");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteDiscountRule(int id)
+        {
+            var (ok, err) = await _api.DeleteDiscountRuleAsync(id);
+            TempData[ok ? "Success" : "Error"] = ok ? "Правило удалено" : (err ?? "Ошибка API");
+            return RedirectToAction("Discounts");
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> Clients()

@@ -558,13 +558,14 @@ namespace Toolify.ProductService.Data
                     EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
                     IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                     MaxUses = TryGetNullableInt32(reader, "MaxUses"),
-                    UsedCount = TryGetInt32(reader, "UsedCount", 0)
+                    UsedCount = TryGetInt32(reader, "UsedCount", 0),
+                    MinGoodsAmount = TryGetNullableDecimal(reader, "MinGoodsAmount")
                 });
             }
             return promos;
         }
 
-        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end, int? maxUses = null)
+        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end, int? maxUses = null, decimal? minGoodsAmount = null)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_AddPromoCode", connection) { CommandType = CommandType.StoredProcedure };
@@ -573,9 +574,27 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@StartDate", start);
             command.Parameters.AddWithValue("@EndDate", end);
             command.Parameters.AddWithValue("@MaxUses", (object?)maxUses ?? DBNull.Value);
+            command.Parameters.AddWithValue("@MinGoodsAmount", (object?)minGoodsAmount ?? DBNull.Value);
+
 
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
+        }
+        private static decimal? TryGetNullableDecimal(SqlDataReader reader, string columnName)
+        {
+            try
+            {
+                var ord = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ord) ? null : reader.GetDecimal(ord);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
         }
         private static int? TryGetNullableInt32(SqlDataReader reader, string columnName)
         {
@@ -804,8 +823,155 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
             return Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
         }
+        public async Task<List<DiscountCampaign>> GetDiscountCampaignsAsync()
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetDiscountCampaigns", connection) { CommandType = CommandType.StoredProcedure };
+            await connection.OpenAsync();
+            var list = new List<DiscountCampaign>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(new DiscountCampaign
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+                    StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                    EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    Priority = reader.GetInt32(reader.GetOrdinal("Priority")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+                });
+            }
+            return list;
+        }
+        public async Task<int> AddDiscountCampaignAsync(string name, string? description, DateTime startDate, DateTime endDate, bool isActive, int priority)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_AddDiscountCampaign", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@Name", name);
+            command.Parameters.AddWithValue("@Description", (object?)description ?? DBNull.Value);
+            command.Parameters.AddWithValue("@StartDate", startDate);
+            command.Parameters.AddWithValue("@EndDate", endDate);
+            command.Parameters.AddWithValue("@IsActive", isActive);
+            command.Parameters.AddWithValue("@Priority", priority);
+            await connection.OpenAsync();
+            var scalar = await command.ExecuteScalarAsync();
+            return Convert.ToInt32(scalar);
+        }
 
+        public async Task UpdateDiscountCampaignAsync(int id, string name, string? description, DateTime startDate, DateTime endDate, bool isActive, int priority)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_UpdateDiscountCampaign", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@Id", id);
+            command.Parameters.AddWithValue("@Name", name);
+            command.Parameters.AddWithValue("@Description", (object?)description ?? DBNull.Value);
+            command.Parameters.AddWithValue("@StartDate", startDate);
+            command.Parameters.AddWithValue("@EndDate", endDate);
+            command.Parameters.AddWithValue("@IsActive", isActive);
+            command.Parameters.AddWithValue("@Priority", priority);
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
 
+        public async Task DeleteDiscountCampaignAsync(int id)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_DeleteDiscountCampaign", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@Id", id);
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<DiscountRule>> GetDiscountRulesAsync()
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetDiscountRules", connection) { CommandType = CommandType.StoredProcedure };
+            await connection.OpenAsync();
+            var list = new List<DiscountRule>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(new DiscountRule
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    CampaignId = TryGetNullableInt32(reader, "CampaignId"),
+                    ScopeType = reader.GetString(reader.GetOrdinal("ScopeType")),
+                    CategoryId = TryGetNullableInt32(reader, "CategoryId"),
+                    UserId = TryGetNullableInt32(reader, "UserId"),
+                    DiscountMode = reader.GetString(reader.GetOrdinal("DiscountMode")),
+                    DiscountValue = reader.GetDecimal(reader.GetOrdinal("DiscountValue")),
+                    MinGoodsAmount = TryGetNullableDecimal(reader, "MinGoodsAmount"),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                    CategoryName = TryGetNullableString(reader, "CategoryName"),
+                    CampaignName = TryGetNullableString(reader, "CampaignName")
+                });
+            }
+            return list;
+        }
+
+        public async Task<int> AddDiscountRuleAsync(int? campaignId, string scopeType, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, bool isActive)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_AddDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@CampaignId", (object?)campaignId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@ScopeType", scopeType);
+            command.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@DiscountMode", discountMode);
+            command.Parameters.AddWithValue("@DiscountValue", discountValue);
+            command.Parameters.AddWithValue("@MinGoodsAmount", (object?)minGoodsAmount ?? DBNull.Value);
+            command.Parameters.AddWithValue("@IsActive", isActive);
+            await connection.OpenAsync();
+            var scalar = await command.ExecuteScalarAsync();
+            return Convert.ToInt32(scalar);
+        }
+
+        public async Task UpdateDiscountRuleAsync(int id, int? campaignId, string scopeType, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, bool isActive)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_UpdateDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@Id", id);
+            command.Parameters.AddWithValue("@CampaignId", (object?)campaignId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@ScopeType", scopeType);
+            command.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@DiscountMode", discountMode);
+            command.Parameters.AddWithValue("@DiscountValue", discountValue);
+            command.Parameters.AddWithValue("@MinGoodsAmount", (object?)minGoodsAmount ?? DBNull.Value);
+            command.Parameters.AddWithValue("@IsActive", isActive);
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task DeleteDiscountRuleAsync(int id)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_DeleteDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@Id", id);
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
+        private static string? TryGetNullableString(SqlDataReader reader, string columnName)
+        {
+            try
+            {
+                var ord = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ord) ? null : reader.GetString(ord);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
 
         private Product MapProduct(SqlDataReader reader)
         {

@@ -176,6 +176,13 @@
                         <span id="summaryPromoText" class="summary-row__value summary-row__value--promo"></span>
                     </div>
 
+                    <div class="summary-row checkout-discounts-note">
+                        <div class="summary-row__label-stack">
+                            <span class="summary-row__heading">Скидки по акции / клиенту</span>
+                            <span class="summary-row__sub">Процент и фиксированная сумма по правилам магазина считаются при подтверждении заказа на сервере; сумма выше — по товарам в корзине (и промокод, если указан).</span>
+                        </div>
+                    </div>
+
                     <div class="summary-row summary-row--delivery">
                         <span class="summary-row__heading">Доставка</span>
                         <span id="summaryDeliverySummary" class="summary-row__value summary-delivery-value">—</span>
@@ -440,7 +447,9 @@
                 promoLastChecked = code;
 
                 try {
-                    const response = await fetch('/Order/ApplyPromo?code=' + encodeURIComponent(code), { method: 'POST' });
+                    const cfg = document.getElementById('checkoutPricing');
+                    const baseGoods = cfg ? (parseFloat(cfg.dataset.baseGoods || '0') || 0) : 0;
+                    const response = await fetch('/Order/ApplyPromo?code=' + encodeURIComponent(code) + '&goodsTotal=' + encodeURIComponent(baseGoods.toString()), { method: 'POST' });
                     const result = await response.json();
 
                     if (result.success) {

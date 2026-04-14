@@ -171,14 +171,16 @@ namespace HouseholdStore.Services
                    ?? new List<PromoCode>();
         }
 
-        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end, int? maxUses = null)
+        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end, int? maxUses = null, decimal? minGoodsAmount = null)
         {
-            var data = new { Code = code, DiscountPercent = discount, StartDate = start, EndDate = end, MaxUses = maxUses };
+            var data = new { Code = code, DiscountPercent = discount, StartDate = start, EndDate = end, MaxUses = maxUses, MinGoodsAmount = minGoodsAmount };
             await _http.PostAsJsonAsync("/api/admin/promocodes", data);
         }
-        public async Task<int?> GetPromoDiscountAsync(string code)
+        public async Task<int?> GetPromoDiscountAsync(string code, decimal? goodsTotal = null)
         {
-            var response = await _http.GetAsync($"/api/admin/promocodes/validate/{code}");
+            var url = $"/api/admin/promocodes/validate/{code}";
+            if (goodsTotal.HasValue) url += $"?goodsTotal={goodsTotal.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            var response = await _http.GetAsync(url);
             if (!response.IsSuccessStatusCode) return null;
 
             var data = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -225,6 +227,94 @@ namespace HouseholdStore.Services
             if (!response.IsSuccessStatusCode) return false;
             var data = await response.Content.ReadFromJsonAsync<JsonElement>();
             return data.GetProperty("isFavourite").GetBoolean();
+        }
+
+        public async Task<List<DiscountCampaign>> GetDiscountCampaignsAsync()
+        {
+            var response = await _http.GetAsync("/api/admin/discounts/campaigns");
+            if (!response.IsSuccessStatusCode) return new List<DiscountCampaign>();
+            return await response.Content.ReadFromJsonAsync<List<DiscountCampaign>>(jsonOptions)
+                   ?? new List<DiscountCampaign>();
+        }
+
+        public async Task<List<DiscountRule>> GetDiscountRulesAsync()
+        {
+            var response = await _http.GetAsync("/api/admin/discounts/rules");
+            if (!response.IsSuccessStatusCode) return new List<DiscountRule>();
+            return await response.Content.ReadFromJsonAsync<List<DiscountRule>>(jsonOptions)
+                   ?? new List<DiscountRule>();
+        }
+
+        public async Task<(bool ok, string? error)> UpsertDiscountCampaignAsync(bool isUpdate, DiscountCampaign campaign)
+        {
+            var body = JsonSerializer.Serialize(new
+            {
+                campaign.Name,
+                campaign.Description,
+                campaign.StartDate,
+                campaign.EndDate,
+                campaign.IsActive,
+                campaign.Priority
+            });
+            HttpResponseMessage response;
+            if (isUpdate)
+            {
+                response = await _http.PutAsync(
+                    $"/api/admin/discounts/campaigns/{campaign.Id}",
+                    new StringContent(body, Encoding.UTF8, "application/json"));
+            }
+            else
+            {
+                response = await _http.PostAsync(
+                    "/api/admin/discounts/campaigns",
+                    new StringContent(body, Encoding.UTF8, "application/json"));
+            }
+            if (response.IsSuccessStatusCode) return (true, null);
+            return (false, await response.Content.ReadAsStringAsync());
+        }
+
+        public async Task<(bool ok, string? error)> DeleteDiscountCampaignAsync(int id)
+        {
+            var response = await _http.DeleteAsync($"/api/admin/discounts/campaigns/{id}");
+            if (response.IsSuccessStatusCode) return (true, null);
+            return (false, await response.Content.ReadAsStringAsync());
+        }
+
+        public async Task<(bool ok, string? error)> UpsertDiscountRuleAsync(bool isUpdate, DiscountRule rule)
+        {
+            var body = JsonSerializer.Serialize(new
+            {
+                rule.CampaignId,
+                ScopeType = rule.ScopeType,
+                rule.CategoryId,
+                rule.UserId,
+                DiscountMode = rule.DiscountMode,
+                rule.DiscountValue,
+                rule.MinGoodsAmount,
+                rule.IsActive
+            });
+            HttpResponseMessage response;
+            if (isUpdate)
+            {
+                response = await _http.PutAsync(
+                    $"/api/admin/discounts/rules/{rule.Id}",
+                    new StringContent(body, Encoding.UTF8, "application/json"));
+            }
+            else
+            {
+                response = await _http.PostAsync(
+                    "/api/admin/discounts/rules",
+                    new StringContent(body, Encoding.UTF8, "application/json"));
+            }
+            if (response.IsSuccessStatusCode) return (true, null);
+            return (false, await response.Content.ReadAsStringAsync());
+        }
+
+        public async Task<(bool ok, string? error)> DeleteDiscountRuleAsync(int id)
+        {
+            var response = await _http.DeleteAsync($"/api/admin/discounts/rules/{id}");
+            if (response.IsSuccessStatusCode) return (true, null);
+            return (false, await response.Content.ReadAsStringAsync());
         }
     }
 }

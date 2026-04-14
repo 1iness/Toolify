@@ -12,7 +12,7 @@
         public int? MaxUses { get; set; }
 
         public int UsedCount { get; set; }
-
+        public decimal? MinGoodsAmount { get; set; }
         public bool IsValid =>
             IsActive
             && DateTime.Now >= StartDate

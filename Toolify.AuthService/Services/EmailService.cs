@@ -12,7 +12,7 @@ namespace Toolify.AuthService.Services
         private SmtpClient CreateClient()
         {
             return new SmtpClient("smtp.gmail.com", 587)
-            {
+            { 
                 Credentials = new NetworkCredential(_email, _password),
                 EnableSsl = true
             };

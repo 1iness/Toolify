@@ -129,9 +129,9 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ApplyPromo(string code)
+        public async Task<IActionResult> ApplyPromo(string code, decimal? goodsTotal = null)
         {
-            var discount = await _api.GetPromoDiscountAsync(code);
+            var discount = await _api.GetPromoDiscountAsync(code, goodsTotal);
             if (discount.HasValue)
             {
                 return Json(new { success = true, discount = discount.Value });
