@@ -64,7 +64,7 @@ namespace HouseholdStore.Controllers
                         var createdFeature = await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName);
                         if (createdFeature != null)
                         {
-                            config.FeatureId = createdFeature.Id; 
+                            config.FeatureId = createdFeature.Id;
                         }
                     }
                 }
@@ -131,7 +131,7 @@ namespace HouseholdStore.Controllers
                         var createdFeature = await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName);
                         if (createdFeature != null)
                         {
-                            config.FeatureId = createdFeature.Id; 
+                            config.FeatureId = createdFeature.Id;
                         }
                     }
                 }
@@ -158,7 +158,7 @@ namespace HouseholdStore.Controllers
             return RedirectToAction("Index");
         }
 
-        [HttpGet("Admin/GetFeatures")] 
+        [HttpGet("Admin/GetFeatures")]
         public async Task<IActionResult> GetFeatures(int categoryId)
         {
             var features = await _api.GetFeaturesByCategoryAsync(categoryId);
@@ -169,7 +169,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> PromoCodes()
         {
             var promos = await _api.GetAllPromoCodesAsync();
-            return View(promos); 
+            return View(promos);
         }
 
         [HttpPost]
@@ -195,12 +195,24 @@ namespace HouseholdStore.Controllers
             var campaigns = await _api.GetDiscountCampaignsAsync();
             var rules = await _api.GetDiscountRulesAsync();
             var categories = await _api.GetCategoriesAsync();
-            var users = await _authApi.GetAllUsersAsync();
+            var products = await _api.GetAllAsync();
+            List<Toolify.AuthService.Models.User> users;
+            try
+            {
+                users = await _authApi.GetAllUsersAsync();
+            }
+            catch (Exception ex)
+            {
+                users = new List<Toolify.AuthService.Models.User>();
+                TempData["Error"] = ex.Message;
+            }
 
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
             ViewBag.Users = new SelectList(users, "Id", "Email");
+            ViewBag.Products = new SelectList(products, "Id", "Name");
             ViewBag.CategoriesList = categories;
             ViewBag.UsersList = users;
+            ViewBag.ProductsList = products;
 
             return View(new AdminDiscountsViewModel { Campaigns = campaigns, Rules = rules });
         }
@@ -261,7 +273,7 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddDiscountRule(string scopeType, string discountMode, decimal discountValue, int? campaignId, int? categoryId, int? userId, decimal? minGoodsAmount, bool isActive = true)
+        public async Task<IActionResult> AddDiscountRule(string scopeType, string discountMode, decimal discountValue, int? campaignId, int? productId, int? categoryId, int? userId, decimal? minGoodsAmount, bool isActive = true)
         {
             var rule = new DiscountRule
             {
@@ -269,6 +281,7 @@ namespace HouseholdStore.Controllers
                 DiscountMode = discountMode,
                 DiscountValue = discountValue,
                 CampaignId = campaignId,
+                ProductId = scopeType == "Product" ? productId : null,
                 CategoryId = scopeType == "Category" ? categoryId : null,
                 UserId = scopeType == "Client" ? userId : null,
                 MinGoodsAmount = minGoodsAmount,
@@ -280,7 +293,7 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateDiscountRule(int id, string scopeType, string discountMode, decimal discountValue, int? campaignId, int? categoryId, int? userId, decimal? minGoodsAmount, bool isActive)
+        public async Task<IActionResult> UpdateDiscountRule(int id, string scopeType, string discountMode, decimal discountValue, int? campaignId, int? productId, int? categoryId, int? userId, decimal? minGoodsAmount, bool isActive)
         {
             var rule = new DiscountRule
             {
@@ -289,6 +302,7 @@ namespace HouseholdStore.Controllers
                 DiscountMode = discountMode,
                 DiscountValue = discountValue,
                 CampaignId = campaignId,
+                ProductId = scopeType == "Product" ? productId : null,
                 CategoryId = scopeType == "Category" ? categoryId : null,
                 UserId = scopeType == "Client" ? userId : null,
                 MinGoodsAmount = minGoodsAmount,
@@ -417,7 +431,7 @@ namespace HouseholdStore.Controllers
 
         private FileResult GenerateCsv(string csvContent, string fileName)
         {
-            var bom = new byte[] { 0xEF, 0xBB, 0xBF }; 
+            var bom = new byte[] { 0xEF, 0xBB, 0xBF };
             var bytes = Encoding.UTF8.GetBytes(csvContent);
             var finalBytes = bom.Concat(bytes).ToArray();
             return File(finalBytes, "text/csv", fileName);

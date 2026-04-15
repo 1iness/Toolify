@@ -107,7 +107,7 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@FullDescription", (object?)product.FullDescription ?? DBNull.Value);
             command.Parameters.AddWithValue("@Price", product.Price);
             command.Parameters.AddWithValue("@StockQuantity", product.StockQuantity);
-            command.Parameters.AddWithValue("@Discount", product.Discount);
+            command.Parameters.AddWithValue("@Discount", 0);
             command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
 
             var featureTable = new DataTable();
@@ -137,7 +137,7 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@FullDescription", (object?)product.FullDescription ?? DBNull.Value);
             command.Parameters.AddWithValue("@Price", product.Price);
             command.Parameters.AddWithValue("@StockQuantity", product.StockQuantity);
-            command.Parameters.AddWithValue("@Discount", product.Discount);
+            command.Parameters.AddWithValue("@Discount", 0);
             command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
 
             var featureTable = new DataTable();
@@ -232,18 +232,16 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@GuestId", (object?)guestId ?? DBNull.Value);
 
             await connection.OpenAsync();
-            var raw = new List<(int ProductId, string Name, decimal ListPrice, int Discount, int Quantity, string? Article)>();
+            var raw = new List<(int ProductId, string Name, decimal ListPrice, int Quantity, string? Article)>();
             using (var reader = await command.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
                 {
                     var listPrice = reader.GetDecimal(reader.GetOrdinal("Price"));
-                    var discount = reader.GetInt32(reader.GetOrdinal("Discount"));
                     raw.Add((
                         reader.GetInt32(reader.GetOrdinal("ProductId")),
                         reader.GetString(reader.GetOrdinal("Name")),
                         listPrice,
-                        discount,
                         reader.GetInt32(reader.GetOrdinal("Quantity")),
                         reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber"))
                     ));
@@ -262,11 +260,10 @@ namespace Toolify.ProductService.Data
             foreach (var row in raw)
             {
                 categoryByProduct.TryGetValue(row.ProductId, out var categoryId);
+                var prodPct = ResolveBestProductPercent(row.ProductId, rules, campaigns, now);
                 var catPct = ResolveBestCategoryPercent(categoryId, rules, campaigns, now);
-                var stackPct = Math.Max(catPct, clientPct);
-                var pd = Math.Clamp(row.Discount, 0, 100);
-                var unitAfterProduct = row.ListPrice * (1 - pd / 100m);
-                var finalUnit = Math.Round(unitAfterProduct * (1 - stackPct / 100m), 2, MidpointRounding.AwayFromZero);
+                var stackPct = Math.Max(prodPct, Math.Max(catPct, clientPct));
+                var finalUnit = Math.Round(row.ListPrice * (1 - stackPct / 100m), 2, MidpointRounding.AwayFromZero);
 
                 decimal? oldPrice = null;
                 if (finalUnit < row.ListPrice - 0.005m)
@@ -310,6 +307,29 @@ namespace Toolify.ProductService.Data
             foreach (var r in rules)
             {
                 if (!r.IsActive || r.ScopeType != "Category" || r.DiscountMode != "Percent" || r.CategoryId != categoryId)
+                    continue;
+                if (r.CampaignId.HasValue)
+                {
+                    var dc = campaigns.FirstOrDefault(c => c.Id == r.CampaignId.Value);
+                    if (dc == null || !IsCampaignActive(dc)) continue;
+                    candidates.Add((r.DiscountValue, dc.Priority, r.Id));
+                }
+                else
+                    candidates.Add((r.DiscountValue, 0, r.Id));
+            }
+            if (candidates.Count == 0) return 0;
+            return candidates.OrderByDescending(x => x.prio).ThenByDescending(x => x.rid).First().val;
+        }
+
+        private static decimal ResolveBestProductPercent(int productId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
+        {
+            bool IsCampaignActive(DiscountCampaign dc) =>
+                dc.IsActive && now >= dc.StartDate && now <= dc.EndDate;
+
+            var candidates = new List<(decimal val, int prio, int rid)>();
+            foreach (var r in rules)
+            {
+                if (!r.IsActive || r.ScopeType != "Product" || r.DiscountMode != "Percent" || r.ProductId != productId)
                     continue;
                 if (r.CampaignId.HasValue)
                 {
@@ -1026,6 +1046,7 @@ namespace Toolify.ProductService.Data
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     CampaignId = TryGetNullableInt32(reader, "CampaignId"),
                     ScopeType = reader.GetString(reader.GetOrdinal("ScopeType")),
+                    ProductId = TryGetNullableInt32(reader, "ProductId"),
                     CategoryId = TryGetNullableInt32(reader, "CategoryId"),
                     UserId = TryGetNullableInt32(reader, "UserId"),
                     DiscountMode = reader.GetString(reader.GetOrdinal("DiscountMode")),
@@ -1034,18 +1055,20 @@ namespace Toolify.ProductService.Data
                     IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     CategoryName = TryGetNullableString(reader, "CategoryName"),
+                    ProductName = TryGetNullableString(reader, "ProductName"),
                     CampaignName = TryGetNullableString(reader, "CampaignName")
                 });
             }
             return list;
         }
 
-        public async Task<int> AddDiscountRuleAsync(int? campaignId, string scopeType, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, bool isActive)
+        public async Task<int> AddDiscountRuleAsync(int? campaignId, string scopeType, int? productId, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, bool isActive)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_AddDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
             command.Parameters.AddWithValue("@CampaignId", (object?)campaignId ?? DBNull.Value);
             command.Parameters.AddWithValue("@ScopeType", scopeType);
+            command.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
             command.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);
             command.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
             command.Parameters.AddWithValue("@DiscountMode", discountMode);
@@ -1057,13 +1080,14 @@ namespace Toolify.ProductService.Data
             return Convert.ToInt32(scalar);
         }
 
-        public async Task UpdateDiscountRuleAsync(int id, int? campaignId, string scopeType, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, bool isActive)
+        public async Task UpdateDiscountRuleAsync(int id, int? campaignId, string scopeType, int? productId, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, bool isActive)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_UpdateDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
             command.Parameters.AddWithValue("@Id", id);
             command.Parameters.AddWithValue("@CampaignId", (object?)campaignId ?? DBNull.Value);
             command.Parameters.AddWithValue("@ScopeType", scopeType);
+            command.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
             command.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);
             command.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
             command.Parameters.AddWithValue("@DiscountMode", discountMode);
@@ -1083,10 +1107,6 @@ namespace Toolify.ProductService.Data
             await command.ExecuteNonQueryAsync();
         }
 
-        /// <summary>
-        /// Цены для витрины: после скидки товара применяется max(процент категории, процент клиента), как в sp_CalcDiscountContext.
-        /// Фиксированные скидки (Amount) действуют на сумму заказа и здесь не распределяются по товарам.
-        /// </summary>
         public async Task ApplyCatalogDisplayPricesAsync(IList<Product> products, int? userId)
         {
             if (products == null || products.Count == 0) return;
@@ -1099,11 +1119,10 @@ namespace Toolify.ProductService.Data
 
             foreach (var p in products)
             {
+                var prodPct = ResolveBestProductPercent(p.Id, rules, campaigns, now);
                 var catPct = ResolveBestCategoryPercent(p.CategoryId, rules, campaigns, now);
-                var stackPct = Math.Max(catPct, clientPct);
-                var pd = Math.Clamp(p.Discount, 0, 100);
-                var unitAfterProduct = p.Price * (1 - pd / 100m);
-                var final = unitAfterProduct * (1 - stackPct / 100m);
+                var stackPct = Math.Max(prodPct, Math.Max(catPct, clientPct));
+                var final = p.Price * (1 - stackPct / 100m);
                 final = Math.Round(final, 2, MidpointRounding.AwayFromZero);
 
                 p.CatalogSalePrice = final;
@@ -1150,7 +1169,6 @@ namespace Toolify.ProductService.Data
                 Name = reader.GetString(reader.GetOrdinal("Name")),
                 Price = reader.GetDecimal(reader.GetOrdinal("Price")),
                 StockQuantity = reader.GetInt32(reader.GetOrdinal("StockQuantity")),
-                Discount = reader.GetInt32(reader.GetOrdinal("Discount")),
                 ArticleNumber = reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber")),
                 ShortDescription = reader.IsDBNull(reader.GetOrdinal("ShortDescription")) ? null : reader.GetString(reader.GetOrdinal("ShortDescription")),
                 FullDescription = reader.IsDBNull(reader.GetOrdinal("FullDescription")) ? null : reader.GetString(reader.GetOrdinal("FullDescription")),

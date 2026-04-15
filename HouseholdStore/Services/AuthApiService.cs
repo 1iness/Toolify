@@ -2,18 +2,10 @@
 using Microsoft.AspNetCore.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Toolify.AuthService.Models;
 
 namespace HouseholdStore.Services;
-
-public class User
-{
-    public int Id { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public string Phone { get; set; }
-}
-public class AuthApiService 
+public class AuthApiService
 {
     private readonly HttpClient _http;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -92,20 +84,24 @@ public class AuthApiService
     }
     public async Task<List<User>> GetAllUsersAsync()
     {
-        var token = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
-        if (!string.IsNullOrEmpty(token))
+        var rawToken = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
+        if (string.IsNullOrWhiteSpace(rawToken))
+            throw new Exception("Auth API error: missing jwt cookie (jwt). Please re-login as Admin.");
+
+        var token = Uri.UnescapeDataString(rawToken);
+
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"{BASE_URL}/users");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _http.SendAsync(req);
+
+        if (!response.IsSuccessStatusCode)
         {
-            _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            var body = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Auth API error: {(int)response.StatusCode} {response.StatusCode}. {body}");
         }
 
-        var response = await _http.GetAsync($"{BASE_URL}/users");
-
-        if (response.IsSuccessStatusCode)
-        {
-            return await response.Content.ReadFromJsonAsync<List<User>>() ?? new List<User>();
-        }
-
-        return new List<User>();
+        return await response.Content.ReadFromJsonAsync<List<User>>() ?? new List<User>();
     }
 
     public async Task<bool> UpdateProfileAsync(string email, string firstName, string lastName, string phone)

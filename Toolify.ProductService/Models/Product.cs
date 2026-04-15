@@ -12,7 +12,6 @@ namespace Toolify.ProductService.Models
         public decimal Price { get; set; }
         public string? ImagePath { get; set; }
         public int StockQuantity { get; set; }
-        public int Discount { get; set; }
         public string? ArticleNumber { get; set; }
         public double AverageRating { get; set; }
         public int ReviewsCount { get; set; }

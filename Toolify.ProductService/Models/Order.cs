@@ -19,19 +19,4 @@
         public string? PaymentMethod { get; set; }
         public decimal DeliveryFee { get; set; }
     }
-    public class CheckoutPreviewResult
-    {
-        public decimal SubtotalAfterProductDiscount { get; set; }
-        public decimal DiscountFromCategoryClientPercent { get; set; }
-        public decimal GoodsTotalBeforePromo { get; set; }
-        public int PromoPercent { get; set; }
-        public decimal PromoDiscountAmount { get; set; }
-        public decimal GoodsAfterPromo { get; set; }
-        public decimal ClientFixedRuleAmount { get; set; }
-        public decimal CategoryFixedRuleAmount { get; set; }
-        public decimal AppliedFixedDiscountAmount { get; set; }
-        public decimal NetGoodsAmount { get; set; }
-        public decimal DeliveryFee { get; set; }
-        public decimal GrandTotal { get; set; }
-    }
 }

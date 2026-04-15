@@ -80,6 +80,7 @@ namespace Toolify.ProductService.Controllers
             var id = await _repo.AddDiscountRuleAsync(
                 dto.CampaignId,
                 dto.ScopeType!.Trim(),
+                dto.ScopeType == "Product" ? dto.ProductId : null,
                 dto.ScopeType == "Category" ? dto.CategoryId : null,
                 dto.ScopeType == "Client" ? dto.UserId : null,
                 dto.DiscountMode!.Trim(),
@@ -99,6 +100,7 @@ namespace Toolify.ProductService.Controllers
                 id,
                 dto.CampaignId,
                 dto.ScopeType!.Trim(),
+                dto.ScopeType == "Product" ? dto.ProductId : null,
                 dto.ScopeType == "Category" ? dto.CategoryId : null,
                 dto.ScopeType == "Client" ? dto.UserId : null,
                 dto.DiscountMode!.Trim(),
@@ -119,8 +121,10 @@ namespace Toolify.ProductService.Controllers
         {
             if (dto == null) return "Пустое тело запроса";
             var scope = dto.ScopeType?.Trim();
-            if (scope != "Category" && scope != "Client")
-                return "ScopeType должен быть Category или Client";
+            if (scope != "Category" && scope != "Client" && scope != "Product")
+                return "ScopeType должен быть Category или Client или Product";
+            if (scope == "Product" && (!dto.ProductId.HasValue || dto.ProductId.Value < 1))
+                return "Для скидки по товару укажите ProductId";
             if (scope == "Category" && (!dto.CategoryId.HasValue || dto.CategoryId.Value < 1))
                 return "Для скидки по категории укажите CategoryId";
             if (scope == "Client" && (!dto.UserId.HasValue || dto.UserId.Value < 1))
@@ -152,6 +156,7 @@ namespace Toolify.ProductService.Controllers
     {
         public int? CampaignId { get; set; }
         public string? ScopeType { get; set; }
+        public int? ProductId { get; set; }
         public int? CategoryId { get; set; }
         public int? UserId { get; set; }
         public string? DiscountMode { get; set; }

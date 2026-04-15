@@ -317,6 +317,7 @@ namespace HouseholdStore.Services
             {
                 rule.CampaignId,
                 ScopeType = rule.ScopeType,
+                rule.ProductId,
                 rule.CategoryId,
                 rule.UserId,
                 DiscountMode = rule.DiscountMode,

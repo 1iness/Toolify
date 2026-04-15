@@ -23,7 +23,7 @@
                 <th>Фото</th>
                 <th>Название</th>
                 <th>Цена</th>
-                <th style="text-align: center;">Скидка</th>
+                <th style="text-align: center;">Акция</th>
                 <th>Кол-во</th>
                 <th>Действия</th>
             </tr>
@@ -40,15 +40,8 @@
                     </td>
                     <td><strong>@item.Name</strong></td>
                     <td>@item.Price.ToString("C")</td>
-                    <td>
-                        @if (item.Discount > 0)
-                        {
-                            <span class="discount-badge">-@item.Discount%</span>
-                        }
-                        else
-                        {
-                            <span class="no-discount">Нет</span>
-                        }
+                    <td style="text-align:center;">
+                        <span class="no-discount">См. правила</span>
                     </td>
                     <td>@item.StockQuantity шт.</td>
                     <td class="action-links">
