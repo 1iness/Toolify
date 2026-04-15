@@ -16,12 +16,13 @@ namespace Toolify.ProductService.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string query)
+        public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int? userId = null)
         {
             if (string.IsNullOrWhiteSpace(query))
                 return Ok(new List<Product>());
 
             var products = await _repo.SearchAsync(query);
+            await _repo.ApplyCatalogDisplayPricesAsync(products, userId);
             return Ok(products);
         }
 
@@ -43,16 +44,19 @@ namespace Toolify.ProductService.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int? userId = null)
         {
-            return Ok(await _repo.GetAllAsync());
+            var products = await _repo.GetAllAsync();
+            await _repo.ApplyCatalogDisplayPricesAsync(products, userId);
+            return Ok(products);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id, [FromQuery] int? userId = null)
         {
             var product = await _repo.GetByIdAsync(id);
             if (product == null) return NotFound();
+            await _repo.ApplyCatalogDisplayPricesAsync(new List<Product> { product }, userId);
             return Ok(product);
         }
 
@@ -84,7 +88,7 @@ namespace Toolify.ProductService.Controllers
         }
 
         [HttpPost("{id}/upload-image")]
-        [Consumes("multipart/form-data")] 
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadImage(int id, IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -123,13 +127,13 @@ namespace Toolify.ProductService.Controllers
         [HttpPost("{id}/configurations")]
         public async Task<IActionResult> UpdateConfigs(int id, [FromBody] List<ProductConfiguration> configurations)
         {
-            await _repo.UpdateProductConfigurationsAsync(id, configurations); 
+            await _repo.UpdateProductConfigurationsAsync(id, configurations);
             return Ok();
         }
         [HttpGet("filters/{categoryId}")]
         public async Task<IActionResult> GetCategoryFilters(int categoryId)
         {
-            var filters = await _repo.GetCategoryFiltersAsync(categoryId); 
+            var filters = await _repo.GetCategoryFiltersAsync(categoryId);
             return Ok(filters);
         }
 
@@ -152,6 +156,7 @@ namespace Toolify.ProductService.Controllers
         public async Task<IActionResult> GetFavourites(int userId)
         {
             var products = await _repo.GetFavouritesAsync(userId);
+            await _repo.ApplyCatalogDisplayPricesAsync(products, userId);
             return Ok(products);
         }
 

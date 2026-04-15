@@ -35,9 +35,37 @@ namespace HouseholdStore.Services
             return JsonSerializer.Deserialize<List<Product>>(json, jsonOptions);
         }
 
+        /// <summary>Витрина: цены с учётом акций/категории/клиента (публичный api/Product).</summary>
+        public async Task<List<Product>> GetStoreCatalogAsync(int? userId = null)
+        {
+            var url = "/api/Product";
+            if (userId.HasValue) url += $"?userId={userId.Value}";
+            var response = await _http.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                throw new Exception($"API ERROR: {response.StatusCode} => {err}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<List<Product>>(json, jsonOptions) ?? new List<Product>();
+        }
+
         public async Task<Product?> GetByIdAsync(int id)
         {
             var response = await _http.GetAsync($"/api/admin/products/{id}");
+            if (!response.IsSuccessStatusCode) return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<Product>(json, jsonOptions);
+        }
+
+        /// <summary>Карточка товара на витрине с расчётом акций.</summary>
+        public async Task<Product?> GetStoreProductByIdAsync(int id, int? userId = null)
+        {
+            var url = $"/api/Product/{id}";
+            if (userId.HasValue) url += $"?userId={userId.Value}";
+            var response = await _http.GetAsync(url);
             if (!response.IsSuccessStatusCode) return null;
 
             var json = await response.Content.ReadAsStringAsync();
@@ -104,12 +132,15 @@ namespace HouseholdStore.Services
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<Category>(jsonOptions);
         }
-        public async Task<List<Product>> SearchProductsAsync(string query)
+        public async Task<List<Product>> SearchProductsAsync(string query, int? userId = null)
         {
-            var response = await _http.GetAsync($"api/Product/search?query={query}");
+            var q = Uri.EscapeDataString(query);
+            var url = $"api/Product/search?query={q}";
+            if (userId.HasValue) url += $"&userId={userId.Value}";
+            var response = await _http.GetAsync(url);
             if (!response.IsSuccessStatusCode) return new List<Product>();
 
-            return await response.Content.ReadFromJsonAsync<List<Product>>(jsonOptions);
+            return await response.Content.ReadFromJsonAsync<List<Product>>(jsonOptions) ?? new List<Product>();
         }
         public async Task<List<ReviewViewModel>> GetReviewsAsync(int productId)
         {

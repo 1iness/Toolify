@@ -67,7 +67,13 @@
                                          onerror="this.src='/images/no-image.png'" />
                                 </div>
                                 <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 10px; min-height: 40px; display: flex; align-items: center; justify-content: center;">@p.Name</h4>
-                                <strong style="color: #e74c3c; font-size: 18px; display: block;">@p.Price <span class="nbrb-icon">&#xE901;</span></strong>
+                                <strong style="color: #e74c3c; font-size: 18px; display: block;">
+                                    @CatalogProductPricing.FinalUnitPrice(p).ToString("N2") <span class="nbrb-icon">&#xE901;</span>
+                                    @if (CatalogProductPricing.ShowDiscountStyle(p) && p.CatalogCompareAtPrice.HasValue)
+                                    {
+                                        <span style="text-decoration: line-through; color: #999; font-size: 14px; font-weight: 400;">@p.CatalogCompareAtPrice.Value.ToString("N2")</span>
+                                    }
+                                </strong>
                             </th>
                         }
                     </tr>

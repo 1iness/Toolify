@@ -191,8 +191,8 @@ namespace Toolify.ProductService.Data
         public async Task<Category> AddCategoryAsync(Category category)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_AddCategory", connection) 
-            { 
+            using var command = new SqlCommand("sp_AddCategory", connection)
+            {
                 CommandType = CommandType.StoredProcedure
             };
             command.Parameters.AddWithValue("@Name", category.Name);
@@ -232,25 +232,120 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@GuestId", (object?)guestId ?? DBNull.Value);
 
             await connection.OpenAsync();
-            var items = new List<CartItem>();
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var raw = new List<(int ProductId, string Name, decimal ListPrice, int Discount, int Quantity, string? Article)>();
+            using (var reader = await command.ExecuteReaderAsync())
             {
-                var basePrice = reader.GetDecimal(reader.GetOrdinal("Price"));
-                var discount = reader.GetInt32(reader.GetOrdinal("Discount"));
-                decimal finalPrice = discount > 0 ? basePrice * (1 - discount / 100m) : basePrice;
+                while (await reader.ReadAsync())
+                {
+                    var listPrice = reader.GetDecimal(reader.GetOrdinal("Price"));
+                    var discount = reader.GetInt32(reader.GetOrdinal("Discount"));
+                    raw.Add((
+                        reader.GetInt32(reader.GetOrdinal("ProductId")),
+                        reader.GetString(reader.GetOrdinal("Name")),
+                        listPrice,
+                        discount,
+                        reader.GetInt32(reader.GetOrdinal("Quantity")),
+                        reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber"))
+                    ));
+                }
+            }
+
+            if (raw.Count == 0) return new List<CartItem>();
+
+            var categoryByProduct = await GetCategoryIdsByProductIdsAsync(raw.Select(r => r.ProductId).Distinct().ToList());
+            var rules = await GetDiscountRulesAsync();
+            var campaigns = await GetDiscountCampaignsAsync();
+            var now = DateTime.Now;
+            var clientPct = ResolveBestClientPercent(userId, rules, campaigns, now);
+
+            var items = new List<CartItem>();
+            foreach (var row in raw)
+            {
+                categoryByProduct.TryGetValue(row.ProductId, out var categoryId);
+                var catPct = ResolveBestCategoryPercent(categoryId, rules, campaigns, now);
+                var stackPct = Math.Max(catPct, clientPct);
+                var pd = Math.Clamp(row.Discount, 0, 100);
+                var unitAfterProduct = row.ListPrice * (1 - pd / 100m);
+                var finalUnit = Math.Round(unitAfterProduct * (1 - stackPct / 100m), 2, MidpointRounding.AwayFromZero);
+
+                decimal? oldPrice = null;
+                if (finalUnit < row.ListPrice - 0.005m)
+                    oldPrice = row.ListPrice;
 
                 items.Add(new CartItem
                 {
-                    ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
-                    ProductName = reader.GetString(reader.GetOrdinal("Name")),
-                    Price = finalPrice,
-                    OldPrice = discount > 0 ? basePrice : null,
-                    Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
-                    ArticleNumber = reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber"))
+                    ProductId = row.ProductId,
+                    ProductName = row.Name,
+                    Price = finalUnit,
+                    OldPrice = oldPrice,
+                    Quantity = row.Quantity,
+                    ArticleNumber = row.Article
                 });
             }
+
             return items;
+        }
+
+        private async Task<Dictionary<int, int>> GetCategoryIdsByProductIdsAsync(List<int> productIds)
+        {
+            var dict = new Dictionary<int, int>();
+            if (productIds == null || productIds.Count == 0) return dict;
+            var distinct = productIds.Distinct().ToList();
+            using var connection = _factory.CreateConnection();
+            await connection.OpenAsync();
+            var idList = string.Join(",", distinct);
+            using var cmd = new SqlCommand($"SELECT Id, CategoryId FROM dbo.Products WHERE Id IN ({idList})", connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                dict[reader.GetInt32(0)] = reader.GetInt32(1);
+            return dict;
+        }
+
+        private static decimal ResolveBestCategoryPercent(int categoryId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
+        {
+            bool IsCampaignActive(DiscountCampaign dc) =>
+                dc.IsActive && now >= dc.StartDate && now <= dc.EndDate;
+
+            var candidates = new List<(decimal val, int prio, int rid)>();
+            foreach (var r in rules)
+            {
+                if (!r.IsActive || r.ScopeType != "Category" || r.DiscountMode != "Percent" || r.CategoryId != categoryId)
+                    continue;
+                if (r.CampaignId.HasValue)
+                {
+                    var dc = campaigns.FirstOrDefault(c => c.Id == r.CampaignId.Value);
+                    if (dc == null || !IsCampaignActive(dc)) continue;
+                    candidates.Add((r.DiscountValue, dc.Priority, r.Id));
+                }
+                else
+                    candidates.Add((r.DiscountValue, 0, r.Id));
+            }
+            if (candidates.Count == 0) return 0;
+            return candidates.OrderByDescending(x => x.prio).ThenByDescending(x => x.rid).First().val;
+        }
+
+        private static decimal ResolveBestClientPercent(int? userId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
+        {
+            if (!userId.HasValue) return 0;
+            bool IsCampaignActive(DiscountCampaign dc) =>
+                dc.IsActive && now >= dc.StartDate && now <= dc.EndDate;
+
+            var candidates = new List<(decimal val, int prio, int rid)>();
+            foreach (var r in rules)
+            {
+                if (!r.IsActive || r.ScopeType != "Client" || r.DiscountMode != "Percent" || r.UserId != userId.Value)
+                    continue;
+                if (r.CampaignId.HasValue)
+                {
+                    var dc = campaigns.FirstOrDefault(c => c.Id == r.CampaignId.Value);
+                    if (dc == null || !IsCampaignActive(dc)) continue;
+                    candidates.Add((r.DiscountValue, dc.Priority, r.Id));
+                }
+                else
+                    candidates.Add((r.DiscountValue, 0, r.Id));
+            }
+            if (candidates.Count == 0) return 0;
+            return candidates.OrderByDescending(x => x.prio).ThenByDescending(x => x.rid).First().val;
         }
 
         public async Task RemoveFromCartAsync(int productId, int? userId, string? guestId)
@@ -306,6 +401,36 @@ namespace Toolify.ProductService.Data
 
             await connection.OpenAsync();
             return Convert.ToInt32(await command.ExecuteScalarAsync());
+        }
+
+        public async Task<CheckoutPreviewResult?> PreviewCheckoutTotalsAsync(int? userId, string? guestId, string? promoCode, string deliveryType)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_PreviewCheckoutTotals", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@GuestId", (object?)guestId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@PromoCode", (object?)promoCode ?? DBNull.Value);
+            command.Parameters.AddWithValue("@DeliveryType", string.IsNullOrEmpty(deliveryType) ? "Courier" : deliveryType);
+
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) return null;
+
+            return new CheckoutPreviewResult
+            {
+                SubtotalAfterProductDiscount = reader.GetDecimal(reader.GetOrdinal("SubtotalAfterProductDiscount")),
+                DiscountFromCategoryClientPercent = reader.GetDecimal(reader.GetOrdinal("DiscountFromCategoryClientPercent")),
+                GoodsTotalBeforePromo = reader.GetDecimal(reader.GetOrdinal("GoodsTotalBeforePromo")),
+                PromoPercent = reader.GetInt32(reader.GetOrdinal("PromoPercent")),
+                PromoDiscountAmount = reader.GetDecimal(reader.GetOrdinal("PromoDiscountAmount")),
+                GoodsAfterPromo = reader.GetDecimal(reader.GetOrdinal("GoodsAfterPromo")),
+                ClientFixedRuleAmount = reader.GetDecimal(reader.GetOrdinal("ClientFixedRuleAmount")),
+                CategoryFixedRuleAmount = reader.GetDecimal(reader.GetOrdinal("CategoryFixedRuleAmount")),
+                AppliedFixedDiscountAmount = reader.GetDecimal(reader.GetOrdinal("AppliedFixedDiscountAmount")),
+                NetGoodsAmount = reader.GetDecimal(reader.GetOrdinal("NetGoodsAmount")),
+                DeliveryFee = reader.GetDecimal(reader.GetOrdinal("DeliveryFee")),
+                GrandTotal = reader.GetDecimal(reader.GetOrdinal("GrandTotal"))
+            };
         }
 
         public async Task<List<OrderHistoryDto>> GetUserOrdersAsync(int userId)
@@ -576,10 +701,10 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@MaxUses", (object?)maxUses ?? DBNull.Value);
             command.Parameters.AddWithValue("@MinGoodsAmount", (object?)minGoodsAmount ?? DBNull.Value);
 
-
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
         }
+
         private static decimal? TryGetNullableDecimal(SqlDataReader reader, string columnName)
         {
             try
@@ -661,13 +786,13 @@ namespace Toolify.ProductService.Data
             {
                 static int? TryGetOrdinal(IDataRecord r, string name)
                 {
-                    try 
-                    { 
-                        return r.GetOrdinal(name); 
-                    }
-                    catch (IndexOutOfRangeException) 
+                    try
                     {
-                        return null; 
+                        return r.GetOrdinal(name);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        return null;
                     }
                 }
 
@@ -823,6 +948,7 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
             return Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
         }
+
         public async Task<List<DiscountCampaign>> GetDiscountCampaignsAsync()
         {
             using var connection = _factory.CreateConnection();
@@ -846,6 +972,7 @@ namespace Toolify.ProductService.Data
             }
             return list;
         }
+
         public async Task<int> AddDiscountCampaignAsync(string name, string? description, DateTime startDate, DateTime endDate, bool isActive, int priority)
         {
             using var connection = _factory.CreateConnection();
@@ -954,6 +1081,47 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@Id", id);
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
+        }
+
+        /// <summary>
+        /// Цены для витрины: после скидки товара применяется max(процент категории, процент клиента), как в sp_CalcDiscountContext.
+        /// Фиксированные скидки (Amount) действуют на сумму заказа и здесь не распределяются по товарам.
+        /// </summary>
+        public async Task ApplyCatalogDisplayPricesAsync(IList<Product> products, int? userId)
+        {
+            if (products == null || products.Count == 0) return;
+
+            var rules = await GetDiscountRulesAsync();
+            var campaigns = await GetDiscountCampaignsAsync();
+            var now = DateTime.Now;
+
+            var clientPct = ResolveBestClientPercent(userId, rules, campaigns, now);
+
+            foreach (var p in products)
+            {
+                var catPct = ResolveBestCategoryPercent(p.CategoryId, rules, campaigns, now);
+                var stackPct = Math.Max(catPct, clientPct);
+                var pd = Math.Clamp(p.Discount, 0, 100);
+                var unitAfterProduct = p.Price * (1 - pd / 100m);
+                var final = unitAfterProduct * (1 - stackPct / 100m);
+                final = Math.Round(final, 2, MidpointRounding.AwayFromZero);
+
+                p.CatalogSalePrice = final;
+                if (final < p.Price - 0.005m)
+                {
+                    p.CatalogCompareAtPrice = p.Price;
+                    var offPct = (p.Price - final) / p.Price * 100m;
+                    var rounded = (int)Math.Round(offPct, MidpointRounding.AwayFromZero);
+                    if (offPct > 0 && rounded == 0) rounded = 1;
+                    if (rounded > 100) rounded = 100;
+                    p.CatalogDiscountBadgePercent = rounded;
+                }
+                else
+                {
+                    p.CatalogCompareAtPrice = null;
+                    p.CatalogDiscountBadgePercent = null;
+                }
+            }
         }
 
         private static string? TryGetNullableString(SqlDataReader reader, string columnName)

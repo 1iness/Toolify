@@ -1,3 +1,4 @@
+using HouseholdStore.Helpers;
 using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +22,7 @@ namespace HouseholdStore.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            var products = await _productApi.GetAllAsync();
+            var products = await _productApi.GetStoreCatalogAsync(GetCurrentUserId());
             var ratings = new Dictionary<int, double>();
 
             foreach (var product in products)
@@ -54,15 +55,15 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> SearchJson(string query)
         {
             if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
-                return Json(new List<object>()); 
+                return Json(new List<object>());
 
-            var products = await _productApi.SearchProductsAsync(query);
+            var products = await _productApi.SearchProductsAsync(query, GetCurrentUserId());
             return Json(products);
         }
 
         public async Task<IActionResult> Details(int id)
         {
-            var product = await _productApi.GetByIdAsync(id);
+            var product = await _productApi.GetStoreProductByIdAsync(id, GetCurrentUserId());
             if (product == null)
             {
                 return NotFound();
@@ -129,7 +130,7 @@ namespace HouseholdStore.Controllers
         }
         public async Task<IActionResult> AllReviews(int productId)
         {
-            var product = await _productApi.GetByIdAsync(productId);
+            var product = await _productApi.GetStoreProductByIdAsync(productId, GetCurrentUserId());
             if (product == null) return NotFound();
 
             var reviews = await _productApi.GetReviewsAsync(productId);
@@ -146,12 +147,12 @@ namespace HouseholdStore.Controllers
 
         public async Task<IActionResult> Catalog(CatalogFilterViewModel filter)
         {
-            var products = await _productApi.GetAllAsync();
+            var products = await _productApi.GetStoreCatalogAsync(GetCurrentUserId());
 
             if (!string.IsNullOrEmpty(filter.SpecialCategory))
             {
                 if (filter.SpecialCategory == "sale")
-                    products = products.Where(p => p.Discount > 0).ToList();
+                    products = products.Where(p => CatalogProductPricing.ShowDiscountStyle(p)).ToList();
                 else if (filter.SpecialCategory == "hits")
                     products = products.OrderByDescending(p => p.StockQuantity).ToList();
             }
@@ -174,15 +175,15 @@ namespace HouseholdStore.Controllers
             }
 
             if (filter.MinPrice.HasValue)
-                products = products.Where(p => (p.Price * (100 - p.Discount) / 100) >= filter.MinPrice.Value).ToList();
+                products = products.Where(p => CatalogProductPricing.FinalUnitPrice(p) >= filter.MinPrice.Value).ToList();
 
             if (filter.MaxPrice.HasValue)
-                products = products.Where(p => (p.Price * (100 - p.Discount) / 100) <= filter.MaxPrice.Value).ToList();
+                products = products.Where(p => CatalogProductPricing.FinalUnitPrice(p) <= filter.MaxPrice.Value).ToList();
 
             products = filter.Sort switch
             {
-                "price_asc" => products.OrderBy(p => p.Price * (100 - p.Discount) / 100).ToList(),
-                "price_desc" => products.OrderByDescending(p => p.Price * (100 - p.Discount) / 100).ToList(),
+                "price_asc" => products.OrderBy(p => CatalogProductPricing.FinalUnitPrice(p)).ToList(),
+                "price_desc" => products.OrderByDescending(p => CatalogProductPricing.FinalUnitPrice(p)).ToList(),
                 "name" => products.OrderBy(p => p.Name).ToList(),
                 "rating" => products.OrderByDescending(p => p.StockQuantity).ToList(),
                 _ => products
@@ -214,16 +215,16 @@ namespace HouseholdStore.Controllers
         [HttpGet]
         public async Task<IActionResult> SmartSelectionResults(CatalogFilterViewModel filter)
         {
-            var products = await _productApi.GetAllAsync();
+            var products = await _productApi.GetStoreCatalogAsync(GetCurrentUserId());
 
             if (filter.CategoryId.HasValue)
                 products = products.Where(p => p.CategoryId == filter.CategoryId.Value).ToList();
 
             if (filter.MinPrice.HasValue)
-                products = products.Where(p => p.Price >= filter.MinPrice.Value).ToList();
+                products = products.Where(p => CatalogProductPricing.FinalUnitPrice(p) >= filter.MinPrice.Value).ToList();
 
             if (filter.MaxPrice.HasValue)
-                products = products.Where(p => p.Price <= filter.MaxPrice.Value).ToList();
+                products = products.Where(p => CatalogProductPricing.FinalUnitPrice(p) <= filter.MaxPrice.Value).ToList();
 
             if (filter.SelectedFeatures != null && filter.SelectedFeatures.Any())
             {
@@ -257,6 +258,12 @@ namespace HouseholdStore.Controllers
         public IActionResult About()
         {
             return View();
+        }
+        private int? GetCurrentUserId()
+        {
+            if (User.Identity?.IsAuthenticated != true) return null;
+            var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("id");
+            return int.TryParse(idStr, out var uid) ? uid : null;
         }
     }
 }

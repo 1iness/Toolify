@@ -5,13 +5,10 @@
     ViewData["ParentPage"] = "Каталог";
     ViewData["ParentLink"] = "/Home/Index";
 
-    bool hasDiscount = Model.Discount > 0;
+    bool hasDiscount = CatalogProductPricing.ShowDiscountStyle(Model);
     bool isOutOfStock = Model.StockQuantity <= 0;
-    decimal finalPrice = Model.Price;
-    if (hasDiscount)
-    {
-        finalPrice = Model.Price - (Model.Price * Model.Discount / 100);
-    }
+    decimal finalPrice = CatalogProductPricing.FinalUnitPrice(Model);
+    var badgePct = CatalogProductPricing.BadgePercent(Model);
 }
 
 <partial name="_Breadcrumbs" />
@@ -36,7 +33,7 @@
 
         <div class="detail-rating-row">
             <span class="stars">★</span>
-            
+
             <span class="rating-value">@avgRating.ToString("0.0") </span>
             <span class="reviews-count">(@reviewsCount отзывов)</span>
             <span style="margin-left: 20px; color: #666; font-size: 0.9em;">
@@ -102,17 +99,23 @@
         }
     </div>
 
-   
+
 
     <div class="detail-buy-block product-card">
         <div class="price-wrap">
             <span class="main-price">@finalPrice.ToString("N2") Руб</span>
-            @if (hasDiscount)
+            @if (hasDiscount && Model.CatalogCompareAtPrice.HasValue)
             {
-                <span class="old-price">@Model.Price.ToString("N2") Руб</span>
-                <span class="badge discount">-@Model.Discount%</span>
+                <span class="old-price">@Model.CatalogCompareAtPrice.Value.ToString("N2") Руб</span>
+                @if (badgePct > 0)
+                {
+                    <span class="badge discount">-@badgePct%</span>
+                }
             }
         </div>
+        <p class="text-muted small mt-2 mb-0" style="font-size: 12px; max-width: 280px;">
+            Процент по акции/категории/профилю совпадает с расчётом в корзине. Фиксированная скидка (сумма) применяется к заказу целиком при оформлении.
+        </p>
 
         @if (isOutOfStock)
         {
@@ -214,15 +217,15 @@
                     {
                         if (avgRating >= i)
                         {
-                            <i class="bi bi-star-fill"></i> 
+                            <i class="bi bi-star-fill"></i>
                         }
                         else if (avgRating >= (i - 0.5))
                         {
-                            <i class="bi bi-star-half"></i> 
+                            <i class="bi bi-star-half"></i>
                         }
                         else
                         {
-                            <i class="bi bi-star"></i> 
+                            <i class="bi bi-star"></i>
                         }
                     }
                 </div>

@@ -86,19 +86,16 @@
             <div id="catalog-grid" class="products-grid">
                 @foreach (var product in Model)
                 {
-                    bool hasDiscount = product.Discount > 0;
+                    bool hasDiscount = CatalogProductPricing.ShowDiscountStyle(product);
                     bool isOutOfStock = product.StockQuantity <= 0;
-                    decimal finalPrice = product.Price;
-                    if (hasDiscount)
-                    {
-                        finalPrice = product.Price - (product.Price * product.Discount / 100m);
-                    }
+                    decimal finalPrice = CatalogProductPricing.FinalUnitPrice(product);
+                    var badgePct = CatalogProductPricing.BadgePercent(product);
                     <div class="product-card catalog-item" style="display:none; position:relative; flex-direction:column; height:100%; justify-content:space-between;">
 
                         <div class="card-top">
-                            @if (hasDiscount)
+                            @if (hasDiscount && badgePct > 0)
                             {
-                                <span class="badge discount">-@product.Discount%</span>
+                                <span class="badge discount">-@badgePct%</span>
                             }
                         </div>
 
@@ -112,10 +109,10 @@
                             <span class="price @(hasDiscount ? "price--sale" : "")">
                                 @finalPrice.ToString("N2") <span class="nbrb-icon">&#xE901;</span>
                             </span>
-                            @if (hasDiscount)
+                            @if (hasDiscount && product.CatalogCompareAtPrice.HasValue)
                             {
                                 <span class="price-old" style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">
-                                    @product.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span>
+                                    @product.CatalogCompareAtPrice.Value.ToString("N2") <span class="nbrb-icon">&#xE901;</span>
                                 </span>
                             }
                         </div>

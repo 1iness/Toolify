@@ -1,4 +1,6 @@
-﻿namespace Toolify.ProductService.Models
+﻿using System.Text.Json.Serialization;
+
+namespace Toolify.ProductService.Models
 {
     public class Product
     {
@@ -19,5 +21,15 @@
         public List<ProductImage> Images { get; set; } = new();
         public List<ProductConfiguration> Configurations { get; set; } = new();
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? CatalogSalePrice { get; set; }
+
+        //Зачёркнутая цена
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? CatalogCompareAtPrice { get; set; }
+
+        //Процент для бейджа % от полной цены товара.
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? CatalogDiscountBadgePercent { get; set; }
     }
 }

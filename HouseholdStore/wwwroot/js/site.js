@@ -27,7 +27,7 @@
 
         const observerOptions = {
             threshold: 0.15,
-            rootMargin: "0px 0px -50px 0px" 
+            rootMargin: "0px 0px -50px 0px"
         };
 
         const observer = new IntersectionObserver((entries, obs) => {
@@ -35,7 +35,7 @@
                 if (entry.isIntersecting) {
                     console.log("Показываем элемент:", entry.target.className);
                     entry.target.classList.add('visible');
-                    obs.unobserve(entry.target); 
+                    obs.unobserve(entry.target);
                 }
             });
         }, observerOptions);
@@ -97,7 +97,7 @@ function initTiltCards(selector = '.category-item, .info-card') {
     const cards = Array.from(document.querySelectorAll(selector));
     if (!cards.length) return;
 
-    const maxRotate = 3; 
+    const maxRotate = 3;
     const scaleOnHover = 1.06;
     const rAFs = new WeakMap();
 
@@ -116,8 +116,8 @@ function initTiltCards(selector = '.category-item, .info-card') {
         const clampedX = Math.max(-1, Math.min(1, dx));
         const clampedY = Math.max(-1, Math.min(1, dy));
 
-        const rotateY = clampedX * maxRotate;      
-        const rotateX = -clampedY * maxRotate;     
+        const rotateY = clampedX * maxRotate;
+        const rotateX = -clampedY * maxRotate;
 
         if (rAFs.get(card)) cancelAnimationFrame(rAFs.get(card));
         const id = requestAnimationFrame(() => {
@@ -150,13 +150,13 @@ function initTiltCards(selector = '.category-item, .info-card') {
     });
 }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => initTiltCards());
-    } else {
-        initTiltCards();
-    }
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => initTiltCards());
+} else {
+    initTiltCards();
+}
 
-    //ДЛЯ ЛИСТЬЕВ
+//ДЛЯ ЛИСТЬЕВ
 window.addEventListener('load', () => {
     const leaf1 = document.querySelector('.leaf1');
     const leaf2 = document.querySelector('.leaf2');
@@ -175,72 +175,84 @@ window.addEventListener('load', () => {
 });
 
 // ДЛЯ ПОИСКА
-    document.addEventListener("DOMContentLoaded", function () {
-        const searchInput = document.getElementById("searchInput");
-        const resultsBox = document.getElementById("searchResults");
-        if (!searchInput || !resultsBox) return;
-        let debounceTimer;
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const resultsBox = document.getElementById("searchResults");
+    if (!searchInput || !resultsBox) return;
+    let debounceTimer;
 
-        searchInput.addEventListener("input", function () {
-            const query = this.value.trim();
+    searchInput.addEventListener("input", function () {
+        const query = this.value.trim();
 
-            clearTimeout(debounceTimer);
+        clearTimeout(debounceTimer);
 
-            if (query.length < 2) {
-                resultsBox.style.display = "none";
-                resultsBox.innerHTML = "";
-                return;
-            }
-
-            debounceTimer = setTimeout(() => {
-                fetchProducts(query);
-            }, 300);
-        });
-
-        async function fetchProducts(query) {
-            try {
-                const response = await fetch(`/Home/SearchJson?query=${encodeURIComponent(query)}`);
-                if (!response.ok) return;
-
-                const products = await response.json();
-                renderResults(products);
-            } catch (error) {
-                console.error("Ошибка поиска:", error);
-            }
+        if (query.length < 2) {
+            resultsBox.style.display = "none";
+            resultsBox.innerHTML = "";
+            return;
         }
 
-        function renderResults(products) {
-            resultsBox.innerHTML = "";
+        debounceTimer = setTimeout(() => {
+            fetchProducts(query);
+        }, 300);
+    });
 
-            if (products.length === 0) {
-                resultsBox.innerHTML = '<div style="padding:15px; color:#777; text-align:center;">Ничего не найдено</div>';
-                resultsBox.style.display = "block";
-                return;
-            }
+    async function fetchProducts(query) {
+        try {
+            const response = await fetch(`/Home/SearchJson?query=${encodeURIComponent(query)}`);
+            if (!response.ok) return;
 
-            products.forEach(p => {
-                let priceHtml = '';
+            const products = await response.json();
+            renderResults(products);
+        } catch (error) {
+            console.error("Ошибка поиска:", error);
+        }
+    }
 
-                const apiBaseUrl = "https://localhost:7188";
-                const imgPath = `${apiBaseUrl}/api/Product/${p.id}/image`;
+    function renderResults(products) {
+        resultsBox.innerHTML = "";
 
-                if (p.discount > 0) {
-                    let discountedPrice = p.price * (1 - p.discount / 100);
-                    priceHtml = `
+        if (products.length === 0) {
+            resultsBox.innerHTML = '<div style="padding:15px; color:#777; text-align:center;">Ничего не найдено</div>';
+            resultsBox.style.display = "block";
+            return;
+        }
+
+        products.forEach(p => {
+            let priceHtml = '';
+
+            const apiBaseUrl = "https://localhost:7188";
+            const imgPath = `${apiBaseUrl}/api/Product/${p.id}/image`;
+
+            const finalPrice = (p.catalogSalePrice != null && p.catalogSalePrice !== undefined)
+                ? p.catalogSalePrice
+                : p.price * (1 - (p.discount || 0) / 100);
+            const compareAt = p.catalogCompareAtPrice;
+
+            if (compareAt != null && compareAt !== undefined && finalPrice < compareAt - 0.0001) {
+                priceHtml = `
+                        <div class="price-block">
+                            <span class="current-price" style="color: #e74c3c;">${formatMoney(finalPrice)}</span>
+                            <span class="old-price">${formatMoney(compareAt)}</span>
+                        </div>
+                    `;
+            } else if (p.discount > 0) {
+                let discountedPrice = p.price * (1 - p.discount / 100);
+                priceHtml = `
                         <div class="price-block">
                             <span class="current-price" style="color: #e74c3c;">${formatMoney(discountedPrice)}</span>
                             <span class="old-price">${formatMoney(p.price)}</span>
                         </div>
                     `;
-                } else {
-                        priceHtml = `
+            } else {
+                priceHtml = `
                             <div class="price-block">
-                                <span class="current-price">${formatMoney(p.price)}</span>
+                                <span class="current-price">${formatMoney(finalPrice)}</span>
                             </div>
                         `;
-                }
+            }
 
-                    const itemHtml = `
+            const itemHtml = `
                         <a href="/Home/Details/${p.id}" class="search-item">
                             <img src="${imgPath}" alt="${p.name}" onerror="this.src='/images/no-image.png'">
 
@@ -252,28 +264,28 @@ window.addEventListener('load', () => {
                             ${priceHtml}
                         </a>
                     `;
-                resultsBox.innerHTML += itemHtml;
-            });
-
-            resultsBox.style.display = "block";
-        }
-
-        function formatMoney(amount) {
-            const formatted = amount.toLocaleString('by-BY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-            return `${formatted} <span class="nbrb-icon">&#xE901;</span>`;
-        }
-
-        document.addEventListener("click", function (e) {
-            if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
-                resultsBox.style.display = "none";
-            }
+            resultsBox.innerHTML += itemHtml;
         });
-    });
 
-    //Анимация товара для добавления в корзину
+        resultsBox.style.display = "block";
+    }
+
+    function formatMoney(amount) {
+        const formatted = amount.toLocaleString('by-BY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return `${formatted} <span class="nbrb-icon">&#xE901;</span>`;
+    }
+
+    document.addEventListener("click", function (e) {
+        if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+            resultsBox.style.display = "none";
+        }
+    });
+});
+
+//Анимация товара для добавления в корзину
 function addToCartAnimated(event, productId, btnElement) {
 
-    event.preventDefault(); 
+    event.preventDefault();
 
     const card = btnElement.closest('.product-card');
     let productImg = card ? card.querySelector('img') : null;
@@ -286,7 +298,7 @@ function addToCartAnimated(event, productId, btnElement) {
 
     if (productImg && cartIcon) {
         const flyImg = productImg.cloneNode();
-        flyImg.classList.add('flying-img'); 
+        flyImg.classList.add('flying-img');
 
         const rect = productImg.getBoundingClientRect();
         flyImg.style.left = rect.left + 'px';
@@ -314,7 +326,7 @@ function addToCartAnimated(event, productId, btnElement) {
             cartIcon.style.transition = "transform 0.2s";
             setTimeout(() => cartIcon.style.transform = "scale(1)", 200);
 
-        }, 1500); 
+        }, 1500);
     }
 
 
@@ -357,7 +369,7 @@ function addToCartAnimated(event, productId, btnElement) {
 
 //Загрузка при открытии
 document.addEventListener("DOMContentLoaded", function () {
-    fetch('/Cart/GetCartCount') 
+    fetch('/Cart/GetCartCount')
         .then(r => r.json())
         .then(data => {
             const badge = document.getElementById('cart-count');
