@@ -15,5 +15,7 @@ namespace Toolify.AuthService.Models
         public DateTime? EmailConfirmExpires { get; set; }
         public string? PasswordResetCode { get; set; }
         public DateTime? PasswordResetExpires { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public bool IsBlocked { get; set; }
     }
 }

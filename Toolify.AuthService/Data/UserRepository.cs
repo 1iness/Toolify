@@ -163,6 +163,36 @@ public class UserRepository
 
         cmd.ExecuteNonQuery();
     }
+
+    public void UpdateUserRole(int userId, string role)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand("usp_UpdateUserRole", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        cmd.Parameters.AddWithValue("@Role", role);
+
+        cmd.ExecuteNonQuery();
+    }
+
+    public void SetUserBlocked(int userId, bool isBlocked)
+    {
+        using var con = new SqlConnection(_connectionString);
+        con.Open();
+
+        var cmd = new SqlCommand("usp_SetUserBlocked", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        cmd.Parameters.AddWithValue("@IsBlocked", isBlocked);
+
+        cmd.ExecuteNonQuery();
+    }
     public async Task<List<User>> GetAllUsersAsync()
     {
         var users = new List<User>();
@@ -270,7 +300,9 @@ public class UserRepository
             Role = ReadString("Role", "User"),
             EmailConfirmed = ReadBool("EmailConfirmed"),
             EmailConfirmCode = ReadNullableString("EmailConfirmCode"),
-            EmailConfirmExpires = ReadDateTime("EmailConfirmExpires")
+            EmailConfirmExpires = ReadDateTime("EmailConfirmExpires"),
+            CreatedAt = ReadDateTime("CreatedAt"),
+            IsBlocked = ReadBool("IsBlocked")
         };
     }
 }

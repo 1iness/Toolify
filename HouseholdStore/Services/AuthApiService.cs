@@ -69,6 +69,11 @@ public class AuthApiService
         await _http.PostAsJsonAsync($"{BASE_URL}/forgot-password", new { Email = email });
     }
 
+    public async Task SendPasswordResetAsync(string email)
+    {
+        await _http.PostAsJsonAsync($"{BASE_URL}/forgot-password", new { Email = email });
+    }
+
     public async Task<bool> ConfirmResetCode(string email, string code)
     {
         var res = await _http.PostAsJsonAsync($"{BASE_URL}/confirm-reset-code",
@@ -102,6 +107,46 @@ public class AuthApiService
         }
 
         return await response.Content.ReadFromJsonAsync<List<User>>() ?? new List<User>();
+    }
+
+    public async Task ChangeUserRoleAsync(int userId, string role)
+    {
+        var rawToken = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
+        if (string.IsNullOrWhiteSpace(rawToken))
+            throw new Exception("Auth API error: missing jwt cookie (jwt). Please re-login as Admin.");
+
+        var token = Uri.UnescapeDataString(rawToken);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"{BASE_URL}/users/{userId}/role");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req.Content = JsonContent.Create(new { Role = role });
+
+        var response = await _http.SendAsync(req);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Auth API error: {(int)response.StatusCode} {response.StatusCode}. {body}");
+        }
+    }
+
+    public async Task SetUserBlockedAsync(int userId, bool isBlocked)
+    {
+        var rawToken = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
+        if (string.IsNullOrWhiteSpace(rawToken))
+            throw new Exception("Auth API error: missing jwt cookie (jwt). Please re-login as Admin.");
+
+        var token = Uri.UnescapeDataString(rawToken);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"{BASE_URL}/users/{userId}/blocked");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req.Content = JsonContent.Create(new { IsBlocked = isBlocked });
+
+        var response = await _http.SendAsync(req);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Auth API error: {(int)response.StatusCode} {response.StatusCode}. {body}");
+        }
     }
 
     public async Task<bool> UpdateProfileAsync(string email, string firstName, string lastName, string phone)

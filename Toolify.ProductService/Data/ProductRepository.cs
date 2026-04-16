@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
 using Toolify.ProductService.Database;
 using Toolify.ProductService.Models;

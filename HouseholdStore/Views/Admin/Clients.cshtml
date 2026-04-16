@@ -1,0 +1,363 @@
+@model IEnumerable<Toolify.AuthService.Models.User>
+
+@{
+    ViewData["Title"] = "Пользователи";
+    Layout = null;
+
+    var users = Model?.ToList() ?? new List<Toolify.AuthService.Models.User>();
+    var total = users.Count;
+    var admins = users.Count(u => u.Role == "Admin");
+    var blocked = users.Count(u => u.IsBlocked);
+    var active = total - blocked;
+    var hasUsers = users.Any();
+    var selectedUser = users.FirstOrDefault();
+}
+
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="~/css/admin-clients.css" asp-append-version="true" />
+
+<div class="admin-clients-page">
+    <div class="container py-4 admin-clients">
+        <div class="clients-hero mb-4">
+            <div>
+                <div class="clients-hero-label">Админ-панель</div>
+                <h1 class="clients-hero-title">Управление учетными записями</h1>
+                <p class="clients-hero-text mb-0">
+                    Просмотр пользователей, быстрый поиск, смена роли, блокировка и отправка письма для сброса пароля.
+                </p>
+            </div>
+            <a asp-action="Index" class="btn btn-outline-secondary clients-back-btn">Назад в панель</a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="clients-stat-card">
+                    <div class="clients-stat-label">Всего пользователей</div>
+                    <div class="clients-stat-value">@total</div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="clients-stat-card">
+                    <div class="clients-stat-label">Активные</div>
+                    <div class="clients-stat-value text-success">@active</div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="clients-stat-card">
+                    <div class="clients-stat-label">Заблокированные</div>
+                    <div class="clients-stat-value text-danger">@blocked</div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="clients-stat-card">
+                    <div class="clients-stat-label">Администраторы</div>
+                    <div class="clients-stat-value text-primary">@admins</div>
+                </div>
+            </div>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success clients-alert" role="alert">
+                <div>@TempData["Success"]</div>
+                <button type="button" class="btn-close js-dismiss-alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger clients-alert" role="alert">
+                <div>@TempData["Error"]</div>
+                <button type="button" class="btn-close js-dismiss-alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (!hasUsers)
+        {
+            <div class="clients-empty-state">
+                <div class="clients-empty-title">Список пользователей пока пуст</div>
+                <div class="clients-empty-text">Когда в системе появятся учетные записи, они отобразятся здесь.</div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4 align-items-start">
+                <div class="col-12 col-xl-4">
+                    <div class="clients-profile-card">
+                        <div class="clients-profile-label">Карточка пользователя</div>
+                        <div class="clients-profile-name" id="selectedUserName">
+                            @($"{selectedUser?.FirstName} {selectedUser?.LastName}".Trim())
+                        </div>
+                        <div class="clients-profile-email" id="selectedUserEmail">@selectedUser?.Email</div>
+
+                        <div class="clients-profile-badges">
+                            <span class="clients-pill @(selectedUser?.Role == "Admin" ? "clients-pill-primary" : "clients-pill-muted")" id="selectedUserRole">
+                                @(selectedUser?.Role ?? "—")
+                            </span>
+                            <span class="clients-pill @(selectedUser?.IsBlocked == true ? "clients-pill-danger" : "clients-pill-success")" id="selectedUserStatus">
+                                @(selectedUser?.IsBlocked == true ? "Заблокирован" : "Активен")
+                            </span>
+                        </div>
+
+                        <div class="clients-profile-grid">
+                            <div class="clients-profile-item">
+                                <div class="clients-profile-item-label">ID</div>
+                                <div class="clients-profile-item-value" id="selectedUserId">@(selectedUser?.Id.ToString() ?? "—")</div>
+                            </div>
+                            <div class="clients-profile-item">
+                                <div class="clients-profile-item-label">Телефон</div>
+                                <div class="clients-profile-item-value" id="selectedUserPhone">@(string.IsNullOrWhiteSpace(selectedUser?.Phone) ? "—" : selectedUser?.Phone)</div>
+                            </div>
+                            <div class="clients-profile-item">
+                                <div class="clients-profile-item-label">Подтверждение email</div>
+                                <div class="clients-profile-item-value" id="selectedUserConfirmed">@(selectedUser?.EmailConfirmed == true ? "Подтвержден" : "Не подтвержден")</div>
+                            </div>
+                            <div class="clients-profile-item">
+                                <div class="clients-profile-item-label">Дата регистрации</div>
+                                <div class="clients-profile-item-value" id="selectedUserCreatedAt">@(selectedUser?.CreatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</div>
+                            </div>
+                        </div>
+
+                        <div class="clients-profile-note">
+                            Карточка помогает быстро проверить, что отображаются статус, роль, email и дата регистрации без открытия дополнительных страниц.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-8">
+                    <div class="clients-table-card">
+                        <div class="clients-toolbar">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-5">
+                                    <label for="userSearch" class="form-label clients-label">Поиск по ФИО, email и телефону</label>
+                                    <input id="userSearch" type="text" class="form-control clients-input" placeholder="Например: admin@toolify.com">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="roleFilter" class="form-label clients-label">Роль</label>
+                                    <select id="roleFilter" class="form-select clients-input">
+                                        <option value="">Все</option>
+                                        <option value="Admin">Admin</option>
+                                        <option value="User">User</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="statusFilter" class="form-label clients-label">Статус</label>
+                                    <select id="statusFilter" class="form-select clients-input">
+                                        <option value="">Все</option>
+                                        <option value="Active">Активен</option>
+                                        <option value="Blocked">Заблокирован</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-1">
+                                    <div class="clients-visible-count">
+                                        <span id="visibleUsersCount">@total</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table clients-table mb-0" id="usersTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Пользователь</th>
+                                        <th>Email</th>
+                                        <th>Телефон</th>
+                                        <th>Роль</th>
+                                        <th>Статус</th>
+                                        <th class="text-end">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var u in users)
+                                    {
+                                        var fullName = string.Concat(u.FirstName, " ", u.LastName).Trim();
+                                        var displayName = !string.IsNullOrWhiteSpace(fullName) ? fullName : "Без имени";
+                                        var statusKey = u.IsBlocked ? "Blocked" : "Active";
+                                        var createdAtText = u.CreatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—";
+
+                                        <tr class="client-row"
+                                            data-role="@u.Role"
+                                            data-status="@statusKey"
+                                            data-search="@($"{displayName} {u.Email} {u.Phone}")">
+                                            <td class="clients-id">@u.Id</td>
+                                            <td>
+                                                <div class="clients-user-name">@displayName</div>
+                                                <div class="clients-user-subtext">@(u.EmailConfirmed ? "Email подтвержден" : "Email не подтвержден")</div>
+                                            </td>
+                                            <td class="clients-email-cell">@u.Email</td>
+                                            <td>@(string.IsNullOrWhiteSpace(u.Phone) ? "—" : u.Phone)</td>
+                                            <td>
+                                                <span class="clients-pill @(u.Role == "Admin" ? "clients-pill-primary" : "clients-pill-muted")">@u.Role</span>
+                                            </td>
+                                            <td>
+                                                <span class="clients-pill @(u.IsBlocked ? "clients-pill-danger" : "clients-pill-success")">
+                                                    @(u.IsBlocked ? "Заблокирован" : "Активен")
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="clients-actions">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-secondary js-user-card"
+                                                            data-user-id="@u.Id"
+                                                            data-user-name="@displayName"
+                                                            data-user-email="@u.Email"
+                                                            data-user-phone="@u.Phone"
+                                                            data-user-role="@u.Role"
+                                                            data-user-status="@(u.IsBlocked ? "Заблокирован" : "Активен")"
+                                                            data-user-blocked="@(u.IsBlocked ? "true" : "false")"
+                                                            data-user-confirmed="@(u.EmailConfirmed ? "Подтвержден" : "Не подтвержден")"
+                                                            data-user-created-at="@createdAtText">
+                                                        Подробнее
+                                                    </button>
+
+                                                    <form asp-action="ChangeUserRole" method="post" class="d-inline">
+                                                        <input type="hidden" name="userId" value="@u.Id" />
+                                                        <input type="hidden" name="role" value="@(u.Role == "Admin" ? "User" : "Admin")" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                            @(u.Role == "Admin" ? "Снять Admin" : "Сделать Admin")
+                                                        </button>
+                                                    </form>
+
+                                                    <form asp-action="ToggleUserBlocked" method="post" class="d-inline">
+                                                        <input type="hidden" name="userId" value="@u.Id" />
+                                                        <input type="hidden" name="isBlocked" value="@(u.IsBlocked ? "false" : "true")" />
+                                                        <button type="submit" class="btn btn-sm @(u.IsBlocked ? "btn-outline-success" : "btn-outline-danger")">
+                                                            @(u.IsBlocked ? "Разблокировать" : "Заблокировать")
+                                                        </button>
+                                                    </form>
+
+                                                    <form asp-action="SendPasswordReset" method="post" class="d-inline">
+                                                        <input type="hidden" name="email" value="@u.Email" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-dark">
+                                                            Сбросить пароль
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="clientsNoResults" class="clients-empty-state d-none">
+                            <div class="clients-empty-title">Ничего не найдено</div>
+                            <div class="clients-empty-text">Попробуй изменить строку поиска или фильтры роли и статуса.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    (function () {
+        const searchInput = document.getElementById('userSearch');
+        const roleFilter = document.getElementById('roleFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const rows = Array.from(document.querySelectorAll('.client-row'));
+        const visibleUsersCount = document.getElementById('visibleUsersCount');
+        const noResults = document.getElementById('clientsNoResults');
+
+        const selectedUser = {
+            id: document.getElementById('selectedUserId'),
+            name: document.getElementById('selectedUserName'),
+            email: document.getElementById('selectedUserEmail'),
+            phone: document.getElementById('selectedUserPhone'),
+            role: document.getElementById('selectedUserRole'),
+            status: document.getElementById('selectedUserStatus'),
+            confirmed: document.getElementById('selectedUserConfirmed'),
+            createdAt: document.getElementById('selectedUserCreatedAt')
+        };
+
+        function updateProfile(button) {
+            if (!button || !selectedUser.name) {
+                return;
+            }
+
+            const data = button.dataset;
+            selectedUser.id.textContent = data.userId || '—';
+            selectedUser.name.textContent = data.userName || 'Без имени';
+            selectedUser.email.textContent = data.userEmail || '—';
+            selectedUser.phone.textContent = data.userPhone || '—';
+            selectedUser.confirmed.textContent = data.userConfirmed || '—';
+            selectedUser.createdAt.textContent = data.userCreatedAt || '—';
+
+            selectedUser.role.textContent = data.userRole || '—';
+            selectedUser.role.className = data.userRole === 'Admin'
+                ? 'clients-pill clients-pill-primary'
+                : 'clients-pill clients-pill-muted';
+
+            selectedUser.status.textContent = data.userStatus || '—';
+            selectedUser.status.className = data.userBlocked === 'true'
+                ? 'clients-pill clients-pill-danger'
+                : 'clients-pill clients-pill-success';
+        }
+
+        function applyFilters() {
+            const search = (searchInput?.value || '').toLowerCase().trim();
+            const role = roleFilter?.value || '';
+            const status = statusFilter?.value || '';
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const rowRole = row.dataset.role || '';
+                const rowStatus = row.dataset.status || '';
+                const rowSearch = (row.dataset.search || '').toLowerCase();
+
+                const matchesSearch = !search || rowSearch.includes(search);
+                const matchesRole = !role || rowRole === role;
+                const matchesStatus = !status || rowStatus === status;
+                const isVisible = matchesSearch && matchesRole && matchesStatus;
+
+                row.classList.toggle('d-none', !isVisible);
+
+                if (isVisible) {
+                    visibleCount++;
+                }
+            });
+
+            if (visibleUsersCount) {
+                visibleUsersCount.textContent = String(visibleCount);
+            }
+
+            if (noResults) {
+                noResults.classList.toggle('d-none', visibleCount !== 0);
+            }
+        }
+
+        document.querySelectorAll('.js-user-card').forEach(button => {
+            button.addEventListener('click', function () {
+                updateProfile(this);
+            });
+        });
+
+        document.querySelectorAll('.js-dismiss-alert').forEach(button => {
+            button.addEventListener('click', function () {
+                const alert = this.closest('.clients-alert');
+                if (alert) {
+                    alert.remove();
+                }
+            });
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', applyFilters);
+        }
+        if (roleFilter) {
+            roleFilter.addEventListener('change', applyFilters);
+        }
+        if (statusFilter) {
+            statusFilter.addEventListener('change', applyFilters);
+        }
+
+        const firstUserButton = document.querySelector('.js-user-card');
+        if (firstUserButton) {
+            updateProfile(firstUserButton);
+        }
+
+        applyFilters();
+    })();
+</script>

@@ -1,4 +1,4 @@
-using HouseholdStore.Models;
+﻿using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -351,8 +351,62 @@ namespace HouseholdStore.Controllers
         [HttpGet]
         public async Task<IActionResult> Clients()
         {
-            var users = await _authApi.GetAllUsersAsync();
-            return View(users);
+            try
+            {
+                var users = await _authApi.GetAllUsersAsync();
+                return View(users);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return View(new List<Toolify.AuthService.Models.User>());
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeUserRole(int userId, string role)
+        {
+            try
+            {
+                await _authApi.ChangeUserRoleAsync(userId, role);
+                TempData["Success"] = "Роль пользователя обновлена";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+            return RedirectToAction("Clients");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleUserBlocked(int userId, bool isBlocked)
+        {
+            try
+            {
+                await _authApi.SetUserBlockedAsync(userId, isBlocked);
+                TempData["Success"] = isBlocked ? "Пользователь заблокирован" : "Пользователь разблокирован";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+            return RedirectToAction("Clients");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendPasswordReset(string email)
+        {
+            try
+            {
+                await _authApi.SendPasswordResetAsync(email);
+                TempData["Success"] = $"Письмо для сброса пароля отправлено на {email}";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction("Clients");
         }
 
         [HttpGet]

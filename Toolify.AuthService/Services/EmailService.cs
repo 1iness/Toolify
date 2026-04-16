@@ -6,8 +6,8 @@ namespace Toolify.AuthService.Services
 {
     public class EmailService
     {
-        private readonly string _email = "";
-        private readonly string _password = "";
+        private readonly string _email = "toolify.store@gmail.com";
+        private readonly string _password = "hweutitbxynwexkk";
 
         private SmtpClient CreateClient()
         {

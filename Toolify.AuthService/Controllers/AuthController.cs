@@ -84,6 +84,9 @@ public class AuthController : ControllerBase
         if (user == null)
             return Unauthorized("Invalid login or password");
 
+        if (user.IsBlocked)
+            return Unauthorized("Account is blocked");
+
         var token = GenerateJwt(user);
 
         return Ok(new
@@ -207,6 +210,25 @@ public class AuthController : ControllerBase
         return Ok(users);
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpPost("users/{id:int}/role")]
+    public IActionResult ChangeUserRole(int id, [FromBody] ChangeUserRoleRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Role))
+            return BadRequest("Role is required");
+
+        _repo.UpdateUserRole(id, request.Role.Trim());
+        return Ok();
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("users/{id:int}/blocked")]
+    public IActionResult SetUserBlocked(int id, [FromBody] SetUserBlockedRequest request)
+    {
+        _repo.SetUserBlocked(id, request.IsBlocked);
+        return Ok();
+    }
+
     [HttpPut("update-profile")]
     public IActionResult UpdateProfile([FromBody] UpdateProfileRequest request)
     {
@@ -217,5 +239,15 @@ public class AuthController : ControllerBase
         _repo.UpdateUserProfile(request.Email, request.FirstName, request.LastName, request.Phone);
         return Ok();
     }
+}
+
+public class ChangeUserRoleRequest
+{
+    public string Role { get; set; } = "User";
+}
+
+public class SetUserBlockedRequest
+{
+    public bool IsBlocked { get; set; }
 }
 
