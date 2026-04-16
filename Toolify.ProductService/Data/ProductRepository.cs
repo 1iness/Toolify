@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Data.SqlClient;
 using Toolify.ProductService.Database;
 using Toolify.ProductService.Models;
@@ -767,6 +767,30 @@ namespace Toolify.ProductService.Data
 
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task<PromoCode?> GetPromoCodeByCodeAsync(string code)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetPromoCodeByCode", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@Code", code);
+
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) return null;
+
+            return new PromoCode
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                Code = reader.GetString(reader.GetOrdinal("Code")),
+                DiscountPercent = reader.GetInt32(reader.GetOrdinal("DiscountPercent")),
+                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                MaxUses = TryGetNullableInt32(reader, "MaxUses"),
+                UsedCount = TryGetInt32(reader, "UsedCount", 0),
+                MinGoodsAmount = TryGetNullableDecimal(reader, "MinGoodsAmount")
+            };
         }
 
         private static decimal? TryGetNullableDecimal(SqlDataReader reader, string columnName)

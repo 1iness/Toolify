@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Toolify.ProductService.Models;
 using Toolify.ProductService.Data;
 
@@ -47,17 +47,20 @@ namespace Toolify.ProductService.Controllers
         [HttpGet("validate/{code}")]
         public async Task<IActionResult> Validate(string code, [FromQuery] decimal? goodsTotal = null)
         {
-            var allPromos = await _repo.GetAllPromoCodesAsync();
-            var promo = allPromos.FirstOrDefault(p =>
-                p.Code.Equals(code, StringComparison.OrdinalIgnoreCase) &&
-                p.IsActive &&
-                p.StartDate <= DateTime.Now &&
-                 p.EndDate >= DateTime.Now &&
-                (!p.MaxUses.HasValue || p.UsedCount < p.MaxUses.Value));
+            var promo = await _repo.GetPromoCodeByCodeAsync(code);
+            if (promo != null &&
+                (!promo.Code.Equals(code, StringComparison.OrdinalIgnoreCase) ||
+                 !promo.IsActive ||
+                 promo.StartDate > DateTime.Now ||
+                 promo.EndDate < DateTime.Now ||
+                 (promo.MaxUses.HasValue && promo.UsedCount >= promo.MaxUses.Value)))
+            {
+                promo = null;
+            }
 
             if (promo == null) return NotFound("Промокод не найден, истёк или исчерпан");
 
-            if (promo.MinGoodsAmount.HasValue && goodsTotal.HasValue && goodsTotal.Value < promo.MinGoodsAmount.Value)
+            if (promo.MinGoodsAmount.HasValue && (!goodsTotal.HasValue || goodsTotal.Value < promo.MinGoodsAmount.Value))
                 return NotFound($"Промокод действует от суммы {promo.MinGoodsAmount.Value:N2}");
 
             return Ok(new { discountPercent = promo.DiscountPercent });

@@ -1,4 +1,4 @@
-﻿using HouseholdStore.Models;
+using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -173,7 +173,7 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePromoCode(string code, int discountPercent, DateTime startDate, DateTime endDate, int? maxUses = null)
+        public async Task<IActionResult> CreatePromoCode(string code, int discountPercent, DateTime startDate, DateTime endDate, int? maxUses = null, decimal? minGoodsAmount = null)
         {
             if (!string.IsNullOrEmpty(code) && discountPercent > 0)
             {
@@ -184,7 +184,14 @@ namespace HouseholdStore.Controllers
                     return RedirectToAction("PromoCodes");
                 }
 
-                await _api.CreatePromoCodeAsync(code, discountPercent, startDate, endDate, maxUses);
+                if (minGoodsAmount.HasValue && minGoodsAmount.Value < 0)
+                {
+                    TempData["Success"] = null;
+                    TempData["Error"] = "Минимальная сумма не может быть отрицательной.";
+                    return RedirectToAction("PromoCodes");
+                }
+
+                await _api.CreatePromoCodeAsync(code, discountPercent, startDate, endDate, maxUses, minGoodsAmount);
                 TempData["Success"] = "Промокод успешно добавлен";
             }
             return RedirectToAction("PromoCodes");
