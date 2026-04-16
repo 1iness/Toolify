@@ -11,9 +11,10 @@
         public string DiscountMode { get; set; } = string.Empty;
         public decimal DiscountValue { get; set; }
         public decimal? MinGoodsAmount { get; set; }
+        public int? BundleBuyQty { get; set; }
+        public int? BundlePayQty { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
-
         public string? CategoryName { get; set; }
         public string? ProductName { get; set; }
         public string? CampaignName { get; set; }

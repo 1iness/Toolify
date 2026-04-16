@@ -35,7 +35,6 @@ namespace HouseholdStore.Services
             return JsonSerializer.Deserialize<List<Product>>(json, jsonOptions);
         }
 
-        /// <summary>Витрина: цены с учётом акций/категории/клиента (публичный api/Product).</summary>
         public async Task<List<Product>> GetStoreCatalogAsync(int? userId = null)
         {
             var url = "/api/Product";
@@ -60,7 +59,6 @@ namespace HouseholdStore.Services
             return JsonSerializer.Deserialize<Product>(json, jsonOptions);
         }
 
-        /// <summary>Карточка товара на витрине с расчётом акций.</summary>
         public async Task<Product?> GetStoreProductByIdAsync(int id, int? userId = null)
         {
             var url = $"/api/Product/{id}";
@@ -323,6 +321,8 @@ namespace HouseholdStore.Services
                 DiscountMode = rule.DiscountMode,
                 rule.DiscountValue,
                 rule.MinGoodsAmount,
+                rule.BundleBuyQty,
+                rule.BundlePayQty,
                 rule.IsActive
             });
             HttpResponseMessage response;
@@ -340,6 +340,17 @@ namespace HouseholdStore.Services
             }
             if (response.IsSuccessStatusCode) return (true, null);
             return (false, await response.Content.ReadAsStringAsync());
+        }
+
+        public async Task<JsonElement> GetDiscountProductStatusAsync(int productId)
+        {
+            var response = await _http.GetAsync($"/api/admin/discounts/product-status/{productId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                throw new Exception($"API ERROR: {response.StatusCode} => {err}");
+            }
+            return await response.Content.ReadFromJsonAsync<JsonElement>(jsonOptions);
         }
 
         public async Task<(bool ok, string? error)> DeleteDiscountRuleAsync(int id)

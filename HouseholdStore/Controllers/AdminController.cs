@@ -273,18 +273,20 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddDiscountRule(string scopeType, string discountMode, decimal discountValue, int? campaignId, int? productId, int? categoryId, int? userId, decimal? minGoodsAmount, bool isActive = true)
+        public async Task<IActionResult> AddDiscountRule(string scopeType, string discountMode, decimal discountValue, int? campaignId, int? productId, int? categoryId, int? userId, decimal? minGoodsAmount, int? bundleBuyQty, int? bundlePayQty, bool isActive = true)
         {
             var rule = new DiscountRule
             {
                 ScopeType = scopeType,
                 DiscountMode = discountMode,
-                DiscountValue = discountValue,
+                DiscountValue = discountMode == "Bundle" ? 0 : discountValue,
                 CampaignId = campaignId,
                 ProductId = scopeType == "Product" ? productId : null,
                 CategoryId = scopeType == "Category" ? categoryId : null,
                 UserId = scopeType == "Client" ? userId : null,
                 MinGoodsAmount = minGoodsAmount,
+                BundleBuyQty = discountMode == "Bundle" ? bundleBuyQty : null,
+                BundlePayQty = discountMode == "Bundle" ? bundlePayQty : null,
                 IsActive = isActive
             };
             var (ok, err) = await _api.UpsertDiscountRuleAsync(false, rule);
@@ -293,24 +295,41 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateDiscountRule(int id, string scopeType, string discountMode, decimal discountValue, int? campaignId, int? productId, int? categoryId, int? userId, decimal? minGoodsAmount, bool isActive)
+        public async Task<IActionResult> UpdateDiscountRule(int id, string scopeType, string discountMode, decimal discountValue, int? campaignId, int? productId, int? categoryId, int? userId, decimal? minGoodsAmount, int? bundleBuyQty, int? bundlePayQty, bool isActive)
         {
             var rule = new DiscountRule
             {
                 Id = id,
                 ScopeType = scopeType,
                 DiscountMode = discountMode,
-                DiscountValue = discountValue,
+                DiscountValue = discountMode == "Bundle" ? 0 : discountValue,
                 CampaignId = campaignId,
                 ProductId = scopeType == "Product" ? productId : null,
                 CategoryId = scopeType == "Category" ? categoryId : null,
                 UserId = scopeType == "Client" ? userId : null,
                 MinGoodsAmount = minGoodsAmount,
+                BundleBuyQty = discountMode == "Bundle" ? bundleBuyQty : null,
+                BundlePayQty = discountMode == "Bundle" ? bundlePayQty : null,
                 IsActive = isActive
             };
             var (ok, err) = await _api.UpsertDiscountRuleAsync(true, rule);
             TempData[ok ? "Success" : "Error"] = ok ? "Правило обновлено" : (err ?? "Ошибка API");
             return RedirectToAction("Discounts");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDiscountProductStatus(int productId)
+        {
+            try
+            {
+                var status = await _api.GetDiscountProductStatusAsync(productId);
+                return Json(status);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { error = ex.Message });
+            }
         }
 
         [HttpPost]

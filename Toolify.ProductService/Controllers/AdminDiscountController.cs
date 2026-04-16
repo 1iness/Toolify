@@ -71,6 +71,13 @@ namespace Toolify.ProductService.Controllers
             return Ok(await _repo.GetDiscountRulesAsync());
         }
 
+        [HttpGet("product-status/{productId:int}")]
+        public async Task<IActionResult> GetProductDiscountStatus(int productId)
+        {
+            if (productId < 1) return BadRequest("Некорректный productId");
+            return Ok(await _repo.GetDiscountStatusForProductAsync(productId));
+        }
+
         [HttpPost("rules")]
         public async Task<IActionResult> AddRule([FromBody] DiscountRuleWriteDto dto)
         {
@@ -84,8 +91,10 @@ namespace Toolify.ProductService.Controllers
                 dto.ScopeType == "Category" ? dto.CategoryId : null,
                 dto.ScopeType == "Client" ? dto.UserId : null,
                 dto.DiscountMode!.Trim(),
-                dto.DiscountValue,
+                dto.DiscountMode == "Bundle" ? 0 : dto.DiscountValue,
                 dto.MinGoodsAmount,
+                dto.BundleBuyQty,
+                dto.BundlePayQty,
                 dto.IsActive);
             return Ok(new { id });
         }
@@ -104,8 +113,10 @@ namespace Toolify.ProductService.Controllers
                 dto.ScopeType == "Category" ? dto.CategoryId : null,
                 dto.ScopeType == "Client" ? dto.UserId : null,
                 dto.DiscountMode!.Trim(),
-                dto.DiscountValue,
+                dto.DiscountMode == "Bundle" ? 0 : dto.DiscountValue,
                 dto.MinGoodsAmount,
+                dto.BundleBuyQty,
+                dto.BundlePayQty,
                 dto.IsActive);
             return Ok();
         }
@@ -130,12 +141,22 @@ namespace Toolify.ProductService.Controllers
             if (scope == "Client" && (!dto.UserId.HasValue || dto.UserId.Value < 1))
                 return "Для персональной скидки укажите UserId";
             var mode = dto.DiscountMode?.Trim();
-            if (mode != "Percent" && mode != "Amount")
-                return "DiscountMode должен быть Percent или Amount";
+            if (mode != "Percent" && mode != "Amount" && mode != "Bundle")
+                return "DiscountMode должен быть Percent или Amount или Bundle";
             if (mode == "Percent" && (dto.DiscountValue < 0 || dto.DiscountValue > 100))
                 return "Процент должен быть от 0 до 100";
             if (mode == "Amount" && dto.DiscountValue <= 0)
                 return "Фиксированная скидка должна быть больше 0";
+            if (mode == "Bundle")
+            {
+                if (scope != "Product") return "Bundle-акция возможна только для ScopeType=Product";
+                if (!dto.BundleBuyQty.HasValue || !dto.BundlePayQty.HasValue)
+                    return "Для Bundle укажите BundleBuyQty и BundlePayQty";
+                if (dto.BundleBuyQty.Value < 2) return "BundleBuyQty должен быть >= 2";
+                if (dto.BundlePayQty.Value < 1) return "BundlePayQty должен быть >= 1";
+                if (dto.BundlePayQty.Value >= dto.BundleBuyQty.Value)
+                    return "BundlePayQty должен быть меньше BundleBuyQty";
+            }
             if (dto.MinGoodsAmount.HasValue && dto.MinGoodsAmount.Value < 0)
                 return "Минимальная сумма заказа не может быть отрицательной";
             return null;
@@ -162,6 +183,8 @@ namespace Toolify.ProductService.Controllers
         public string? DiscountMode { get; set; }
         public decimal DiscountValue { get; set; }
         public decimal? MinGoodsAmount { get; set; }
+        public int? BundleBuyQty { get; set; }
+        public int? BundlePayQty { get; set; }
         public bool IsActive { get; set; } = true;
     }
 }

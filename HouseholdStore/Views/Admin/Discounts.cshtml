@@ -184,18 +184,30 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small mb-0">Режим</label>
-                                <select name="discountMode" class="form-select form-select-sm" required>
+                                <select name="discountMode" class="form-select form-select-sm" data-rule-mode required>
                                     <option value="Percent">Процент (%)</option>
                                     <option value="Amount">Фикс. сумма</option>
+                                    <option value="Bundle">Две/три по цене одной</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4 rule-val">
                                 <label class="form-label small mb-0">Значение</label>
                                 <input type="number" name="discountValue" class="form-control form-control-sm" step="0.01" min="0" required />
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4 rule-min">
                                 <label class="form-label small mb-0">Мин. сумма товаров (необяз.)</label>
                                 <input type="number" name="minGoodsAmount" class="form-control form-control-sm" step="0.01" min="0" />
+                            </div>
+                            <div class="col-md-4 rule-bundle" style="display:none;">
+                                <label class="form-label small mb-0">Купить (штук)</label>
+                                <input type="number" name="bundleBuyQty" class="form-control form-control-sm" min="2" step="1" />
+                            </div>
+                            <div class="col-md-4 rule-bundle" style="display:none;">
+                                <label class="form-label small mb-0">Оплатить (штук)</label>
+                                <input type="number" name="bundlePayQty" class="form-control form-control-sm" min="1" step="1" />
+                            </div>
+                            <div class="col-12 rule-warning" style="display:none;">
+                                <div class="alert alert-warning py-2 mb-0 small"></div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small mb-0">Акция (необяз.)</label>
@@ -257,7 +269,11 @@
                                                     : (r.ScopeType == "Category" ? "Категория" : "Клиент"))
                                             </td>
                                             <td class="small">@target</td>
-                                            <td>@(r.DiscountMode == "Percent" ? "%" : "сумма")</td>
+                                            <td>
+                                                @(r.DiscountMode == "Percent"
+                                                    ? "%"
+                                                    : (r.DiscountMode == "Amount" ? "сумма" : "две/три по цене одной"))
+                                            </td>
                                             <td>@r.DiscountValue.ToString("0.##")</td>
                                             <td class="small text-muted">@(r.CampaignName ?? "—")</td>
                                             <td class="text-end text-nowrap">
@@ -339,26 +355,45 @@
                                                             </div>
                                                             <div class="mb-2">
                                                                 <label class="form-label small mb-0">Режим</label>
-                                                                <select name="discountMode" class="form-select form-select-sm" required>
+                                                                <select name="discountMode" class="form-select form-select-sm" data-rule-mode required>
                                                                     @if (r.DiscountMode == "Percent")
                                                                     {
                                                                         <option value="Percent" selected>Процент</option>
                                                                         <option value="Amount">Фикс. сумма</option>
+                                                                        <option value="Bundle">Две/три по цене одной</option>
+                                                                    }
+                                                                    else if (r.DiscountMode == "Amount")
+                                                                    {
+                                                                        <option value="Percent">Процент</option>
+                                                                        <option value="Amount" selected>Фикс. сумма</option>
+                                                                        <option value="Bundle">Две/три по цене одной</option>
                                                                     }
                                                                     else
                                                                     {
                                                                         <option value="Percent">Процент</option>
-                                                                        <option value="Amount" selected>Фикс. сумма</option>
+                                                                        <option value="Amount">Фикс. сумма</option>
+                                                                        <option value="Bundle" selected>Две/три по цене одной</option>
                                                                     }
                                                                 </select>
                                                             </div>
-                                                            <div class="mb-2">
+                                                            <div class="mb-2 rule-val">
                                                                 <label class="form-label small mb-0">Значение</label>
                                                                 <input type="number" name="discountValue" class="form-control form-control-sm" step="0.01" value="@r.DiscountValue.ToString(System.Globalization.CultureInfo.InvariantCulture)" required />
                                                             </div>
-                                                            <div class="mb-2">
+                                                            <div class="mb-2 rule-min">
                                                                 <label class="form-label small mb-0">Мин. сумма</label>
                                                                 <input type="number" name="minGoodsAmount" class="form-control form-control-sm" step="0.01" value="@(r.MinGoodsAmount?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+                                                            </div>
+                                                            <div class="mb-2 rule-bundle" style="display:@(r.DiscountMode == "Bundle" ? "block" : "none")">
+                                                                <label class="form-label small mb-0">Купить (штук)</label>
+                                                                <input type="number" name="bundleBuyQty" class="form-control form-control-sm" min="2" step="1" value="@(r.BundleBuyQty?.ToString() ?? "")" />
+                                                            </div>
+                                                            <div class="mb-2 rule-bundle" style="display:@(r.DiscountMode == "Bundle" ? "block" : "none")">
+                                                                <label class="form-label small mb-0">Оплатить (штук)</label>
+                                                                <input type="number" name="bundlePayQty" class="form-control form-control-sm" min="1" step="1" value="@(r.BundlePayQty?.ToString() ?? "")" />
+                                                            </div>
+                                                            <div class="mb-2 rule-warning" style="display:none;">
+                                                                <div class="alert alert-warning py-2 mb-0 small"></div>
                                                             </div>
                                                             <div class="mb-2">
                                                                 <label class="form-label small mb-0">Акция</label>
@@ -417,20 +452,87 @@
 </div>
 
 <script>
-    document.querySelectorAll('[data-rule-scope]').forEach(function (sel) {
-        function sync() {
-            var body = sel.closest('.rule-form-body');
-            if (!body) return;
-            var prod = body.querySelector('.rule-prod');
-            var cat = body.querySelector('.rule-cat');
-            var usr = body.querySelector('.rule-user');
-            if (!prod || !cat || !usr) return;
-            var v = sel.value;
-            prod.style.display = v === 'Product' ? '' : 'none';
-            cat.style.display = v === 'Category' ? '' : 'none';
-            usr.style.display = v === 'Client' ? '' : 'none';
+    document.querySelectorAll('.rule-form-body').forEach(function (body) {
+        var scopeSel = body.querySelector('[data-rule-scope]');
+        var modeSel = body.querySelector('[data-rule-mode]');
+        var prod = body.querySelector('.rule-prod');
+        var cat = body.querySelector('.rule-cat');
+        var usr = body.querySelector('.rule-user');
+        var val = body.querySelector('.rule-val');
+        var min = body.querySelector('.rule-min');
+        var bundle = body.querySelectorAll('.rule-bundle');
+        var warningRow = body.querySelector('.rule-warning');
+        var warningBox = warningRow ? warningRow.querySelector('.alert') : null;
+        var prodSelect = prod ? prod.querySelector('select[name="productId"]') : null;
+
+        function applyScope() {
+            if (!scopeSel) return;
+            var v = scopeSel.value;
+            if (prod) prod.style.display = v === 'Product' ? '' : 'none';
+            if (cat) cat.style.display = v === 'Category' ? '' : 'none';
+            if (usr) usr.style.display = v === 'Client' ? '' : 'none';
         }
-        sel.addEventListener('change', sync);
-        sync();
+
+        function setWarning(text) {
+            if (!warningRow || !warningBox) return;
+            if (!text) {
+                warningRow.style.display = 'none';
+                warningBox.textContent = '';
+                return;
+            }
+            warningRow.style.display = '';
+            warningBox.textContent = text;
+        }
+
+        async function refreshProductStatusIfNeeded() {
+            setWarning('');
+            if (!modeSel || !prodSelect || !scopeSel) return;
+            if (modeSel.value !== 'Bundle') return;
+            if (scopeSel.value !== 'Product') return;
+            var pid = parseInt(prodSelect.value || '0', 10);
+            if (!pid) return;
+            try {
+                var resp = await fetch('@Url.Action("GetDiscountProductStatus", "Admin")' + '?productId=' + pid, { headers: { 'Accept': 'application/json' } });
+                var data = await resp.json();
+                if (!resp.ok) return;
+                if (data && data.exists === false) {
+                    setWarning('Товар не найден');
+                    return;
+                }
+                var msg = '';
+                if (data.hasBundle) {
+                    msg += 'У товара уже есть bundle-акция: купить ' + data.bundleBuyQty + ', оплатить ' + data.bundlePayQty + '. ';
+                }
+                if (data.bestPercent && data.bestPercent > 0) {
+                    var src = data.bestPercentSource === 'Product' ? 'по товару' : 'по категории';
+                    msg += 'Сейчас на товар действует скидка ' + data.bestPercent + '% (' + src + ').';
+                }
+                if (msg) setWarning(msg.trim());
+            } catch (e) { }
+        }
+
+        function applyMode() {
+            if (!modeSel) return;
+            var isBundle = modeSel.value === 'Bundle';
+            if (val) val.style.display = isBundle ? 'none' : '';
+            if (min) min.style.display = isBundle ? 'none' : '';
+            bundle.forEach(function (x) { x.style.display = isBundle ? '' : 'none'; });
+            if (val) {
+                var inp = val.querySelector('input[name="discountValue"]');
+                if (inp) inp.required = !isBundle;
+            }
+            if (isBundle && scopeSel && scopeSel.value !== 'Product') {
+                scopeSel.value = 'Product';
+                applyScope();
+            }
+            refreshProductStatusIfNeeded();
+        }
+
+        if (scopeSel) scopeSel.addEventListener('change', function () { applyScope(); applyMode(); });
+        if (modeSel) modeSel.addEventListener('change', applyMode);
+        if (prodSelect) prodSelect.addEventListener('change', refreshProductStatusIfNeeded);
+
+        applyScope();
+        applyMode();
     });
 </script>

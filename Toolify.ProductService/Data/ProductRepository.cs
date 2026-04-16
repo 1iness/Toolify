@@ -263,7 +263,15 @@ namespace Toolify.ProductService.Data
                 var prodPct = ResolveBestProductPercent(row.ProductId, rules, campaigns, now);
                 var catPct = ResolveBestCategoryPercent(categoryId, rules, campaigns, now);
                 var stackPct = Math.Max(prodPct, Math.Max(catPct, clientPct));
-                var finalUnit = Math.Round(row.ListPrice * (1 - stackPct / 100m), 2, MidpointRounding.AwayFromZero);
+                var percentTotal = row.ListPrice * row.Quantity * (1 - stackPct / 100m);
+
+                var bundle = ResolveBestProductBundle(row.ProductId, rules, campaigns, now);
+                var bundleTotal = bundle == null
+                    ? decimal.MaxValue
+                    : CalcBundleTotal(row.ListPrice, row.Quantity, bundle.BuyQty, bundle.PayQty);
+
+                var bestTotal = Math.Min(percentTotal, bundleTotal);
+                var finalUnit = Math.Round(bestTotal / row.Quantity, 2, MidpointRounding.AwayFromZero);
 
                 decimal? oldPrice = null;
                 if (finalUnit < row.ListPrice - 0.005m)
@@ -281,6 +289,18 @@ namespace Toolify.ProductService.Data
             }
 
             return items;
+        }
+
+        private sealed record BundleSpec(int BuyQty, int PayQty, int Priority, int RuleId);
+
+        private static decimal CalcBundleTotal(decimal unitPrice, int qty, int buyQty, int payQty)
+        {
+            if (qty <= 0) return 0;
+            if (buyQty < 2 || payQty < 1 || payQty >= buyQty) return unitPrice * qty;
+            var groups = qty / buyQty;
+            var rem = qty % buyQty;
+            var payable = groups * payQty + rem;
+            return unitPrice * payable;
         }
 
         private async Task<Dictionary<int, int>> GetCategoryIdsByProductIdsAsync(List<int> productIds)
@@ -342,6 +362,30 @@ namespace Toolify.ProductService.Data
             }
             if (candidates.Count == 0) return 0;
             return candidates.OrderByDescending(x => x.prio).ThenByDescending(x => x.rid).First().val;
+        }
+
+        private static BundleSpec? ResolveBestProductBundle(int productId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
+        {
+            bool IsCampaignActive(DiscountCampaign dc) =>
+                dc.IsActive && now >= dc.StartDate && now <= dc.EndDate;
+
+            var candidates = new List<BundleSpec>();
+            foreach (var r in rules)
+            {
+                if (!r.IsActive || r.ScopeType != "Product" || r.DiscountMode != "Bundle" || r.ProductId != productId)
+                    continue;
+                if (!r.BundleBuyQty.HasValue || !r.BundlePayQty.HasValue) continue;
+                var prio = 0;
+                if (r.CampaignId.HasValue)
+                {
+                    var dc = campaigns.FirstOrDefault(c => c.Id == r.CampaignId.Value);
+                    if (dc == null || !IsCampaignActive(dc)) continue;
+                    prio = dc.Priority;
+                }
+                candidates.Add(new BundleSpec(r.BundleBuyQty.Value, r.BundlePayQty.Value, prio, r.Id));
+            }
+            if (candidates.Count == 0) return null;
+            return candidates.OrderByDescending(x => x.Priority).ThenByDescending(x => x.RuleId).First();
         }
 
         private static decimal ResolveBestClientPercent(int? userId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
@@ -1052,6 +1096,8 @@ namespace Toolify.ProductService.Data
                     DiscountMode = reader.GetString(reader.GetOrdinal("DiscountMode")),
                     DiscountValue = reader.GetDecimal(reader.GetOrdinal("DiscountValue")),
                     MinGoodsAmount = TryGetNullableDecimal(reader, "MinGoodsAmount"),
+                    BundleBuyQty = TryGetNullableInt32(reader, "BundleBuyQty"),
+                    BundlePayQty = TryGetNullableInt32(reader, "BundlePayQty"),
                     IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     CategoryName = TryGetNullableString(reader, "CategoryName"),
@@ -1062,7 +1108,7 @@ namespace Toolify.ProductService.Data
             return list;
         }
 
-        public async Task<int> AddDiscountRuleAsync(int? campaignId, string scopeType, int? productId, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, bool isActive)
+        public async Task<int> AddDiscountRuleAsync(int? campaignId, string scopeType, int? productId, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, int? bundleBuyQty, int? bundlePayQty, bool isActive)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_AddDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
@@ -1074,13 +1120,15 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@DiscountMode", discountMode);
             command.Parameters.AddWithValue("@DiscountValue", discountValue);
             command.Parameters.AddWithValue("@MinGoodsAmount", (object?)minGoodsAmount ?? DBNull.Value);
+            command.Parameters.AddWithValue("@BundleBuyQty", (object?)bundleBuyQty ?? DBNull.Value);
+            command.Parameters.AddWithValue("@BundlePayQty", (object?)bundlePayQty ?? DBNull.Value);
             command.Parameters.AddWithValue("@IsActive", isActive);
             await connection.OpenAsync();
             var scalar = await command.ExecuteScalarAsync();
             return Convert.ToInt32(scalar);
         }
 
-        public async Task UpdateDiscountRuleAsync(int id, int? campaignId, string scopeType, int? productId, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, bool isActive)
+        public async Task UpdateDiscountRuleAsync(int id, int? campaignId, string scopeType, int? productId, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, int? bundleBuyQty, int? bundlePayQty, bool isActive)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_UpdateDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
@@ -1093,6 +1141,8 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@DiscountMode", discountMode);
             command.Parameters.AddWithValue("@DiscountValue", discountValue);
             command.Parameters.AddWithValue("@MinGoodsAmount", (object?)minGoodsAmount ?? DBNull.Value);
+            command.Parameters.AddWithValue("@BundleBuyQty", (object?)bundleBuyQty ?? DBNull.Value);
+            command.Parameters.AddWithValue("@BundlePayQty", (object?)bundlePayQty ?? DBNull.Value);
             command.Parameters.AddWithValue("@IsActive", isActive);
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
@@ -1141,6 +1191,50 @@ namespace Toolify.ProductService.Data
                     p.CatalogDiscountBadgePercent = null;
                 }
             }
+        }
+
+        public async Task<object> GetDiscountStatusForProductAsync(int productId)
+        {
+            var rules = await GetDiscountRulesAsync();
+            var campaigns = await GetDiscountCampaignsAsync();
+            var now = DateTime.Now;
+
+            int categoryId;
+            string? productName;
+            using (var connection = _factory.CreateConnection())
+            {
+                await connection.OpenAsync();
+                using var cmd = new SqlCommand("SELECT TOP 1 Name, CategoryId FROM dbo.Products WHERE Id=@Id", connection);
+                cmd.Parameters.AddWithValue("@Id", productId);
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (!await reader.ReadAsync())
+                    return new { productId, exists = false };
+                productName = reader.IsDBNull(0) ? null : reader.GetString(0);
+                categoryId = reader.GetInt32(1);
+            }
+
+            var prodPct = ResolveBestProductPercent(productId, rules, campaigns, now);
+            var catPct = ResolveBestCategoryPercent(categoryId, rules, campaigns, now);
+            var bestPct = Math.Max(prodPct, catPct);
+
+            var bundle = ResolveBestProductBundle(productId, rules, campaigns, now);
+
+            var source = bestPct <= 0
+                ? null
+                : (prodPct >= catPct ? "Product" : "Category");
+
+            return new
+            {
+                productId,
+                exists = true,
+                productName,
+                categoryId,
+                bestPercent = bestPct,
+                bestPercentSource = source,
+                hasBundle = bundle != null,
+                bundleBuyQty = bundle?.BuyQty,
+                bundlePayQty = bundle?.PayQty
+            };
         }
 
         private static string? TryGetNullableString(SqlDataReader reader, string columnName)
