@@ -9,6 +9,16 @@ namespace HouseholdStore.Models
 
         public decimal TotalAmount => CartItems.Sum(x => x.TotalPrice);
 
+        public decimal PreviewGoods { get; set; }
+        public decimal PreviewDeliveryCourier { get; set; }
+        public decimal PreviewDeliveryPickup { get; set; }
+        public decimal PreviewPromoAmount { get; set; }
+        public int PreviewPromoPercent { get; set; }
+        public decimal PreviewAppliedFixed { get; set; }
+        public decimal PreviewGrandCourier { get; set; }
+        public decimal PreviewGrandPickup { get; set; }
+        public List<Toolify.ProductService.Models.AppliedRule> PreviewAppliedRules { get; set; } = new();
+
         [Required(ErrorMessage = "Введите имя")]
         public string FirstName { get; set; }
 

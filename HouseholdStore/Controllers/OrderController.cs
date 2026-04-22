@@ -42,6 +42,8 @@ namespace HouseholdStore.Controllers
                 CartItems = cartItems
             };
 
+            await FillPreviewAsync(model, userId, guestId, null);
+
             if (userId.HasValue && User.Identity.IsAuthenticated)
             {
                 var email = User.FindFirst(ClaimTypes.Name)?.Value;
@@ -53,12 +55,58 @@ namespace HouseholdStore.Controllers
                         model.FirstName = user.FirstName;
                         model.LastName = user.LastName;
                         model.Email = user.Email;
-                        model.Phone = user.Phone; 
+                        model.Phone = user.Phone;
                     }
                 }
             }
 
             return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Preview(string? promoCode)
+        {
+            var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
+
+            var courier = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, promoCode, "Courier");
+            var pickup  = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, promoCode, "Pickup");
+
+            if (courier == null || pickup == null)
+            {
+                return Json(new { success = false });
+            }
+
+            return Json(new
+            {
+                success = true,
+                goods = courier.NetGoodsAmount,
+                promoPercent = courier.PromoPercent,
+                promoAmount = courier.PromoDiscountAmount,
+                appliedFixed = courier.AppliedFixedDiscountAmount,
+                deliveryCourier = courier.DeliveryFee,
+                deliveryPickup = pickup.DeliveryFee,
+                grandCourier = courier.GrandTotal,
+                grandPickup = pickup.GrandTotal,
+                rules = courier.AppliedRules.Select(r => new { r.Kind, r.Title, r.Amount })
+            });
+        }
+
+        private async Task FillPreviewAsync(CheckoutViewModel model, int? userId, string? guestId, string? promoCode)
+        {
+            var courier = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, promoCode, "Courier");
+            var pickup  = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, promoCode, "Pickup");
+
+            if (courier == null || pickup == null) return;
+
+            model.PreviewGoods            = courier.NetGoodsAmount;
+            model.PreviewPromoPercent     = courier.PromoPercent;
+            model.PreviewPromoAmount      = courier.PromoDiscountAmount;
+            model.PreviewAppliedFixed     = courier.AppliedFixedDiscountAmount;
+            model.PreviewDeliveryCourier  = courier.DeliveryFee;
+            model.PreviewDeliveryPickup   = pickup.DeliveryFee;
+            model.PreviewGrandCourier     = courier.GrandTotal;
+            model.PreviewGrandPickup      = pickup.GrandTotal;
+            model.PreviewAppliedRules     = courier.AppliedRules;
         }
 
         [HttpPost]

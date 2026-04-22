@@ -448,7 +448,7 @@ namespace Toolify.ProductService.Data
             using var reader = await command.ExecuteReaderAsync();
             if (!await reader.ReadAsync()) return null;
 
-            return new CheckoutPreviewResult
+            var result = new CheckoutPreviewResult
             {
                 SubtotalAfterProductDiscount = reader.GetDecimal(reader.GetOrdinal("SubtotalAfterProductDiscount")),
                 DiscountFromCategoryClientPercent = reader.GetDecimal(reader.GetOrdinal("DiscountFromCategoryClientPercent")),
@@ -463,6 +463,21 @@ namespace Toolify.ProductService.Data
                 DeliveryFee = reader.GetDecimal(reader.GetOrdinal("DeliveryFee")),
                 GrandTotal = reader.GetDecimal(reader.GetOrdinal("GrandTotal"))
             };
+
+            if (await reader.NextResultAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    result.AppliedRules.Add(new AppliedRule
+                    {
+                        Kind = reader.GetString(reader.GetOrdinal("Kind")),
+                        Title = reader.GetString(reader.GetOrdinal("Title")),
+                        Amount = reader.GetDecimal(reader.GetOrdinal("Amount"))
+                    });
+                }
+            }
+
+            return result;
         }
 
         public async Task<List<OrderHistoryDto>> GetUserOrdersAsync(int userId)

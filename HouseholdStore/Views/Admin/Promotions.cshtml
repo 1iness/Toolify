@@ -166,6 +166,7 @@
                             <div class="col-6 d-flex align-items-end">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked id="newPromoActive" />
+                                    <input type="hidden" name="IsActive" value="false" />
                                     <label class="form-check-label small" for="newPromoActive">Активна</label>
                                 </div>
                             </div>
@@ -302,13 +303,13 @@
                                             <div class="row g-2 mt-1 promo-field" data-show-type="order">
                                                 <div class="col-6">
                                                     <label class="form-label small mb-0">Процент</label>
-                                                    <input type="number" name="PercentOff" class="form-control form-control-sm" min="0" max="100" step="0.01" value="@(p.PercentOff?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+                                                    <input type="number" name="PercentOff" class="form-control form-control-sm" min="0" max="100" step="0.01" value="@(p.PercentOff?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
                                                 </div>
                                             </div>
                                             <div class="row g-2 mt-1 promo-field" data-show-type="order,ship">
                                                 <div class="col-6">
                                                     <label class="form-label small mb-0">Мин. сумма</label>
-                                                    <input type="number" name="MinOrderAmount" class="form-control form-control-sm" min="0" step="0.01" value="@(p.MinOrderAmount?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+                                                    <input type="number" name="MinOrderAmount" class="form-control form-control-sm" min="0" step="0.01" value="@(p.MinOrderAmount?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
                                                 </div>
                                             </div>
                                             <div class="row g-2 mt-1 promo-field" data-show-type="gift">
@@ -337,6 +338,7 @@
                                                 <div class="col-6 d-flex align-items-end">
                                                     <div class="form-check">
                                                         <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="promo_@(p.Id)_active" @(p.IsActive ? "checked" : null) />
+                                                        <input type="hidden" name="IsActive" value="false" />
                                                         <label class="form-check-label small" for="promo_@(p.Id)_active">Активна</label>
                                                     </div>
                                                 </div>

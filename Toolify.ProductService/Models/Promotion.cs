@@ -41,7 +41,7 @@ namespace Toolify.ProductService.Models
         public DateTime EndDate { get; set; }
 
         public int Priority { get; set; }
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

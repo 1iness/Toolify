@@ -14,5 +14,14 @@
         public decimal NetGoodsAmount { get; set; }
         public decimal DeliveryFee { get; set; }
         public decimal GrandTotal { get; set; }
+
+        public List<AppliedRule> AppliedRules { get; set; } = new();
+    }
+
+    public class AppliedRule
+    {
+        public string Kind { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
     }
 }

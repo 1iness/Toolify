@@ -1,5 +1,7 @@
-﻿using HouseholdStore.Services;
+﻿using System.Globalization;
+using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Toolify.AuthService.Services;
 
@@ -46,6 +48,15 @@ namespace HouseholdStore
             });
 
             var app = builder.Build();
+
+            var invariant = CultureInfo.InvariantCulture;
+            var localizationOptions = new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(invariant, invariant),
+                SupportedCultures = new[] { invariant },
+                SupportedUICultures = new[] { invariant }
+            };
+            app.UseRequestLocalization(localizationOptions);
 
             if (!app.Environment.IsDevelopment())
             {

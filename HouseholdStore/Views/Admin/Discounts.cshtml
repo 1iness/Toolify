@@ -131,6 +131,7 @@
 
                         <div class="form-check mt-3">
                             <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked id="newDiscActive" />
+                            <input type="hidden" name="IsActive" value="false" />
                             <label class="form-check-label small" for="newDiscActive">Активна</label>
                         </div>
 
@@ -206,7 +207,7 @@
                                             <div class="row g-2 mt-1">
                                                 <div class="col-md-6">
                                                     <label class="form-label small mb-0">Значение</label>
-                                                    <input type="number" name="Value" class="form-control form-control-sm" min="0" step="0.01" value="@d.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)" required />
+                                                    <input type="number" name="Value" class="form-control form-control-sm" min="0" step="0.01" value="@d.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" required />
                                                 </div>
                                                 <div class="col-md-6 disc-field" data-show-type="qty">
                                                     <label class="form-label small mb-0">Мин. количество</label>
@@ -243,6 +244,7 @@
                                             </div>
                                             <div class="form-check mt-3">
                                                 <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="disc_@(d.Id)_a" @(d.IsActive ? "checked" : null) />
+                                                <input type="hidden" name="IsActive" value="false" />
                                                 <label class="form-check-label small" for="disc_@(d.Id)_a">Активна</label>
                                             </div>
                                             <div class="disc-warning small text-muted mt-2"></div>
