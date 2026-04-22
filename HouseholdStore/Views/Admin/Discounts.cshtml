@@ -1,150 +1,251 @@
 ﻿@model HouseholdStore.Models.AdminDiscountsViewModel
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using Toolify.ProductService.Models
-@using Toolify.AuthService.Models
 
 @{
-    ViewData["Title"] = "Акции и скидки";
+    ViewData["Title"] = "Скидки";
     Layout = null;
     var catList = ViewBag.Categories as SelectList;
-    var userList = ViewBag.Users as SelectList;
     var prodList = ViewBag.Products as SelectList;
     var categoriesList = ViewBag.CategoriesList as List<Category> ?? new List<Category>();
-    var usersList = ViewBag.UsersList as List<User> ?? new List<User>();
     var productsList = ViewBag.ProductsList as List<Product> ?? new List<Product>();
+
+    var types = new[] {
+        new { Key = "prod", Value = DiscountTypes.Product,  Label = DiscountTypes.Product  },
+        new { Key = "cat",  Value = DiscountTypes.Category, Label = DiscountTypes.Category },
+        new { Key = "qty",  Value = DiscountTypes.Quantity, Label = DiscountTypes.Quantity },
+    };
+    var kinds = new[] {
+        new { Key = "pct", Value = DiscountValueKinds.Percent, Label = DiscountValueKinds.Percent },
+        new { Key = "fix", Value = DiscountValueKinds.Fixed,   Label = DiscountValueKinds.Fixed   },
+    };
+
+    string FormatDiscount(Discount d)
+    {
+        var val = d.ValueKind == DiscountValueKinds.Percent
+            ? $"−{d.Value:0.##}%"
+            : $"−{d.Value:0.##}";
+
+        switch (d.DiscountType)
+        {
+            case DiscountTypes.Product:
+                return $"{val} на товар «{d.ProductName ?? ("#" + d.ProductId)}»";
+            case DiscountTypes.Category:
+                return $"{val} на категорию «{d.CategoryName ?? ("#" + d.CategoryId)}»";
+            case DiscountTypes.Quantity:
+                var target = d.ProductId.HasValue
+                    ? $"товар «{d.ProductName ?? ("#" + d.ProductId)}»"
+                    : $"категория «{d.CategoryName ?? ("#" + d.CategoryId)}»";
+                return $"{val} от {d.MinQuantity} шт ({target})";
+            default: return val;
+        }
+    }
 }
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
+<style>
+    .disc-form-body .disc-field { display: none; }
+    .disc-form-body .disc-field.visible { display: flex; }
+    .disc-form-body .disc-target-group { display: none; }
+    .disc-form-body .disc-target-group.visible { display: flex; gap: .5rem; }
+</style>
+
 <div class="container-fluid py-4 px-3" style="max-width: 1400px;">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3 mb-0 fw-bold text-dark">Акции и скидки</h2>
-        <a href="/Admin/Index" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> Назад в панель</a>
+        <h2 class="h3 mb-0 fw-bold text-dark">Скидки</h2>
+        <div class="d-flex gap-2">
+            <a href="/Admin/Promotions" class="btn btn-outline-primary btn-sm">К акциям</a>
+            <a href="/Admin/Index" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> Назад в панель</a>
+        </div>
     </div>
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-
-    <div class="alert alert-info small mb-4">
-        <strong>Как это работает.</strong> Акции (кампании) задают период и приоритет; правила привязываются к акции опционально.
-        Скидка по категории — процент или фиксированная сумма по сумме товаров этой категории; по клиенту — персональная скидка.
-        Минимальная сумма товаров в правиле действует до применения промокода (как в БД). Изменения вступают в силу для новых заказов.
-    </div>
+    @if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+    @if (TempData["Error"]   != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
 
     <div class="row g-4">
         <div class="col-lg-5">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white fw-semibold">Новая акция (кампания)</div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-white fw-semibold">Новая скидка</div>
                 <div class="card-body">
-                    <form asp-action="AddDiscountCampaign" method="post">
+                    <form asp-action="AddDiscount" method="post" class="disc-form-body">
                         <div class="mb-2">
                             <label class="form-label small mb-0">Название</label>
-                            <input type="text" name="name" class="form-control form-control-sm" required maxlength="150" />
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small mb-0">Описание</label>
-                            <input type="text" name="description" class="form-control form-control-sm" maxlength="500" />
+                            <input type="text" name="Name" class="form-control form-control-sm" required maxlength="150" />
                         </div>
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <label class="form-label small mb-0">Начало</label>
-                                <input type="datetime-local" name="startDate" class="form-control form-control-sm" required />
+                                <label class="form-label small mb-0">Тип скидки</label>
+                                <select name="DiscountType" class="form-select form-select-sm" data-disc-type required>
+                                    @foreach (var t in types)
+                                    {
+                                        <option value="@t.Value" data-key="@t.Key">@t.Label</option>
+                                    }
+                                </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small mb-0">Окончание</label>
-                                <input type="datetime-local" name="endDate" class="form-control form-control-sm" required />
+                                <label class="form-label small mb-0">Вид значения</label>
+                                <select name="ValueKind" class="form-select form-select-sm" data-disc-kind required>
+                                    @foreach (var k in kinds)
+                                    {
+                                        <option value="@k.Value" data-key="@k.Key">@k.Label</option>
+                                    }
+                                </select>
                             </div>
                         </div>
+
                         <div class="row g-2 mt-1">
-                            <div class="col-6">
-                                <label class="form-label small mb-0">Приоритет</label>
-                                <input type="number" name="priority" class="form-control form-control-sm" value="0" />
-                                <div class="form-text">Больше — раньше в расчёте заказа</div>
+                            <div class="col-md-6">
+                                <label class="form-label small mb-0">Значение</label>
+                                <input type="number" name="Value" class="form-control form-control-sm" min="0" step="0.01" required />
                             </div>
-                            <div class="col-6 d-flex align-items-end">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="isActive" value="true" checked id="newCampActive" />
-                                    <label class="form-check-label small" for="newCampActive">Активна</label>
-                                </div>
+                            <div class="col-md-6 disc-field" data-show-type="qty">
+                                <label class="form-label small mb-0">Мин. количество</label>
+                                <input type="number" name="MinQuantity" class="form-control form-control-sm" min="1" step="1" />
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-success btn-sm mt-3">Добавить акцию</button>
+
+                        <div class="row g-2 mt-1 disc-target-group" data-disc-target>
+                            <div class="col-md-6 disc-field" data-show-type="prod,qty">
+                                <label class="form-label small mb-0">Товар</label>
+                                <select name="ProductId" class="form-select form-select-sm">
+                                    <option value="">—</option>
+                                    @foreach (var pr in productsList)
+                                    {
+                                        <option value="@pr.Id">@pr.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 disc-field" data-show-type="cat,qty">
+                                <label class="form-label small mb-0">Категория</label>
+                                <select name="CategoryId" class="form-select form-select-sm">
+                                    <option value="">—</option>
+                                    @foreach (var c in categoriesList)
+                                    {
+                                        <option value="@c.Id">@c.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked id="newDiscActive" />
+                            <label class="form-check-label small" for="newDiscActive">Активна</label>
+                        </div>
+
+                        <div class="disc-warning small text-muted mt-2"></div>
+                        <button type="submit" class="btn btn-success btn-sm mt-3">Добавить скидку</button>
                     </form>
                 </div>
             </div>
+        </div>
 
+        <div class="col-lg-7">
             <div class="card shadow-sm">
-                <div class="card-header bg-white fw-semibold">Список акций</div>
+                <div class="card-header bg-white fw-semibold">Список скидок (@Model.Discounts.Count)</div>
                 <div class="card-body p-0">
-                    @if (Model.Campaigns.Count == 0)
+                    @if (Model.Discounts.Count == 0)
                     {
-                        <p class="text-muted small p-3 mb-0">Пока нет кампаний</p>
+                        <p class="text-muted small p-3 mb-0">Пока нет скидок</p>
                     }
                     else
                     {
                         <ul class="list-group list-group-flush">
-                            @foreach (var c in Model.Campaigns)
+                            @foreach (var d in Model.Discounts)
                             {
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between align-items-start gap-2">
                                         <div>
-                                            <strong>@c.Name</strong>
-                                            @if (!string.IsNullOrEmpty(c.Description))
-                                            {
-                                                <div class="text-muted small">@c.Description</div>
-                                            }
-                                            <div class="small text-muted mt-1">
-                                                @c.StartDate.ToString("dd.MM.yyyy HH:mm") — @c.EndDate.ToString("dd.MM.yyyy HH:mm")
-                                                · приоритет @c.Priority
-                                                · @(c.IsActive ? "активна" : "выкл.")
-                                            </div>
+                                            <strong>@d.Name</strong>
+                                            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">@d.DiscountType</span>
+                                            @if (!d.IsActive) { <span class="badge bg-secondary">выкл.</span> }
+                                            <div class="small text-muted mt-1">@FormatDiscount(d)</div>
                                         </div>
-                                        <form asp-action="DeleteDiscountCampaign" method="post" class="flex-shrink-0" onsubmit="return confirm('Удалить акцию «@c.Name»?');">
-                                            <input type="hidden" name="id" value="@c.Id" />
+                                        <form asp-action="DeleteDiscount" method="post" class="flex-shrink-0"
+                                              onsubmit="return confirm('Удалить скидку «@d.Name»?');">
+                                            <input type="hidden" name="id" value="@d.Id" />
                                             <button type="submit" class="btn btn-outline-danger btn-sm" title="Удалить"><i class="fas fa-trash"></i></button>
                                         </form>
                                     </div>
+
                                     <details class="mt-2">
                                         <summary class="small text-primary" style="cursor:pointer;">Изменить</summary>
-                                        <form asp-action="UpdateDiscountCampaign" method="post" class="border rounded p-2 mt-2 bg-light">
-                                            <input type="hidden" name="id" value="@c.Id" />
+                                        <form asp-action="UpdateDiscount" method="post" class="border rounded p-2 mt-2 bg-light disc-form-body">
+                                            <input type="hidden" name="Id" value="@d.Id" />
                                             <div class="mb-2">
                                                 <label class="form-label small mb-0">Название</label>
-                                                <input type="text" name="name" class="form-control form-control-sm" value="@c.Name" required maxlength="150" />
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label small mb-0">Описание</label>
-                                                <input type="text" name="description" class="form-control form-control-sm" value="@c.Description" maxlength="500" />
+                                                <input type="text" name="Name" class="form-control form-control-sm" value="@d.Name" required maxlength="150" />
                                             </div>
                                             <div class="row g-2">
                                                 <div class="col-md-6">
-                                                    <label class="form-label small mb-0">Начало</label>
-                                                    <input type="datetime-local" name="startDate" class="form-control form-control-sm" value="@c.StartDate.ToString("yyyy-MM-ddTHH:mm")" required />
+                                                    <label class="form-label small mb-0">Тип</label>
+                                                    <select name="DiscountType" class="form-select form-select-sm" data-disc-type required>
+                                                        @foreach (var t in types)
+                                                        {
+                                                            if (t.Value == d.DiscountType)
+                                                            { <option value="@t.Value" data-key="@t.Key" selected>@t.Label</option> }
+                                                            else
+                                                            { <option value="@t.Value" data-key="@t.Key">@t.Label</option> }
+                                                        }
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label small mb-0">Окончание</label>
-                                                    <input type="datetime-local" name="endDate" class="form-control form-control-sm" value="@c.EndDate.ToString("yyyy-MM-ddTHH:mm")" required />
+                                                    <label class="form-label small mb-0">Вид</label>
+                                                    <select name="ValueKind" class="form-select form-select-sm" data-disc-kind required>
+                                                        @foreach (var k in kinds)
+                                                        {
+                                                            if (k.Value == d.ValueKind)
+                                                            { <option value="@k.Value" data-key="@k.Key" selected>@k.Label</option> }
+                                                            else
+                                                            { <option value="@k.Value" data-key="@k.Key">@k.Label</option> }
+                                                        }
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="row g-2 mt-1">
-                                                <div class="col-6">
-                                                    <label class="form-label small mb-0">Приоритет</label>
-                                                    <input type="number" name="priority" class="form-control form-control-sm" value="@c.Priority" />
+                                                <div class="col-md-6">
+                                                    <label class="form-label small mb-0">Значение</label>
+                                                    <input type="number" name="Value" class="form-control form-control-sm" min="0" step="0.01" value="@d.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)" required />
                                                 </div>
-                                                <div class="col-6 d-flex align-items-end">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="isActive" value="true" id="camp_@(c.Id)_active" @(c.IsActive ? "checked" : null) />
-                                                        <label class="form-check-label small" for="camp_@(c.Id)_active">Активна</label>
-                                                    </div>
+                                                <div class="col-md-6 disc-field" data-show-type="qty">
+                                                    <label class="form-label small mb-0">Мин. количество</label>
+                                                    <input type="number" name="MinQuantity" class="form-control form-control-sm" min="1" step="1" value="@(d.MinQuantity?.ToString() ?? "")" />
                                                 </div>
                                             </div>
+                                            <div class="row g-2 mt-1 disc-target-group" data-disc-target>
+                                                <div class="col-md-6 disc-field" data-show-type="prod,qty">
+                                                    <label class="form-label small mb-0">Товар</label>
+                                                    <select name="ProductId" class="form-select form-select-sm">
+                                                        <option value="">—</option>
+                                                        @foreach (var pr in productsList)
+                                                        {
+                                                            if (d.ProductId == pr.Id)
+                                                            { <option value="@pr.Id" selected>@pr.Name</option> }
+                                                            else
+                                                            { <option value="@pr.Id">@pr.Name</option> }
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6 disc-field" data-show-type="cat,qty">
+                                                    <label class="form-label small mb-0">Категория</label>
+                                                    <select name="CategoryId" class="form-select form-select-sm">
+                                                        <option value="">—</option>
+                                                        @foreach (var c in categoriesList)
+                                                        {
+                                                            if (d.CategoryId == c.Id)
+                                                            { <option value="@c.Id" selected>@c.Name</option> }
+                                                            else
+                                                            { <option value="@c.Id">@c.Name</option> }
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-check mt-3">
+                                                <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="disc_@(d.Id)_a" @(d.IsActive ? "checked" : null) />
+                                                <label class="form-check-label small" for="disc_@(d.Id)_a">Активна</label>
+                                            </div>
+                                            <div class="disc-warning small text-muted mt-2"></div>
                                             <button type="submit" class="btn btn-primary btn-sm mt-2">Сохранить</button>
                                         </form>
                                     </details>
@@ -155,384 +256,49 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-lg-7">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white fw-semibold">Новое правило скидки</div>
-                <div class="card-body">
-                    <form asp-action="AddDiscountRule" method="post" class="rule-form-body">
-                        <div class="row g-2">
-                            <div class="col-md-4">
-                                <label class="form-label small mb-0">Область</label>
-                                <select name="scopeType" class="form-select form-select-sm" data-rule-scope required>
-                                    <option value="Product">Товар</option>
-                                    <option value="Category">Категория</option>
-                                    <option value="Client">Клиент</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 rule-prod">
-                                <label class="form-label small mb-0">Товар</label>
-                                <select name="productId" class="form-select form-select-sm" asp-items="prodList"></select>
-                            </div>
-                            <div class="col-md-4 rule-cat">
-                                <label class="form-label small mb-0">Категория</label>
-                                <select name="categoryId" class="form-select form-select-sm" asp-items="catList"></select>
-                            </div>
-                            <div class="col-md-4 rule-user" style="display:none;">
-                                <label class="form-label small mb-0">Клиент (email в списке)</label>
-                                <select name="userId" class="form-select form-select-sm" asp-items="userList"></select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small mb-0">Режим</label>
-                                <select name="discountMode" class="form-select form-select-sm" data-rule-mode required>
-                                    <option value="Percent">Процент (%)</option>
-                                    <option value="Amount">Фикс. сумма</option>
-                                    <option value="Bundle">Две/три по цене одной</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 rule-val">
-                                <label class="form-label small mb-0">Значение</label>
-                                <input type="number" name="discountValue" class="form-control form-control-sm" step="0.01" min="0" required />
-                            </div>
-                            <div class="col-md-4 rule-min">
-                                <label class="form-label small mb-0">Мин. сумма товаров (необяз.)</label>
-                                <input type="number" name="minGoodsAmount" class="form-control form-control-sm" step="0.01" min="0" />
-                            </div>
-                            <div class="col-md-4 rule-bundle" style="display:none;">
-                                <label class="form-label small mb-0">Купить (штук)</label>
-                                <input type="number" name="bundleBuyQty" class="form-control form-control-sm" min="2" step="1" />
-                            </div>
-                            <div class="col-md-4 rule-bundle" style="display:none;">
-                                <label class="form-label small mb-0">Оплатить (штук)</label>
-                                <input type="number" name="bundlePayQty" class="form-control form-control-sm" min="1" step="1" />
-                            </div>
-                            <div class="col-12 rule-warning" style="display:none;">
-                                <div class="alert alert-warning py-2 mb-0 small"></div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small mb-0">Акция (необяз.)</label>
-                                <select name="campaignId" class="form-select form-select-sm">
-                                    <option value="">—</option>
-                                    @foreach (var camp in Model.Campaigns)
-                                    {
-                                        <option value="@camp.Id">@camp.Name</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="isActive" value="true" checked id="newRuleActive" />
-                                    <label class="form-check-label small" for="newRuleActive">Активно</label>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-success btn-sm mt-3">Добавить правило</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card shadow-sm">
-                <div class="card-header bg-white fw-semibold">Правила (@Model.Rules.Count)</div>
-                <div class="card-body p-0">
-                    @if (Model.Rules.Count == 0)
-                    {
-                        <p class="text-muted small p-3 mb-0">Правил пока нет</p>
-                    }
-                    else
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Область</th>
-                                        <th>Цель</th>
-                                        <th>Режим</th>
-                                        <th>Значение</th>
-                                        <th>Акция</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var r in Model.Rules)
-                                    {
-                                        var target = r.ScopeType == "Product"
-                                            ? (r.ProductName ?? ("#" + r.ProductId))
-                                            : (r.ScopeType == "Category"
-                                                ? (r.CategoryName ?? ("#" + r.CategoryId))
-                                                : ("user " + r.UserId));
-                                        <tr>
-                                            <td>@r.Id</td>
-                                            <td>
-                                                @(r.ScopeType == "Product"
-                                                    ? "Товар"
-                                                    : (r.ScopeType == "Category" ? "Категория" : "Клиент"))
-                                            </td>
-                                            <td class="small">@target</td>
-                                            <td>
-                                                @(r.DiscountMode == "Percent"
-                                                    ? "%"
-                                                    : (r.DiscountMode == "Amount" ? "сумма" : "две/три по цене одной"))
-                                            </td>
-                                            <td>@r.DiscountValue.ToString("0.##")</td>
-                                            <td class="small text-muted">@(r.CampaignName ?? "—")</td>
-                                            <td class="text-end text-nowrap">
-                                                <details>
-                                                    <summary class="small text-primary d-inline" style="cursor:pointer;">Изм.</summary>
-                                                    <div class="text-start border rounded p-2 mt-1 bg-light rule-form-body" style="min-width: 260px;">
-                                                        <form asp-action="UpdateDiscountRule" method="post">
-                                                            <input type="hidden" name="id" value="@r.Id" />
-                                                            <div class="mb-2">
-                                                                <label class="form-label small mb-0">Область</label>
-                                                                <select name="scopeType" class="form-select form-select-sm" data-rule-scope required>
-                                                                    @if (r.ScopeType == "Product")
-                                                                    {
-                                                                        <option value="Product" selected>Товар</option>
-                                                                        <option value="Category">Категория</option>
-                                                                        <option value="Client">Клиент</option>
-                                                                    }
-                                                                    else if (r.ScopeType == "Category")
-                                                                    {
-                                                                        <option value="Product">Товар</option>
-                                                                        <option value="Category" selected>Категория</option>
-                                                                        <option value="Client">Клиент</option>
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        <option value="Product">Товар</option>
-                                                                        <option value="Category">Категория</option>
-                                                                        <option value="Client" selected>Клиент</option>
-                                                                    }
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-2 rule-prod" style="display:@(r.ScopeType == "Product" ? "block" : "none")">
-                                                                <label class="form-label small mb-0">Товар</label>
-                                                                <select name="productId" class="form-select form-select-sm">
-                                                                    @foreach (var p in productsList)
-                                                                    {
-                                                                        if (r.ProductId == p.Id)
-                                                                        {
-                                                                            <option value="@p.Id" selected>@p.Name</option>
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <option value="@p.Id">@p.Name</option>
-                                                                        }
-                                                                    }
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-2 rule-cat" style="display:@(r.ScopeType == "Category" ? "block" : "none")">
-                                                                <label class="form-label small mb-0">Категория</label>
-                                                                <select name="categoryId" class="form-select form-select-sm">
-                                                                    @foreach (var cat in categoriesList)
-                                                                    {
-                                                                        if (r.CategoryId == cat.Id)
-                                                                        {
-                                                                            <option value="@cat.Id" selected>@cat.Name</option>
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <option value="@cat.Id">@cat.Name</option>
-                                                                        }
-                                                                    }
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-2 rule-user" style="display:@(r.ScopeType == "Client" ? "block" : "none")">
-                                                                <label class="form-label small mb-0">Клиент</label>
-                                                                <select name="userId" class="form-select form-select-sm">
-                                                                    @foreach (var u in usersList)
-                                                                    {
-                                                                        if (r.UserId == u.Id)
-                                                                        {
-                                                                            <option value="@u.Id" selected>@u.Email</option>
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <option value="@u.Id">@u.Email</option>
-                                                                        }
-                                                                    }
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-2">
-                                                                <label class="form-label small mb-0">Режим</label>
-                                                                <select name="discountMode" class="form-select form-select-sm" data-rule-mode required>
-                                                                    @if (r.DiscountMode == "Percent")
-                                                                    {
-                                                                        <option value="Percent" selected>Процент</option>
-                                                                        <option value="Amount">Фикс. сумма</option>
-                                                                        <option value="Bundle">Две/три по цене одной</option>
-                                                                    }
-                                                                    else if (r.DiscountMode == "Amount")
-                                                                    {
-                                                                        <option value="Percent">Процент</option>
-                                                                        <option value="Amount" selected>Фикс. сумма</option>
-                                                                        <option value="Bundle">Две/три по цене одной</option>
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        <option value="Percent">Процент</option>
-                                                                        <option value="Amount">Фикс. сумма</option>
-                                                                        <option value="Bundle" selected>Две/три по цене одной</option>
-                                                                    }
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-2 rule-val">
-                                                                <label class="form-label small mb-0">Значение</label>
-                                                                <input type="number" name="discountValue" class="form-control form-control-sm" step="0.01" value="@r.DiscountValue.ToString(System.Globalization.CultureInfo.InvariantCulture)" required />
-                                                            </div>
-                                                            <div class="mb-2 rule-min">
-                                                                <label class="form-label small mb-0">Мин. сумма</label>
-                                                                <input type="number" name="minGoodsAmount" class="form-control form-control-sm" step="0.01" value="@(r.MinGoodsAmount?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
-                                                            </div>
-                                                            <div class="mb-2 rule-bundle" style="display:@(r.DiscountMode == "Bundle" ? "block" : "none")">
-                                                                <label class="form-label small mb-0">Купить (штук)</label>
-                                                                <input type="number" name="bundleBuyQty" class="form-control form-control-sm" min="2" step="1" value="@(r.BundleBuyQty?.ToString() ?? "")" />
-                                                            </div>
-                                                            <div class="mb-2 rule-bundle" style="display:@(r.DiscountMode == "Bundle" ? "block" : "none")">
-                                                                <label class="form-label small mb-0">Оплатить (штук)</label>
-                                                                <input type="number" name="bundlePayQty" class="form-control form-control-sm" min="1" step="1" value="@(r.BundlePayQty?.ToString() ?? "")" />
-                                                            </div>
-                                                            <div class="mb-2 rule-warning" style="display:none;">
-                                                                <div class="alert alert-warning py-2 mb-0 small"></div>
-                                                            </div>
-                                                            <div class="mb-2">
-                                                                <label class="form-label small mb-0">Акция</label>
-                                                                <select name="campaignId" class="form-select form-select-sm">
-                                                                    @if (!r.CampaignId.HasValue)
-                                                                    {
-                                                                        <option value="" selected>—</option>
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        <option value="">—</option>
-                                                                    }
-                                                                    @foreach (var camp in Model.Campaigns)
-                                                                    {
-                                                                        if (r.CampaignId == camp.Id)
-                                                                        {
-                                                                            <option value="@camp.Id" selected>@camp.Name</option>
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <option value="@camp.Id">@camp.Name</option>
-                                                                        }
-                                                                    }
-                                                                </select>
-                                                            </div>
-                                                            <div class="form-check mb-2">
-                                                                @if (r.IsActive)
-                                                                {
-                                                                    <input class="form-check-input" type="checkbox" name="isActive" value="true" id="rule_@(r.Id)_a" checked />
-                                                                }
-                                                                else
-                                                                {
-                                                                    <input class="form-check-input" type="checkbox" name="isActive" value="true" id="rule_@(r.Id)_a" />
-                                                                }
-                                                                <label class="form-check-label small" for="rule_@(r.Id)_a">Активно</label>
-                                                            </div>
-                                                            <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
-                                                        </form>
-                                                    </div>
-                                                </details>
-                                                <form asp-action="DeleteDiscountRule" method="post" class="d-inline ms-1" onsubmit="return confirm('Удалить правило #@r.Id?');">
-                                                    <input type="hidden" name="id" value="@r.Id" />
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm p-1" title="Удалить"><i class="fas fa-trash"></i></button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
 <script>
-    document.querySelectorAll('.rule-form-body').forEach(function (body) {
-        var scopeSel = body.querySelector('[data-rule-scope]');
-        var modeSel = body.querySelector('[data-rule-mode]');
-        var prod = body.querySelector('.rule-prod');
-        var cat = body.querySelector('.rule-cat');
-        var usr = body.querySelector('.rule-user');
-        var val = body.querySelector('.rule-val');
-        var min = body.querySelector('.rule-min');
-        var bundle = body.querySelectorAll('.rule-bundle');
-        var warningRow = body.querySelector('.rule-warning');
-        var warningBox = warningRow ? warningRow.querySelector('.alert') : null;
-        var prodSelect = prod ? prod.querySelector('select[name="productId"]') : null;
+    (function () {
+        function setupForm(body) {
+            var typeSel = body.querySelector('[data-disc-type]');
+            var targetGroup = body.querySelector('[data-disc-target]');
+            var warn = body.querySelector('.disc-warning');
 
-        function applyScope() {
-            if (!scopeSel) return;
-            var v = scopeSel.value;
-            if (prod) prod.style.display = v === 'Product' ? '' : 'none';
-            if (cat) cat.style.display = v === 'Category' ? '' : 'none';
-            if (usr) usr.style.display = v === 'Client' ? '' : 'none';
-        }
-
-        function setWarning(text) {
-            if (!warningRow || !warningBox) return;
-            if (!text) {
-                warningRow.style.display = 'none';
-                warningBox.textContent = '';
-                return;
+            function currentKey(sel) {
+                if (!sel) return '';
+                var opt = sel.options[sel.selectedIndex];
+                return opt ? (opt.getAttribute('data-key') || '') : '';
             }
-            warningRow.style.display = '';
-            warningBox.textContent = text;
-        }
 
-        async function refreshProductStatusIfNeeded() {
-            setWarning('');
-            if (!modeSel || !prodSelect || !scopeSel) return;
-            if (modeSel.value !== 'Bundle') return;
-            if (scopeSel.value !== 'Product') return;
-            var pid = parseInt(prodSelect.value || '0', 10);
-            if (!pid) return;
-            try {
-                var resp = await fetch('@Url.Action("GetDiscountProductStatus", "Admin")' + '?productId=' + pid, { headers: { 'Accept': 'application/json' } });
-                var data = await resp.json();
-                if (!resp.ok) return;
-                if (data && data.exists === false) {
-                    setWarning('Товар не найден');
-                    return;
-                }
-                var msg = '';
-                if (data.hasBundle) {
-                    msg += 'У товара уже есть bundle-акция: купить ' + data.bundleBuyQty + ', оплатить ' + data.bundlePayQty + '. ';
-                }
-                if (data.bestPercent && data.bestPercent > 0) {
-                    var src = data.bestPercentSource === 'Product' ? 'по товару' : 'по категории';
-                    msg += 'Сейчас на товар действует скидка ' + data.bestPercent + '% (' + src + ').';
-                }
-                if (msg) setWarning(msg.trim());
-            } catch (e) { }
-        }
+            function apply() {
+                var tKey = currentKey(typeSel);
 
-        function applyMode() {
-            if (!modeSel) return;
-            var isBundle = modeSel.value === 'Bundle';
-            if (val) val.style.display = isBundle ? 'none' : '';
-            if (min) min.style.display = isBundle ? 'none' : '';
-            bundle.forEach(function (x) { x.style.display = isBundle ? '' : 'none'; });
-            if (val) {
-                var inp = val.querySelector('input[name="discountValue"]');
-                if (inp) inp.required = !isBundle;
+                body.querySelectorAll('.disc-field').forEach(function (el) {
+                    var want = (el.getAttribute('data-show-type') || '').split(',').filter(Boolean);
+                    if (want.length === 0 || want.indexOf(tKey) !== -1) el.classList.add('visible');
+                    else                                                el.classList.remove('visible');
+                });
+
+                if (targetGroup) {
+                    if (tKey === 'prod' || tKey === 'cat' || tKey === 'qty')
+                        targetGroup.classList.add('visible');
+                    else
+                        targetGroup.classList.remove('visible');
+                }
+
+                if (warn) {
+                    warn.textContent = (tKey === 'qty')
+                        ? 'Для скидки «Количество» выберите товар ИЛИ категорию — не оба поля.'
+                        : '';
+                }
             }
-            if (isBundle && scopeSel && scopeSel.value !== 'Product') {
-                scopeSel.value = 'Product';
-                applyScope();
-            }
-            refreshProductStatusIfNeeded();
+
+            if (typeSel) typeSel.addEventListener('change', apply);
+            apply();
         }
 
-        if (scopeSel) scopeSel.addEventListener('change', function () { applyScope(); applyMode(); });
-        if (modeSel) modeSel.addEventListener('change', applyMode);
-        if (prodSelect) prodSelect.addEventListener('change', refreshProductStatusIfNeeded);
-
-        applyScope();
-        applyMode();
-    });
+        document.querySelectorAll('.disc-form-body').forEach(setupForm);
+    })();
 </script>

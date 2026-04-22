@@ -1,0 +1,405 @@
+@model HouseholdStore.Models.AdminPromotionsViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using Toolify.ProductService.Models
+
+@{
+    ViewData["Title"] = "Акции";
+    Layout = null;
+    var catList = ViewBag.Categories as SelectList;
+    var prodList = ViewBag.Products as SelectList;
+    var categoriesList = ViewBag.CategoriesList as List<Category> ?? new List<Category>();
+    var productsList = ViewBag.ProductsList as List<Product> ?? new List<Product>();
+
+    // Короткие английские ключи для UI-логики + русские значения, которые уходят в БД.
+    var types = new[] {
+        new { Key = "buy",   Value = PromotionTypes.BuyGetY,      Label = PromotionTypes.BuyGetY },
+        new { Key = "order", Value = PromotionTypes.OrderPercent, Label = PromotionTypes.OrderPercent },
+        new { Key = "ship",  Value = PromotionTypes.FreeShipping, Label = PromotionTypes.FreeShipping },
+        new { Key = "gift",  Value = PromotionTypes.Gift,         Label = PromotionTypes.Gift },
+    };
+    var scopes = new[] {
+        new { Key = "all", Value = PromotionScopes.All,      Label = PromotionScopes.All },
+        new { Key = "cat", Value = PromotionScopes.Category, Label = PromotionScopes.Category },
+        new { Key = "prd", Value = PromotionScopes.Product,  Label = PromotionScopes.Product },
+    };
+
+    string TypeKey(string v) => types.FirstOrDefault(x => x.Value == v)?.Key ?? "buy";
+    string ScopeKey(string v) => scopes.FirstOrDefault(x => x.Value == v)?.Key ?? "all";
+
+    string FormatParams(Promotion p)
+    {
+        switch (p.PromotionType)
+        {
+            case PromotionTypes.BuyGetY:
+                return $"купить {p.BuyQty}, заплатить {p.PayQty}";
+            case PromotionTypes.OrderPercent:
+                var min = p.MinOrderAmount.HasValue ? $" от {p.MinOrderAmount.Value:0.##}" : "";
+                return $"−{p.PercentOff:0.##}% на заказ{min}";
+            case PromotionTypes.FreeShipping:
+                return p.MinOrderAmount.HasValue ? $"бесплатная доставка от {p.MinOrderAmount.Value:0.##}" : "бесплатная доставка";
+            case PromotionTypes.Gift:
+                return $"подарок: {p.GiftDescription}";
+            default:
+                return "";
+        }
+    }
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<style>
+    .promo-form-body .promo-field { display: none; }
+    .promo-form-body .promo-field.visible { display: flex; }
+</style>
+
+<div class="container-fluid py-4 px-3" style="max-width: 1400px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0 fw-bold text-dark">Акции</h2>
+        <div class="d-flex gap-2">
+            <a href="/Admin/Discounts" class="btn btn-outline-primary btn-sm">К скидкам</a>
+            <a href="/Admin/Index" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> Назад в панель</a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+    @if (TempData["Error"]   != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white fw-semibold">Новая акция</div>
+                <div class="card-body">
+                    <form asp-action="AddPromotion" method="post" class="promo-form-body">
+                        <div class="mb-2">
+                            <label class="form-label small mb-0">Название</label>
+                            <input type="text" name="Name" class="form-control form-control-sm" required maxlength="150" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small mb-0">Описание</label>
+                            <input type="text" name="Description" class="form-control form-control-sm" maxlength="500" />
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small mb-0">Тип акции</label>
+                                <select name="PromotionType" class="form-select form-select-sm" data-promo-type required>
+                                    @foreach (var t in types)
+                                    {
+                                        <option value="@t.Value" data-key="@t.Key">@t.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small mb-0">Область</label>
+                                <select name="ScopeType" class="form-select form-select-sm" data-promo-scope required>
+                                    @foreach (var s in scopes)
+                                    {
+                                        <option value="@s.Value" data-key="@s.Key">@s.Label</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-1 promo-field" data-show-scope="cat">
+                            <div class="col-12">
+                                <label class="form-label small mb-0">Категория</label>
+                                <select name="CategoryId" class="form-select form-select-sm" asp-items="catList"></select>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-1 promo-field" data-show-scope="prd">
+                            <div class="col-12">
+                                <label class="form-label small mb-0">Товар</label>
+                                <select name="ProductId" class="form-select form-select-sm" asp-items="prodList"></select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-1 promo-field" data-show-type="buy">
+                            <div class="col-6">
+                                <label class="form-label small mb-0">Купить (штук)</label>
+                                <input type="number" name="BuyQty" class="form-control form-control-sm" min="2" step="1" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small mb-0">Заплатить (штук)</label>
+                                <input type="number" name="PayQty" class="form-control form-control-sm" min="1" step="1" />
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-1 promo-field" data-show-type="order">
+                            <div class="col-6">
+                                <label class="form-label small mb-0">Процент скидки</label>
+                                <input type="number" name="PercentOff" class="form-control form-control-sm" min="0" max="100" step="0.01" />
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-1 promo-field" data-show-type="order,ship">
+                            <div class="col-6">
+                                <label class="form-label small mb-0">Мин. сумма заказа</label>
+                                <input type="number" name="MinOrderAmount" class="form-control form-control-sm" min="0" step="0.01" />
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-1 promo-field" data-show-type="gift">
+                            <div class="col-12">
+                                <label class="form-label small mb-0">Описание подарка</label>
+                                <input type="text" name="GiftDescription" class="form-control form-control-sm" maxlength="500" />
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label small mb-0">Начало</label>
+                                <input type="datetime-local" name="StartDate" class="form-control form-control-sm" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small mb-0">Окончание</label>
+                                <input type="datetime-local" name="EndDate" class="form-control form-control-sm" required />
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-1">
+                            <div class="col-6">
+                                <label class="form-label small mb-0">Приоритет</label>
+                                <input type="number" name="Priority" class="form-control form-control-sm" value="0" />
+                                <div class="form-text">Больше — выше в очереди применения</div>
+                            </div>
+                            <div class="col-6 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked id="newPromoActive" />
+                                    <label class="form-check-label small" for="newPromoActive">Активна</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-sm mt-3">Добавить акцию</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white fw-semibold">Список акций (@Model.Promotions.Count)</div>
+                <div class="card-body p-0">
+                    @if (Model.Promotions.Count == 0)
+                    {
+                        <p class="text-muted small p-3 mb-0">Пока нет акций</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var p in Model.Promotions)
+                            {
+                                string target = p.ScopeType switch
+                                {
+                                    PromotionScopes.Category => p.CategoryName ?? ("#" + p.CategoryId),
+                                    PromotionScopes.Product => p.ProductName ?? ("#" + p.ProductId),
+                                    _ => "весь каталог"
+                                };
+
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div>
+                                            <strong>@p.Name</strong>
+                                            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">@p.PromotionType</span>
+                                            <span class="badge bg-secondary-subtle text-secondary-emphasis">@p.ScopeType: @target</span>
+                                            @if (!p.IsActive) { <span class="badge bg-secondary">выкл.</span> }
+                                            <div class="small text-muted mt-1">@FormatParams(p)</div>
+                                            @if (!string.IsNullOrEmpty(p.Description))
+                                            {
+                                                <div class="small text-muted mt-1">@p.Description</div>
+                                            }
+                                            <div class="small text-muted mt-1">
+                                                @p.StartDate.ToString("dd.MM.yyyy HH:mm") — @p.EndDate.ToString("dd.MM.yyyy HH:mm")
+                                                · приоритет @p.Priority
+                                            </div>
+                                        </div>
+                                        <form asp-action="DeletePromotion" method="post" class="flex-shrink-0"
+                                              onsubmit="return confirm('Удалить акцию «@p.Name»?');">
+                                            <input type="hidden" name="id" value="@p.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Удалить"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+
+                                    <details class="mt-2">
+                                        <summary class="small text-primary" style="cursor:pointer;">Изменить</summary>
+                                        <form asp-action="UpdatePromotion" method="post" class="border rounded p-2 mt-2 bg-light promo-form-body">
+                                            <input type="hidden" name="Id" value="@p.Id" />
+                                            <div class="mb-2">
+                                                <label class="form-label small mb-0">Название</label>
+                                                <input type="text" name="Name" class="form-control form-control-sm" value="@p.Name" required maxlength="150" />
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small mb-0">Описание</label>
+                                                <input type="text" name="Description" class="form-control form-control-sm" value="@p.Description" maxlength="500" />
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small mb-0">Тип</label>
+                                                    <select name="PromotionType" class="form-select form-select-sm" data-promo-type required>
+                                                        @foreach (var t in types)
+                                                        {
+                                                            if (t.Value == p.PromotionType)
+                                                            { <option value="@t.Value" data-key="@t.Key" selected>@t.Label</option> }
+                                                            else
+                                                            { <option value="@t.Value" data-key="@t.Key">@t.Label</option> }
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small mb-0">Область</label>
+                                                    <select name="ScopeType" class="form-select form-select-sm" data-promo-scope required>
+                                                        @foreach (var s in scopes)
+                                                        {
+                                                            if (s.Value == p.ScopeType)
+                                                            { <option value="@s.Value" data-key="@s.Key" selected>@s.Label</option> }
+                                                            else
+                                                            { <option value="@s.Value" data-key="@s.Key">@s.Label</option> }
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-2 mt-1 promo-field" data-show-scope="cat">
+                                                <div class="col-12">
+                                                    <label class="form-label small mb-0">Категория</label>
+                                                    <select name="CategoryId" class="form-select form-select-sm">
+                                                        @foreach (var c in categoriesList)
+                                                        {
+                                                            if (p.CategoryId == c.Id)
+                                                            { <option value="@c.Id" selected>@c.Name</option> }
+                                                            else
+                                                            { <option value="@c.Id">@c.Name</option> }
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row g-2 mt-1 promo-field" data-show-scope="prd">
+                                                <div class="col-12">
+                                                    <label class="form-label small mb-0">Товар</label>
+                                                    <select name="ProductId" class="form-select form-select-sm">
+                                                        @foreach (var pr in productsList)
+                                                        {
+                                                            if (p.ProductId == pr.Id)
+                                                            { <option value="@pr.Id" selected>@pr.Name</option> }
+                                                            else
+                                                            { <option value="@pr.Id">@pr.Name</option> }
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-2 mt-1 promo-field" data-show-type="buy">
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-0">Купить (штук)</label>
+                                                    <input type="number" name="BuyQty" class="form-control form-control-sm" min="2" step="1" value="@(p.BuyQty?.ToString() ?? "")" />
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-0">Заплатить (штук)</label>
+                                                    <input type="number" name="PayQty" class="form-control form-control-sm" min="1" step="1" value="@(p.PayQty?.ToString() ?? "")" />
+                                                </div>
+                                            </div>
+                                            <div class="row g-2 mt-1 promo-field" data-show-type="order">
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-0">Процент</label>
+                                                    <input type="number" name="PercentOff" class="form-control form-control-sm" min="0" max="100" step="0.01" value="@(p.PercentOff?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+                                                </div>
+                                            </div>
+                                            <div class="row g-2 mt-1 promo-field" data-show-type="order,ship">
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-0">Мин. сумма</label>
+                                                    <input type="number" name="MinOrderAmount" class="form-control form-control-sm" min="0" step="0.01" value="@(p.MinOrderAmount?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+                                                </div>
+                                            </div>
+                                            <div class="row g-2 mt-1 promo-field" data-show-type="gift">
+                                                <div class="col-12">
+                                                    <label class="form-label small mb-0">Описание подарка</label>
+                                                    <input type="text" name="GiftDescription" class="form-control form-control-sm" value="@p.GiftDescription" maxlength="500" />
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-2 mt-1">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small mb-0">Начало</label>
+                                                    <input type="datetime-local" name="StartDate" class="form-control form-control-sm" value="@p.StartDate.ToString("yyyy-MM-ddTHH:mm")" required />
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small mb-0">Окончание</label>
+                                                    <input type="datetime-local" name="EndDate" class="form-control form-control-sm" value="@p.EndDate.ToString("yyyy-MM-ddTHH:mm")" required />
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-2 mt-1">
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-0">Приоритет</label>
+                                                    <input type="number" name="Priority" class="form-control form-control-sm" value="@p.Priority" />
+                                                </div>
+                                                <div class="col-6 d-flex align-items-end">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="promo_@(p.Id)_active" @(p.IsActive ? "checked" : null) />
+                                                        <label class="form-check-label small" for="promo_@(p.Id)_active">Активна</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-primary btn-sm mt-2">Сохранить</button>
+                                        </form>
+                                    </details>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        function setupForm(body) {
+            var typeSel  = body.querySelector('[data-promo-type]');
+            var scopeSel = body.querySelector('[data-promo-scope]');
+
+            function currentKey(sel) {
+                if (!sel) return '';
+                var opt = sel.options[sel.selectedIndex];
+                return opt ? (opt.getAttribute('data-key') || '') : '';
+            }
+
+            function apply() {
+                var tKey = currentKey(typeSel);
+                var sKey = currentKey(scopeSel);
+
+                // «Купи-получи» требует категорию или товар — если выбрано «Все», переключаем на «Товар».
+                if (tKey === 'buy' && sKey === 'all' && scopeSel) {
+                    for (var i = 0; i < scopeSel.options.length; i++) {
+                        if (scopeSel.options[i].getAttribute('data-key') === 'prd') {
+                            scopeSel.selectedIndex = i;
+                            sKey = 'prd';
+                            break;
+                        }
+                    }
+                }
+
+                body.querySelectorAll('.promo-field').forEach(function (el) {
+                    var wantType  = (el.getAttribute('data-show-type')  || '').split(',').filter(Boolean);
+                    var wantScope = (el.getAttribute('data-show-scope') || '').split(',').filter(Boolean);
+
+                    var ok = true;
+                    if (wantType.length  && wantType.indexOf(tKey)  === -1) ok = false;
+                    if (wantScope.length && wantScope.indexOf(sKey) === -1) ok = false;
+
+                    if (ok) el.classList.add('visible');
+                    else    el.classList.remove('visible');
+                });
+            }
+
+            if (typeSel)  typeSel.addEventListener('change', apply);
+            if (scopeSel) scopeSel.addEventListener('change', apply);
+            apply();
+        }
+
+        document.querySelectorAll('.promo-form-body').forEach(setupForm);
+    })();
+</script>

@@ -250,25 +250,22 @@ namespace Toolify.ProductService.Data
 
             if (raw.Count == 0) return new List<CartItem>();
 
-            var categoryByProduct = await GetCategoryIdsByProductIdsAsync(raw.Select(r => r.ProductId).Distinct().ToList());
-            var rules = await GetDiscountRulesAsync();
-            var campaigns = await GetDiscountCampaignsAsync();
+            var briefByProduct = await GetProductsBriefAsync(raw.Select(r => r.ProductId).Distinct().ToList());
             var now = DateTime.Now;
-            var clientPct = ResolveBestClientPercent(userId, rules, campaigns, now);
 
             var items = new List<CartItem>();
             foreach (var row in raw)
             {
-                categoryByProduct.TryGetValue(row.ProductId, out var categoryId);
-                var prodPct = ResolveBestProductPercent(row.ProductId, rules, campaigns, now);
-                var catPct = ResolveBestCategoryPercent(categoryId, rules, campaigns, now);
-                var stackPct = Math.Max(prodPct, Math.Max(catPct, clientPct));
-                var percentTotal = row.ListPrice * row.Quantity * (1 - stackPct / 100m);
+                briefByProduct.TryGetValue(row.ProductId, out var brief);
+                var categoryId = brief?.CategoryId ?? 0;
 
-                var bundle = ResolveBestProductBundle(row.ProductId, rules, campaigns, now);
-                var bundleTotal = bundle == null
-                    ? decimal.MaxValue
-                    : CalcBundleTotal(row.ListPrice, row.Quantity, bundle.BuyQty, bundle.PayQty);
+                var (bestPct, buyQty, payQty, _) =
+                    await GetBestLineDiscountAsync(row.ProductId, categoryId, row.Quantity, now);
+
+                var percentTotal = row.ListPrice * row.Quantity * (1 - bestPct / 100m);
+                var bundleTotal = (buyQty.HasValue && payQty.HasValue)
+                    ? CalcBundleTotal(row.ListPrice, row.Quantity, buyQty.Value, payQty.Value)
+                    : decimal.MaxValue;
 
                 var bestTotal = Math.Min(percentTotal, bundleTotal);
                 var finalUnit = Math.Round(bestTotal / row.Quantity, 2, MidpointRounding.AwayFromZero);
@@ -291,8 +288,6 @@ namespace Toolify.ProductService.Data
             return items;
         }
 
-        private sealed record BundleSpec(int BuyQty, int PayQty, int Priority, int RuleId);
-
         private static decimal CalcBundleTotal(decimal unitPrice, int qty, int buyQty, int payQty)
         {
             if (qty <= 0) return 0;
@@ -303,113 +298,86 @@ namespace Toolify.ProductService.Data
             return unitPrice * payable;
         }
 
-        private async Task<Dictionary<int, int>> GetCategoryIdsByProductIdsAsync(List<int> productIds)
+        private sealed record ProductBrief(int Id, int CategoryId, string Name, decimal Price);
+
+        private async Task<Dictionary<int, ProductBrief>> GetProductsBriefAsync(List<int> productIds)
         {
-            var dict = new Dictionary<int, int>();
+            var dict = new Dictionary<int, ProductBrief>();
             if (productIds == null || productIds.Count == 0) return dict;
-            var distinct = productIds.Distinct().ToList();
+
+            var table = new DataTable();
+            table.Columns.Add("Id", typeof(int));
+            foreach (var id in productIds.Distinct()) table.Rows.Add(id);
+
             using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetProductsBriefByIds", connection)
+            { CommandType = CommandType.StoredProcedure };
+            var param = command.Parameters.AddWithValue("@Ids", table);
+            param.SqlDbType = SqlDbType.Structured;
+            param.TypeName = "dbo.IntIdTableType";
+
             await connection.OpenAsync();
-            var idList = string.Join(",", distinct);
-            using var cmd = new SqlCommand($"SELECT Id, CategoryId FROM dbo.Products WHERE Id IN ({idList})", connection);
-            using var reader = await cmd.ExecuteReaderAsync();
+            using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
-                dict[reader.GetInt32(0)] = reader.GetInt32(1);
+            {
+                var b = new ProductBrief(
+                    reader.GetInt32(reader.GetOrdinal("Id")),
+                    reader.GetInt32(reader.GetOrdinal("CategoryId")),
+                    reader.GetString(reader.GetOrdinal("Name")),
+                    reader.GetDecimal(reader.GetOrdinal("Price"))
+                );
+                dict[b.Id] = b;
+            }
             return dict;
         }
 
-        private static decimal ResolveBestCategoryPercent(int categoryId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
+        private async Task<ProductBrief?> GetProductBriefAsync(int id)
         {
-            bool IsCampaignActive(DiscountCampaign dc) =>
-                dc.IsActive && now >= dc.StartDate && now <= dc.EndDate;
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetProductBrief", connection)
+            { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@Id", id);
 
-            var candidates = new List<(decimal val, int prio, int rid)>();
-            foreach (var r in rules)
-            {
-                if (!r.IsActive || r.ScopeType != "Category" || r.DiscountMode != "Percent" || r.CategoryId != categoryId)
-                    continue;
-                if (r.CampaignId.HasValue)
-                {
-                    var dc = campaigns.FirstOrDefault(c => c.Id == r.CampaignId.Value);
-                    if (dc == null || !IsCampaignActive(dc)) continue;
-                    candidates.Add((r.DiscountValue, dc.Priority, r.Id));
-                }
-                else
-                    candidates.Add((r.DiscountValue, 0, r.Id));
-            }
-            if (candidates.Count == 0) return 0;
-            return candidates.OrderByDescending(x => x.prio).ThenByDescending(x => x.rid).First().val;
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) return null;
+            return new ProductBrief(
+                reader.GetInt32(reader.GetOrdinal("Id")),
+                reader.GetInt32(reader.GetOrdinal("CategoryId")),
+                reader.GetString(reader.GetOrdinal("Name")),
+                reader.GetDecimal(reader.GetOrdinal("Price"))
+            );
         }
 
-        private static decimal ResolveBestProductPercent(int productId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
+        private async Task<(decimal bestPercent, int? buyQty, int? payQty, int priority)>
+            GetBestLineDiscountAsync(int productId, int categoryId, int quantity, DateTime now)
         {
-            bool IsCampaignActive(DiscountCampaign dc) =>
-                dc.IsActive && now >= dc.StartDate && now <= dc.EndDate;
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetBestLineDiscount", connection)
+            { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@ProductId", productId);
+            command.Parameters.AddWithValue("@CategoryId", categoryId <= 0 ? (object)DBNull.Value : categoryId);
+            command.Parameters.AddWithValue("@Quantity", quantity);
+            command.Parameters.AddWithValue("@Now", now);
 
-            var candidates = new List<(decimal val, int prio, int rid)>();
-            foreach (var r in rules)
-            {
-                if (!r.IsActive || r.ScopeType != "Product" || r.DiscountMode != "Percent" || r.ProductId != productId)
-                    continue;
-                if (r.CampaignId.HasValue)
-                {
-                    var dc = campaigns.FirstOrDefault(c => c.Id == r.CampaignId.Value);
-                    if (dc == null || !IsCampaignActive(dc)) continue;
-                    candidates.Add((r.DiscountValue, dc.Priority, r.Id));
-                }
-                else
-                    candidates.Add((r.DiscountValue, 0, r.Id));
-            }
-            if (candidates.Count == 0) return 0;
-            return candidates.OrderByDescending(x => x.prio).ThenByDescending(x => x.rid).First().val;
-        }
+            var pctOut = new SqlParameter("@BestPercent", SqlDbType.Decimal)
+            { Precision = 18, Scale = 4, Direction = ParameterDirection.Output };
+            var buyOut = new SqlParameter("@BuyQty", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var payOut = new SqlParameter("@PayQty", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var prioOut = new SqlParameter("@PromotionPriority", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            command.Parameters.Add(pctOut);
+            command.Parameters.Add(buyOut);
+            command.Parameters.Add(payOut);
+            command.Parameters.Add(prioOut);
 
-        private static BundleSpec? ResolveBestProductBundle(int productId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
-        {
-            bool IsCampaignActive(DiscountCampaign dc) =>
-                dc.IsActive && now >= dc.StartDate && now <= dc.EndDate;
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
 
-            var candidates = new List<BundleSpec>();
-            foreach (var r in rules)
-            {
-                if (!r.IsActive || r.ScopeType != "Product" || r.DiscountMode != "Bundle" || r.ProductId != productId)
-                    continue;
-                if (!r.BundleBuyQty.HasValue || !r.BundlePayQty.HasValue) continue;
-                var prio = 0;
-                if (r.CampaignId.HasValue)
-                {
-                    var dc = campaigns.FirstOrDefault(c => c.Id == r.CampaignId.Value);
-                    if (dc == null || !IsCampaignActive(dc)) continue;
-                    prio = dc.Priority;
-                }
-                candidates.Add(new BundleSpec(r.BundleBuyQty.Value, r.BundlePayQty.Value, prio, r.Id));
-            }
-            if (candidates.Count == 0) return null;
-            return candidates.OrderByDescending(x => x.Priority).ThenByDescending(x => x.RuleId).First();
-        }
-
-        private static decimal ResolveBestClientPercent(int? userId, List<DiscountRule> rules, List<DiscountCampaign> campaigns, DateTime now)
-        {
-            if (!userId.HasValue) return 0;
-            bool IsCampaignActive(DiscountCampaign dc) =>
-                dc.IsActive && now >= dc.StartDate && now <= dc.EndDate;
-
-            var candidates = new List<(decimal val, int prio, int rid)>();
-            foreach (var r in rules)
-            {
-                if (!r.IsActive || r.ScopeType != "Client" || r.DiscountMode != "Percent" || r.UserId != userId.Value)
-                    continue;
-                if (r.CampaignId.HasValue)
-                {
-                    var dc = campaigns.FirstOrDefault(c => c.Id == r.CampaignId.Value);
-                    if (dc == null || !IsCampaignActive(dc)) continue;
-                    candidates.Add((r.DiscountValue, dc.Priority, r.Id));
-                }
-                else
-                    candidates.Add((r.DiscountValue, 0, r.Id));
-            }
-            if (candidates.Count == 0) return 0;
-            return candidates.OrderByDescending(x => x.prio).ThenByDescending(x => x.rid).First().val;
+            decimal pct = pctOut.Value is decimal dv ? dv : 0m;
+            int? bq = buyOut.Value is int bqv ? bqv : (int?)null;
+            int? py = payOut.Value is int pyv ? pyv : (int?)null;
+            int prio = prioOut.Value is int prv ? prv : 0;
+            return (pct, bq, py, prio);
         }
 
         public async Task RemoveFromCartAsync(int productId, int? userId, string? guestId)
@@ -1037,166 +1005,180 @@ namespace Toolify.ProductService.Data
             return Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
         }
 
-        public async Task<List<DiscountCampaign>> GetDiscountCampaignsAsync()
+
+        public async Task<List<Promotion>> GetPromotionsAsync()
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_GetDiscountCampaigns", connection) { CommandType = CommandType.StoredProcedure };
+            using var command = new SqlCommand("sp_GetPromotions", connection)
+            { CommandType = CommandType.StoredProcedure };
             await connection.OpenAsync();
-            var list = new List<DiscountCampaign>();
+
+            var list = new List<Promotion>();
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                list.Add(new DiscountCampaign
+                list.Add(new Promotion
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     Name = reader.GetString(reader.GetOrdinal("Name")),
-                    Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+                    Description = TryGetNullableString(reader, "Description"),
+                    PromotionType = reader.GetString(reader.GetOrdinal("PromotionType")),
+                    ScopeType = reader.GetString(reader.GetOrdinal("ScopeType")),
+                    CategoryId = TryGetNullableInt32(reader, "CategoryId"),
+                    CategoryName = TryGetNullableString(reader, "CategoryName"),
+                    ProductId = TryGetNullableInt32(reader, "ProductId"),
+                    ProductName = TryGetNullableString(reader, "ProductName"),
+                    BuyQty = TryGetNullableInt32(reader, "BuyQty"),
+                    PayQty = TryGetNullableInt32(reader, "PayQty"),
+                    PercentOff = TryGetNullableDecimal(reader, "PercentOff"),
+                    MinOrderAmount = TryGetNullableDecimal(reader, "MinOrderAmount"),
+                    GiftDescription = TryGetNullableString(reader, "GiftDescription"),
                     StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
                     EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                     Priority = reader.GetInt32(reader.GetOrdinal("Priority")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
                 });
             }
             return list;
         }
 
-        public async Task<int> AddDiscountCampaignAsync(string name, string? description, DateTime startDate, DateTime endDate, bool isActive, int priority)
+        public async Task<int> AddPromotionAsync(Promotion p)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_AddDiscountCampaign", connection) { CommandType = CommandType.StoredProcedure };
-            command.Parameters.AddWithValue("@Name", name);
-            command.Parameters.AddWithValue("@Description", (object?)description ?? DBNull.Value);
-            command.Parameters.AddWithValue("@StartDate", startDate);
-            command.Parameters.AddWithValue("@EndDate", endDate);
-            command.Parameters.AddWithValue("@IsActive", isActive);
-            command.Parameters.AddWithValue("@Priority", priority);
+            using var command = new SqlCommand("sp_AddPromotion", connection)
+            { CommandType = CommandType.StoredProcedure };
+            FillPromotionParams(command, p, includeId: false);
             await connection.OpenAsync();
             var scalar = await command.ExecuteScalarAsync();
             return Convert.ToInt32(scalar);
         }
 
-        public async Task UpdateDiscountCampaignAsync(int id, string name, string? description, DateTime startDate, DateTime endDate, bool isActive, int priority)
+        public async Task UpdatePromotionAsync(Promotion p)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_UpdateDiscountCampaign", connection) { CommandType = CommandType.StoredProcedure };
-            command.Parameters.AddWithValue("@Id", id);
-            command.Parameters.AddWithValue("@Name", name);
-            command.Parameters.AddWithValue("@Description", (object?)description ?? DBNull.Value);
-            command.Parameters.AddWithValue("@StartDate", startDate);
-            command.Parameters.AddWithValue("@EndDate", endDate);
-            command.Parameters.AddWithValue("@IsActive", isActive);
-            command.Parameters.AddWithValue("@Priority", priority);
+            using var command = new SqlCommand("sp_UpdatePromotion", connection)
+            { CommandType = CommandType.StoredProcedure };
+            FillPromotionParams(command, p, includeId: true);
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
         }
 
-        public async Task DeleteDiscountCampaignAsync(int id)
+        public async Task DeletePromotionAsync(int id)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_DeleteDiscountCampaign", connection) { CommandType = CommandType.StoredProcedure };
+            using var command = new SqlCommand("sp_DeletePromotion", connection)
+            { CommandType = CommandType.StoredProcedure };
             command.Parameters.AddWithValue("@Id", id);
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
         }
 
-        public async Task<List<DiscountRule>> GetDiscountRulesAsync()
+        private static void FillPromotionParams(SqlCommand cmd, Promotion p, bool includeId)
+        {
+            if (includeId) cmd.Parameters.AddWithValue("@Id", p.Id);
+            cmd.Parameters.AddWithValue("@Name", p.Name);
+            cmd.Parameters.AddWithValue("@Description", (object?)p.Description ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@PromotionType", p.PromotionType);
+            cmd.Parameters.AddWithValue("@ScopeType", p.ScopeType);
+            cmd.Parameters.AddWithValue("@CategoryId", (object?)p.CategoryId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@ProductId", (object?)p.ProductId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@BuyQty", (object?)p.BuyQty ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@PayQty", (object?)p.PayQty ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@PercentOff", (object?)p.PercentOff ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@MinOrderAmount", (object?)p.MinOrderAmount ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@GiftDescription", (object?)p.GiftDescription ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@StartDate", p.StartDate);
+            cmd.Parameters.AddWithValue("@EndDate", p.EndDate);
+            cmd.Parameters.AddWithValue("@Priority", p.Priority);
+            cmd.Parameters.AddWithValue("@IsActive", p.IsActive);
+        }
+
+
+        public async Task<List<Discount>> GetDiscountsAsync()
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_GetDiscountRules", connection) { CommandType = CommandType.StoredProcedure };
+            using var command = new SqlCommand("sp_GetDiscounts", connection)
+            { CommandType = CommandType.StoredProcedure };
             await connection.OpenAsync();
-            var list = new List<DiscountRule>();
+
+            var list = new List<Discount>();
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                list.Add(new DiscountRule
+                list.Add(new Discount
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                    CampaignId = TryGetNullableInt32(reader, "CampaignId"),
-                    ScopeType = reader.GetString(reader.GetOrdinal("ScopeType")),
-                    ProductId = TryGetNullableInt32(reader, "ProductId"),
+                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    DiscountType = reader.GetString(reader.GetOrdinal("DiscountType")),
+                    ValueKind = reader.GetString(reader.GetOrdinal("ValueKind")),
+                    Value = reader.GetDecimal(reader.GetOrdinal("Value")),
                     CategoryId = TryGetNullableInt32(reader, "CategoryId"),
-                    UserId = TryGetNullableInt32(reader, "UserId"),
-                    DiscountMode = reader.GetString(reader.GetOrdinal("DiscountMode")),
-                    DiscountValue = reader.GetDecimal(reader.GetOrdinal("DiscountValue")),
-                    MinGoodsAmount = TryGetNullableDecimal(reader, "MinGoodsAmount"),
-                    BundleBuyQty = TryGetNullableInt32(reader, "BundleBuyQty"),
-                    BundlePayQty = TryGetNullableInt32(reader, "BundlePayQty"),
-                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     CategoryName = TryGetNullableString(reader, "CategoryName"),
+                    ProductId = TryGetNullableInt32(reader, "ProductId"),
                     ProductName = TryGetNullableString(reader, "ProductName"),
-                    CampaignName = TryGetNullableString(reader, "CampaignName")
+                    MinQuantity = TryGetNullableInt32(reader, "MinQuantity"),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
                 });
             }
             return list;
         }
 
-        public async Task<int> AddDiscountRuleAsync(int? campaignId, string scopeType, int? productId, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, int? bundleBuyQty, int? bundlePayQty, bool isActive)
+        public async Task<int> AddDiscountAsync(Discount d)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_AddDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
-            command.Parameters.AddWithValue("@CampaignId", (object?)campaignId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@ScopeType", scopeType);
-            command.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@DiscountMode", discountMode);
-            command.Parameters.AddWithValue("@DiscountValue", discountValue);
-            command.Parameters.AddWithValue("@MinGoodsAmount", (object?)minGoodsAmount ?? DBNull.Value);
-            command.Parameters.AddWithValue("@BundleBuyQty", (object?)bundleBuyQty ?? DBNull.Value);
-            command.Parameters.AddWithValue("@BundlePayQty", (object?)bundlePayQty ?? DBNull.Value);
-            command.Parameters.AddWithValue("@IsActive", isActive);
+            using var command = new SqlCommand("sp_AddDiscount", connection)
+            { CommandType = CommandType.StoredProcedure };
+            FillDiscountParams(command, d, includeId: false);
             await connection.OpenAsync();
             var scalar = await command.ExecuteScalarAsync();
             return Convert.ToInt32(scalar);
         }
 
-        public async Task UpdateDiscountRuleAsync(int id, int? campaignId, string scopeType, int? productId, int? categoryId, int? userId, string discountMode, decimal discountValue, decimal? minGoodsAmount, int? bundleBuyQty, int? bundlePayQty, bool isActive)
+        public async Task UpdateDiscountAsync(Discount d)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_UpdateDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
-            command.Parameters.AddWithValue("@Id", id);
-            command.Parameters.AddWithValue("@CampaignId", (object?)campaignId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@ScopeType", scopeType);
-            command.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@CategoryId", (object?)categoryId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@DiscountMode", discountMode);
-            command.Parameters.AddWithValue("@DiscountValue", discountValue);
-            command.Parameters.AddWithValue("@MinGoodsAmount", (object?)minGoodsAmount ?? DBNull.Value);
-            command.Parameters.AddWithValue("@BundleBuyQty", (object?)bundleBuyQty ?? DBNull.Value);
-            command.Parameters.AddWithValue("@BundlePayQty", (object?)bundlePayQty ?? DBNull.Value);
-            command.Parameters.AddWithValue("@IsActive", isActive);
+            using var command = new SqlCommand("sp_UpdateDiscount", connection)
+            { CommandType = CommandType.StoredProcedure };
+            FillDiscountParams(command, d, includeId: true);
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
         }
 
-        public async Task DeleteDiscountRuleAsync(int id)
+        public async Task DeleteDiscountAsync(int id)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_DeleteDiscountRule", connection) { CommandType = CommandType.StoredProcedure };
+            using var command = new SqlCommand("sp_DeleteDiscount", connection)
+            { CommandType = CommandType.StoredProcedure };
             command.Parameters.AddWithValue("@Id", id);
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
+        }
+
+        private static void FillDiscountParams(SqlCommand cmd, Discount d, bool includeId)
+        {
+            if (includeId) cmd.Parameters.AddWithValue("@Id", d.Id);
+            cmd.Parameters.AddWithValue("@Name", d.Name);
+            cmd.Parameters.AddWithValue("@DiscountType", d.DiscountType);
+            cmd.Parameters.AddWithValue("@ValueKind", d.ValueKind);
+            cmd.Parameters.AddWithValue("@Value", d.Value);
+            cmd.Parameters.AddWithValue("@CategoryId", (object?)d.CategoryId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@ProductId", (object?)d.ProductId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@MinQuantity", (object?)d.MinQuantity ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IsActive", d.IsActive);
         }
 
         public async Task ApplyCatalogDisplayPricesAsync(IList<Product> products, int? userId)
         {
             if (products == null || products.Count == 0) return;
 
-            var rules = await GetDiscountRulesAsync();
-            var campaigns = await GetDiscountCampaignsAsync();
             var now = DateTime.Now;
-
-            var clientPct = ResolveBestClientPercent(userId, rules, campaigns, now);
-
             foreach (var p in products)
             {
-                var prodPct = ResolveBestProductPercent(p.Id, rules, campaigns, now);
-                var catPct = ResolveBestCategoryPercent(p.CategoryId, rules, campaigns, now);
-                var stackPct = Math.Max(prodPct, Math.Max(catPct, clientPct));
-                var final = p.Price * (1 - stackPct / 100m);
+                var (pct, _, _, _) = await GetBestLineDiscountAsync(p.Id, p.CategoryId, 1, now);
+
+                var final = p.Price * (1 - pct / 100m);
                 final = Math.Round(final, 2, MidpointRounding.AwayFromZero);
 
                 p.CatalogSalePrice = final;
@@ -1217,47 +1199,26 @@ namespace Toolify.ProductService.Data
             }
         }
 
+
         public async Task<object> GetDiscountStatusForProductAsync(int productId)
         {
-            var rules = await GetDiscountRulesAsync();
-            var campaigns = await GetDiscountCampaignsAsync();
+            var brief = await GetProductBriefAsync(productId);
+            if (brief == null) return new { productId, exists = false };
+
             var now = DateTime.Now;
-
-            int categoryId;
-            string? productName;
-            using (var connection = _factory.CreateConnection())
-            {
-                await connection.OpenAsync();
-                using var cmd = new SqlCommand("SELECT TOP 1 Name, CategoryId FROM dbo.Products WHERE Id=@Id", connection);
-                cmd.Parameters.AddWithValue("@Id", productId);
-                using var reader = await cmd.ExecuteReaderAsync();
-                if (!await reader.ReadAsync())
-                    return new { productId, exists = false };
-                productName = reader.IsDBNull(0) ? null : reader.GetString(0);
-                categoryId = reader.GetInt32(1);
-            }
-
-            var prodPct = ResolveBestProductPercent(productId, rules, campaigns, now);
-            var catPct = ResolveBestCategoryPercent(categoryId, rules, campaigns, now);
-            var bestPct = Math.Max(prodPct, catPct);
-
-            var bundle = ResolveBestProductBundle(productId, rules, campaigns, now);
-
-            var source = bestPct <= 0
-                ? null
-                : (prodPct >= catPct ? "Product" : "Category");
+            var (pct, buyQty, payQty, _) = await GetBestLineDiscountAsync(
+                brief.Id, brief.CategoryId, 1, now);
 
             return new
             {
                 productId,
                 exists = true,
-                productName,
-                categoryId,
-                bestPercent = bestPct,
-                bestPercentSource = source,
-                hasBundle = bundle != null,
-                bundleBuyQty = bundle?.BuyQty,
-                bundlePayQty = bundle?.PayQty
+                productName = brief.Name,
+                categoryId = brief.CategoryId,
+                bestPercent = pct,
+                hasBundle = buyQty.HasValue && payQty.HasValue,
+                bundleBuyQty = buyQty,
+                bundlePayQty = payQty
             };
         }
 

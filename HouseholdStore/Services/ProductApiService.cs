@@ -258,93 +258,56 @@ namespace HouseholdStore.Services
             return data.GetProperty("isFavourite").GetBoolean();
         }
 
-        public async Task<List<DiscountCampaign>> GetDiscountCampaignsAsync()
+        public async Task<List<Promotion>> GetPromotionsAsync()
         {
-            var response = await _http.GetAsync("/api/admin/discounts/campaigns");
-            if (!response.IsSuccessStatusCode) return new List<DiscountCampaign>();
-            return await response.Content.ReadFromJsonAsync<List<DiscountCampaign>>(jsonOptions)
-                   ?? new List<DiscountCampaign>();
+            var response = await _http.GetAsync("/api/admin/promotions");
+            if (!response.IsSuccessStatusCode) return new List<Promotion>();
+            return await response.Content.ReadFromJsonAsync<List<Promotion>>(jsonOptions)
+                   ?? new List<Promotion>();
         }
 
-        public async Task<List<DiscountRule>> GetDiscountRulesAsync()
-        {
-            var response = await _http.GetAsync("/api/admin/discounts/rules");
-            if (!response.IsSuccessStatusCode) return new List<DiscountRule>();
-            return await response.Content.ReadFromJsonAsync<List<DiscountRule>>(jsonOptions)
-                   ?? new List<DiscountRule>();
-        }
-
-        public async Task<(bool ok, string? error)> UpsertDiscountCampaignAsync(bool isUpdate, DiscountCampaign campaign)
+        public async Task<(bool ok, string? error)> UpsertPromotionAsync(bool isUpdate, Promotion p)
         {
             var body = JsonSerializer.Serialize(new
             {
-                campaign.Name,
-                campaign.Description,
-                campaign.StartDate,
-                campaign.EndDate,
-                campaign.IsActive,
-                campaign.Priority
+                p.Name,
+                p.Description,
+                p.PromotionType,
+                p.ScopeType,
+                p.CategoryId,
+                p.ProductId,
+                p.BuyQty,
+                p.PayQty,
+                p.PercentOff,
+                p.MinOrderAmount,
+                p.GiftDescription,
+                p.StartDate,
+                p.EndDate,
+                p.Priority,
+                p.IsActive
             });
-            HttpResponseMessage response;
-            if (isUpdate)
-            {
-                response = await _http.PutAsync(
-                    $"/api/admin/discounts/campaigns/{campaign.Id}",
-                    new StringContent(body, Encoding.UTF8, "application/json"));
-            }
-            else
-            {
-                response = await _http.PostAsync(
-                    "/api/admin/discounts/campaigns",
-                    new StringContent(body, Encoding.UTF8, "application/json"));
-            }
-            if (response.IsSuccessStatusCode) return (true, null);
-            return (false, await response.Content.ReadAsStringAsync());
+
+            var content = new StringContent(body, Encoding.UTF8, "application/json");
+            var response = isUpdate
+                ? await _http.PutAsync($"/api/admin/promotions/{p.Id}", content)
+                : await _http.PostAsync("/api/admin/promotions", content);
+
+            return response.IsSuccessStatusCode
+                ? (true, null)
+                : (false, await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<(bool ok, string? error)> DeleteDiscountCampaignAsync(int id)
+        public async Task<(bool ok, string? error)> DeletePromotionAsync(int id)
         {
-            var response = await _http.DeleteAsync($"/api/admin/discounts/campaigns/{id}");
-            if (response.IsSuccessStatusCode) return (true, null);
-            return (false, await response.Content.ReadAsStringAsync());
+            var response = await _http.DeleteAsync($"/api/admin/promotions/{id}");
+            return response.IsSuccessStatusCode
+                ? (true, null)
+                : (false, await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<(bool ok, string? error)> UpsertDiscountRuleAsync(bool isUpdate, DiscountRule rule)
+        public async Task<JsonElement> GetPromotionProductStatusAsync(int productId)
         {
-            var body = JsonSerializer.Serialize(new
-            {
-                rule.CampaignId,
-                ScopeType = rule.ScopeType,
-                rule.ProductId,
-                rule.CategoryId,
-                rule.UserId,
-                DiscountMode = rule.DiscountMode,
-                rule.DiscountValue,
-                rule.MinGoodsAmount,
-                rule.BundleBuyQty,
-                rule.BundlePayQty,
-                rule.IsActive
-            });
-            HttpResponseMessage response;
-            if (isUpdate)
-            {
-                response = await _http.PutAsync(
-                    $"/api/admin/discounts/rules/{rule.Id}",
-                    new StringContent(body, Encoding.UTF8, "application/json"));
-            }
-            else
-            {
-                response = await _http.PostAsync(
-                    "/api/admin/discounts/rules",
-                    new StringContent(body, Encoding.UTF8, "application/json"));
-            }
-            if (response.IsSuccessStatusCode) return (true, null);
-            return (false, await response.Content.ReadAsStringAsync());
-        }
-
-        public async Task<JsonElement> GetDiscountProductStatusAsync(int productId)
-        {
-            var response = await _http.GetAsync($"/api/admin/discounts/product-status/{productId}");
+            var response = await _http.GetAsync($"/api/admin/promotions/product-status/{productId}");
             if (!response.IsSuccessStatusCode)
             {
                 var err = await response.Content.ReadAsStringAsync();
@@ -353,11 +316,44 @@ namespace HouseholdStore.Services
             return await response.Content.ReadFromJsonAsync<JsonElement>(jsonOptions);
         }
 
-        public async Task<(bool ok, string? error)> DeleteDiscountRuleAsync(int id)
+        public async Task<List<Discount>> GetDiscountsAsync()
         {
-            var response = await _http.DeleteAsync($"/api/admin/discounts/rules/{id}");
-            if (response.IsSuccessStatusCode) return (true, null);
-            return (false, await response.Content.ReadAsStringAsync());
+            var response = await _http.GetAsync("/api/admin/discounts");
+            if (!response.IsSuccessStatusCode) return new List<Discount>();
+            return await response.Content.ReadFromJsonAsync<List<Discount>>(jsonOptions)
+                   ?? new List<Discount>();
+        }
+
+        public async Task<(bool ok, string? error)> UpsertDiscountAsync(bool isUpdate, Discount d)
+        {
+            var body = JsonSerializer.Serialize(new
+            {
+                d.Name,
+                d.DiscountType,
+                d.ValueKind,
+                d.Value,
+                d.CategoryId,
+                d.ProductId,
+                d.MinQuantity,
+                d.IsActive
+            });
+
+            var content = new StringContent(body, Encoding.UTF8, "application/json");
+            var response = isUpdate
+                ? await _http.PutAsync($"/api/admin/discounts/{d.Id}", content)
+                : await _http.PostAsync("/api/admin/discounts", content);
+
+            return response.IsSuccessStatusCode
+                ? (true, null)
+                : (false, await response.Content.ReadAsStringAsync());
+        }
+
+        public async Task<(bool ok, string? error)> DeleteDiscountAsync(int id)
+        {
+            var response = await _http.DeleteAsync($"/api/admin/discounts/{id}");
+            return response.IsSuccessStatusCode
+                ? (true, null)
+                : (false, await response.Content.ReadAsStringAsync());
         }
     }
 }
