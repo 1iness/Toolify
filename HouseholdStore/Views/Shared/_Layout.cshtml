@@ -17,8 +17,10 @@
     <!-- ХЕДЕР -->
     <header class="header">
         <div class="header-left">
-            <img src="~/image/logo.jpg" alt="Лого" class="logo-img" />
-            <span class="site-name">Toolify</span>
+            <a asp-controller="Home" asp-action="Index" class="header-logo-link" title="На главную">
+                <img src="~/image/logo.jpg" alt="Лого" class="logo-img" />
+                <span class="site-name">Toolify</span>
+            </a>
         </div>
 
         <nav class="menu">
@@ -64,10 +66,10 @@
 
                 <a href="/Home/Catalog?categoryId=2" class="menu-item">
                     <i class="bi bi-bucket"></i>
-                    <span>Для уборки</span>
+                    <span>Бытовая химия</span>
                 </a>
 
-                <a href="/Home/Index?category=tech" class="menu-item">
+                <a href="/Home/Catalog?categoryId=13" class="menu-item">
                     <i class="bi bi-laptop"></i>
                     <span>Техника</span>
                 </a>

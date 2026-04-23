@@ -1,4 +1,4 @@
-﻿@model List<Toolify.ProductService.Models.Product>
+@model List<Toolify.ProductService.Models.Product>
 
 @{
     ViewData["Title"] = "Сравнение товаров";
@@ -100,10 +100,27 @@
                         {
                             <td style="padding: 15px; border: 1px solid #dee2e6; text-align: center; vertical-align: top;">
                                 <div class="product-card" style="display: inline-block; width: 100%; border: none; padding: 0; box-shadow: none; background: transparent;">
-                                    <button onclick="addToCartAnimated(event, @p.Id, this)"
-                                            style="background: #28a745; color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s;">
-                                        <i class="bi bi-cart-plus"></i> В корзину
-                                    </button>
+                                    @if (p.StockQuantity <= 0)
+                                    {
+                                        <button type="button" disabled
+                                                style="background: #ccc; color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: not-allowed; font-weight: bold; width: 100%;">
+                                            Скоро будет
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <div class="cart-inline" data-cart-product-id="@p.Id" data-stock="@p.StockQuantity">
+                                            <button type="button" class="cart-inline__add"
+                                                    style="background: #28a745; color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s;">
+                                                <i class="bi bi-cart-plus"></i> В корзину
+                                            </button>
+                                            <div class="cart-inline__stepper" hidden>
+                                                <button type="button" class="cart-inline__btn cart-inline__minus" aria-label="Уменьшить количество">−</button>
+                                                <span class="cart-inline__qty" aria-live="polite">0</span>
+                                                <button type="button" class="cart-inline__btn cart-inline__plus" aria-label="Увеличить количество">+</button>
+                                            </div>
+                                        </div>
+                                    }
                                     <div style="margin-top: 10px; line-height: 1.2;">
                                         <small style="color: #888; font-size: 12px;">Выбор доставки доступен</small>
                                     </div>

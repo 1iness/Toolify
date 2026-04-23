@@ -20,9 +20,21 @@ namespace HouseholdStore.Controllers
             _logger = logger;
             _productApi = productApi;
         }
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? category)
         {
             var products = await _productApi.GetStoreCatalogAsync(GetCurrentUserId());
+
+            if (!string.IsNullOrWhiteSpace(category) &&
+                category.Equals("tech", StringComparison.OrdinalIgnoreCase))
+            {
+                var categories = await _productApi.GetCategoriesAsync();
+                var tech = categories.FirstOrDefault(c =>
+                    !string.IsNullOrEmpty(c.Name) &&
+                    c.Name.Contains("РўРµС…РЅРёРєР°", StringComparison.OrdinalIgnoreCase));
+                if (tech != null)
+                    products = products.Where(p => p.CategoryId == tech.Id).ToList();
+            }
+
             var ratings = new Dictionary<int, double>();
 
             foreach (var product in products)
@@ -138,9 +150,9 @@ namespace HouseholdStore.Controllers
             ViewBag.Reviews = reviews;
             ViewBag.ReviewsCount = reviews.Count;
 
-            ViewData["ParentPage"] = "Каталог";
+            ViewData["ParentPage"] = "Р“Р»Р°РІРЅР°СЏ";
             ViewData["ParentLink"] = "/Home/Index";
-            ViewData["Title"] = $"Отзывы о {product.Name}";
+            ViewData["Title"] = $"РћС‚Р·С‹РІС‹ Рѕ {product.Name}";
 
             return View(product);
         }
@@ -252,7 +264,7 @@ namespace HouseholdStore.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult AdminOnly()
         {
-            return Content("админ ура ура админ!");
+            return Content("Р”РѕСЃС‚СѓРї С‚РѕР»СЊРєРѕ РґР»СЏ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРІ!");
         }
 
         public IActionResult About()

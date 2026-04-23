@@ -1,4 +1,4 @@
-﻿@model Toolify.ProductService.Models.Product
+@model Toolify.ProductService.Models.Product
 
 @{
     ViewData["Title"] = Model.Name;
@@ -125,11 +125,16 @@
         else
         {
             <div class="stock in">В наличии</div>
-            <button type="button"
-                    class="btn-add-cart"
-                    onclick="addToCartAnimated(event, @Model.Id, this)">
-                Добавить в корзину
-            </button>
+            <div class="cart-inline cart-inline--details" data-cart-product-id="@Model.Id" data-stock="@Model.StockQuantity">
+                <button type="button" class="btn-add-cart cart-inline__add">
+                    Добавить в корзину
+                </button>
+                <div class="cart-inline__stepper" hidden>
+                    <button type="button" class="cart-inline__btn cart-inline__minus" aria-label="Уменьшить количество">−</button>
+                    <span class="cart-inline__qty" aria-live="polite">0</span>
+                    <button type="button" class="cart-inline__btn cart-inline__plus" aria-label="Увеличить количество">+</button>
+                </div>
+            </div>
         }
     </div>
 </div>

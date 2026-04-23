@@ -234,6 +234,119 @@
         box-shadow: none;
     }
 
+/* на карточке товара */
+.cart-inline {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.cart-inline__stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 10px;
+    padding: 0;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+.cart-inline .cart-inline__add:not(.btn-buy):not(.btn-add-cart) {
+    margin-top: 10px;
+}
+
+.cart-inline .cart-inline__add[hidden] {
+    display: none !important;
+}
+
+.cart-inline .cart-inline__stepper[hidden] {
+    display: none !important;
+}
+
+.cart-inline--busy {
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+.cart-inline__btn {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    max-width: 42px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: #28a745;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, opacity 0.2s;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.cart-inline__btn:hover:not(:disabled) {
+    background: #7aa889;
+    color: #fff;
+}
+
+.cart-inline__btn:disabled,
+.cart-inline__btn.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.cart-inline__qty {
+    flex: 0 0 auto;
+    min-width: 42px;
+    width: auto;
+    height: 42px;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: #1b4332;
+    background: #fff;
+    border: 1px solid #b5d4be;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+.cart-inline--details .cart-inline__stepper {
+    margin-top: 15px;
+    gap: 8px;
+}
+
+.cart-inline--details .cart-inline__btn {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    font-size: 24px;
+    border-radius: 11px;
+}
+
+.cart-inline--details .cart-inline__qty {
+    min-width: 48px;
+    width: auto;
+    height: 48px;
+    padding: 0 8px;
+    font-size: 17px;
+    border-radius: 11px;
+}
+
 .price-currency {
     font-size: 0.8em;
     margin-left: 3px;

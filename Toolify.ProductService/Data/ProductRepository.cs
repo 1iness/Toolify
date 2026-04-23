@@ -107,22 +107,15 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@FullDescription", (object?)product.FullDescription ?? DBNull.Value);
             command.Parameters.AddWithValue("@Price", product.Price);
             command.Parameters.AddWithValue("@StockQuantity", product.StockQuantity);
-            command.Parameters.AddWithValue("@Discount", 0);
             command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
 
-            var featureTable = new DataTable();
-            featureTable.Columns.Add("FeatureId", typeof(int));
-            featureTable.Columns.Add("FeatureValue", typeof(string));
-            foreach (var config in product.Configurations)
-            {
-                featureTable.Rows.Add(config.FeatureId, config.FeatureValue);
-            }
-            var featureParam = command.Parameters.AddWithValue("@Features", featureTable);
-            featureParam.SqlDbType = SqlDbType.Structured;
-            featureParam.TypeName = "dbo.FeatureTableType";
-
             await connection.OpenAsync();
-            return Convert.ToInt32(await command.ExecuteScalarAsync());
+            var newId = Convert.ToInt32(await command.ExecuteScalarAsync());
+
+            if (product.Configurations != null && product.Configurations.Count > 0)
+                await UpdateProductConfigurationsAsync(newId, product.Configurations);
+
+            return newId;
         }
 
         public async Task<bool> UpdateAsync(Product product)
@@ -137,24 +130,7 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@FullDescription", (object?)product.FullDescription ?? DBNull.Value);
             command.Parameters.AddWithValue("@Price", product.Price);
             command.Parameters.AddWithValue("@StockQuantity", product.StockQuantity);
-            command.Parameters.AddWithValue("@Discount", 0);
             command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
-
-            var featureTable = new DataTable();
-            featureTable.Columns.Add("FeatureId", typeof(int));
-            featureTable.Columns.Add("FeatureValue", typeof(string));
-
-            if (product.Configurations != null)
-            {
-                foreach (var config in product.Configurations)
-                {
-                    featureTable.Rows.Add(config.FeatureId, config.FeatureValue);
-                }
-            }
-
-            var featureParam = command.Parameters.AddWithValue("@Features", featureTable);
-            featureParam.SqlDbType = SqlDbType.Structured;
-            featureParam.TypeName = "dbo.FeatureTableType";
 
             await connection.OpenAsync();
             int rows = await command.ExecuteNonQueryAsync();
@@ -413,6 +389,13 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@UserId", userId);
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task ClearCartAsync(int? userId, string? guestId)
+        {
+            var items = await GetCartItemsAsync(userId, guestId);
+            foreach (var item in items)
+                await RemoveFromCartAsync(item.ProductId, userId, guestId);
         }
 
         public async Task<int> CreateOrderAsync(Order order, string? guestId, string? promoCode)

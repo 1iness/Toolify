@@ -23,54 +23,54 @@
     </div>
 </div>
 
-<!-- КАТЕГОРИ -->
+<!-- КАТЕГОРИ  -->
 <div class="categories-container scroll-animate">
     <div class="categories-grid">
-        <div class="category-item">
+        <a asp-controller="Home" asp-action="Catalog" asp-route-categoryId="7" class="category-item">
             <div class="category-title">Для дома</div>
             <div class="category-icon">
                 <img src="~/image/home-icon.png" alt="Для дома" />
             </div>
-        </div>
+        </a>
 
-        <div class="category-item">
+        <a asp-controller="Home" asp-action="Catalog" asp-route-categoryId="10" class="category-item">
             <div class="category-title">Косметика</div>
             <div class="category-icon">
                 <img src="~/image/cosmetics-icon.png" alt="Косметика" />
             </div>
-        </div>
+        </a>
 
-        <div class="category-item">
+        <a asp-controller="Home" asp-action="Catalog" asp-route-categoryId="3" class="category-item">
             <div class="category-title">Для авто</div>
             <div class="category-icon">
                 <img src="~/image/car-icon.png" alt="Для авто" />
             </div>
-        </div>
+        </a>
 
-        <div class="category-item">
-            <div class="category-title">Для уборки</div>
+        <a asp-controller="Home" asp-action="Catalog" asp-route-categoryId="2" class="category-item">
+            <div class="category-title">Бытовая химия</div>
             <div class="category-icon">
-                <img src="~/image/cleaning-icon.png" alt="Для уборки" />
+                <img src="~/image/cleaning-icon.png" alt="Бытовая химия" />
             </div>
-        </div>
+        </a>
 
-        <div class="category-item">
+        <a asp-controller="Home" asp-action="Catalog" asp-route-categoryId="13" class="category-item">
             <div class="category-title">Техника</div>
             <div class="category-icon">
                 <img src="~/image/tech-icon.png" alt="Техника" />
             </div>
-        </div>
+        </a>
 
-        <div class="category-item sale">
+        <a asp-controller="Home" asp-action="Catalog" asp-route-specialCategory="sale" class="category-item sale">
             <div class="category-title">
-                SALE!!!<br>
-                SALE!!!<br>
+                SALE!!!<br />
+                SALE!!!<br />
                 SALE!!!
             </div>
             <div class="category-icon">
                 <img src="~/image/sale-coupon.png" alt="50% OFF" style="transform: rotate(-15deg); margin-bottom: 15px;" />
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -145,9 +145,16 @@
                 else
                 {
                     <div class="stock in">В наличии: @product.StockQuantity шт.</div>
-                    <a href="javascript:void(0)" onclick="addToCartAnimated(event, @product.Id, this)" class="btn-buy">
-                        <i class="bi bi-cart-plus"></i> В корзину
-                    </a>
+                    <div class="cart-inline" data-cart-product-id="@product.Id" data-stock="@product.StockQuantity">
+                        <button type="button" class="btn-buy cart-inline__add">
+                            <i class="bi bi-cart-plus"></i> В корзину
+                        </button>
+                        <div class="cart-inline__stepper" hidden>
+                            <button type="button" class="cart-inline__btn cart-inline__minus" aria-label="Уменьшить количество">−</button>
+                            <span class="cart-inline__qty" aria-live="polite">0</span>
+                            <button type="button" class="cart-inline__btn cart-inline__plus" aria-label="Увеличить количество">+</button>
+                        </div>
+                    </div>
                 }
             </div>
         }

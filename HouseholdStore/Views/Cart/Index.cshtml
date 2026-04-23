@@ -11,7 +11,18 @@
 
 <partial name="_Breadcrumbs" />
 <div class="cart-page-container">
-    <h1 class="page-title">Моя корзина</h1>
+    <div class="cart-page-header">
+        <h1 class="page-title">Моя корзина</h1>
+        @if (!isEmpty)
+        {
+            <form asp-action="Clear" asp-controller="Cart" method="post" class="cart-clear-form">
+                <button type="submit" class="cart-clear-btn">
+                    <i class="bi bi-cart3 cart-clear-icon" aria-hidden="true"></i>
+                    Очистить корзину
+                </button>
+            </form>
+        }
+    </div>
 
     @if (isEmpty)
     {
