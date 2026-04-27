@@ -1,0 +1,70 @@
+@model List<Toolify.ProductService.Models.CategoryAdminItem>
+@{
+    ViewData["Title"] = "Категории";
+    Layout = null;
+}
+<link rel="stylesheet" href="~/css/site.css" />
+<link rel="stylesheet" href="~/css/list.css" />
+
+<div class="admin-list-container">
+    <h1>Категории</h1>
+    <p>
+        <a href="/Admin/Create" class="btn-create">Добавить товар</a>
+        <a href="/Admin/List" class="btn-create" style="background:#6c757d;">К списку товаров</a>
+    </p>
+
+    @if (TempData["CategoryMessage"] != null)
+    {
+        <p style="color: green;">@TempData["CategoryMessage"]</p>
+    }
+    @if (TempData["CategoryError"] != null)
+    {
+        <p style="color: #b00020;">@TempData["CategoryError"]</p>
+    }
+
+    <p style="color:#666; font-size: 14px; max-width: 640px;">
+        Удалить можно только категорию, в которой нет товаров. Пустые характеристики (поля) у такой категории удаляются вместе с ней.
+    </p>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Название</th>
+                <th>Товаров</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.Id</td>
+                    <td><strong>@c.Name</strong></td>
+                    <td>@c.ProductCount</td>
+                    <td>
+                        @if (c.ProductCount == 0)
+                        {
+                            <form asp-action="DeleteCategory" method="post" style="display:inline;" onsubmit="return confirm('Удалить эту категорию?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@c.Id" />
+                                <button type="submit" class="delete-link" style="border:none;background:none;cursor:pointer;padding:0;color:#c00;text-decoration:underline;">Удалить</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span style="color:#999;">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr><td colspan="4">Категорий нет.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

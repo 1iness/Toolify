@@ -1,4 +1,5 @@
 ﻿using HouseholdStore.Models;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -124,11 +125,77 @@ namespace HouseholdStore.Services
             return await response.Content.ReadFromJsonAsync<List<Category>>(jsonOptions);
         }
 
-        public async Task<Category> CreateCategoryAsync(Category category)
+        public async Task<CreateCategoryResult> CreateCategoryAsync(Category category)
         {
             var response = await _http.PostAsJsonAsync("api/Product/categories", category);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<Category>(jsonOptions);
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                var message = root.TryGetProperty("message", out var m) ? m.GetString() : null;
+                Category? existing = null;
+                if (root.TryGetProperty("category", out var catEl) && catEl.ValueKind == JsonValueKind.Object)
+                {
+                    existing = new Category
+                    {
+                        Id = catEl.GetProperty("id").GetInt32(),
+                        Name = catEl.TryGetProperty("name", out var n) ? n.GetString() ?? "" : ""
+                    };
+                }
+                return new CreateCategoryResult
+                {
+                    IsSuccess = false,
+                    IsDuplicate = true,
+                    ErrorMessage = message,
+                    Category = existing
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new CreateCategoryResult
+                {
+                    IsSuccess = false,
+                    ErrorMessage = await response.Content.ReadAsStringAsync()
+                };
+            }
+
+            var data = await response.Content.ReadFromJsonAsync<Category>(jsonOptions);
+            return new CreateCategoryResult
+            {
+                IsSuccess = true,
+                IsDuplicate = false,
+                Category = data
+            };
+        }
+
+        public async Task<List<CategoryAdminItem>> GetCategoriesForAdminAsync()
+        {
+            var response = await _http.GetAsync("api/Product/categories/admin");
+            if (!response.IsSuccessStatusCode) return new List<CategoryAdminItem>();
+            return await response.Content.ReadFromJsonAsync<List<CategoryAdminItem>>(jsonOptions)
+                   ?? new List<CategoryAdminItem>();
+        }
+
+        public async Task<(bool ok, string? error)> DeleteCategoryAsync(int categoryId)
+        {
+            var response = await _http.DeleteAsync($"/api/Product/categories/{categoryId}");
+            if (response.IsSuccessStatusCode) return (true, null);
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("message", out var msg))
+                        return (false, msg.GetString());
+                }
+                catch { }
+                return (false, json);
+            }
+            return (false, await response.Content.ReadAsStringAsync());
         }
         public async Task<List<Product>> SearchProductsAsync(string query, int? userId = null)
         {

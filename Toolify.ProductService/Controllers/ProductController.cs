@@ -33,14 +33,42 @@ namespace Toolify.ProductService.Controllers
             return Ok(categories);
         }
 
+        [HttpGet("categories/admin")]
+        public async Task<IActionResult> GetCategoriesForAdmin()
+        {
+            var list = await _repo.GetCategoriesForAdminAsync();
+            return Ok(list);
+        }
+
+        [HttpDelete("categories/{id:int}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            if (id < 1) return BadRequest("Некорректный идентификатор");
+
+            var result = await _repo.DeleteCategoryAsync(id);
+            if (!result.Success)
+                return BadRequest(new { message = result.ErrorMessage });
+
+            return Ok();
+        }
+
         [HttpPost("categories")]
         public async Task<IActionResult> CreateCategory([FromBody] Category category)
         {
             if (string.IsNullOrWhiteSpace(category.Name))
                 return BadRequest("Имя категории не может быть пустым");
 
-            var newCategory = await _repo.AddCategoryAsync(category);
-            return Ok(newCategory);
+            var addResult = await _repo.AddCategoryAsync(category);
+            if (addResult.AlreadyExists)
+            {
+                return Conflict(new
+                {
+                    message = "Категория с таким названием уже существует. Выберите её из списка или введите другое название.",
+                    category = new { addResult.Category.Id, addResult.Category.Name }
+                });
+            }
+
+            return Ok(new { addResult.Category.Id, addResult.Category.Name, alreadyExists = false });
         }
 
         [HttpGet]

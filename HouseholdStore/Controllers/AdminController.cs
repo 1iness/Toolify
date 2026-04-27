@@ -51,6 +51,22 @@ namespace HouseholdStore.Controllers
             return View(products);
         }
 
+        public async Task<IActionResult> Categories()
+        {
+            var list = await _api.GetCategoriesForAdminAsync();
+            return View(list);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var (ok, error) = await _api.DeleteCategoryAsync(id);
+            if (ok) TempData["CategoryMessage"] = "Категория удалена.";
+            else TempData["CategoryError"] = error ?? "Не удалось удалить категорию";
+            return RedirectToAction(nameof(Categories));
+        }
+
         public async Task<IActionResult> Edit(int id)
         {
             var product = await _api.GetByIdAsync(id);
@@ -123,9 +139,19 @@ namespace HouseholdStore.Controllers
             if (!string.IsNullOrWhiteSpace(NewCategoryName))
             {
                 var newCat = new Category { Name = NewCategoryName };
-                var createdCat = await _api.CreateCategoryAsync(newCat);
-                product.CategoryId = createdCat.Id;
-                ModelState.Remove("CategoryId");
+                var createResult = await _api.CreateCategoryAsync(newCat);
+                if (createResult.IsDuplicate || !createResult.IsSuccess)
+                {
+                    ModelState.AddModelError(
+                        "NewCategoryName",
+                        createResult.ErrorMessage
+                        ?? "Категория с таким названием уже существует. Выберите её из списка или введите другое название.");
+                }
+                else if (createResult.Category != null)
+                {
+                    product.CategoryId = createResult.Category.Id;
+                    ModelState.Remove("CategoryId");
+                }
             }
             else if (product.CategoryId <= 0)
             {

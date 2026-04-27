@@ -164,27 +164,90 @@ namespace Toolify.ProductService.Data
             return categories;
         }
 
-        public async Task<Category> AddCategoryAsync(Category category)
+        public async Task<CategoryAddResult> AddCategoryAsync(Category category)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_AddCategory", connection)
             {
                 CommandType = CommandType.StoredProcedure
             };
-            command.Parameters.AddWithValue("@Name", category.Name);
+            command.Parameters.AddWithValue("@Name", (object)category.Name ?? DBNull.Value);
 
             await connection.OpenAsync();
             using var reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return new Category
+                var alreadyExists = false;
+                for (int i = 0; i < reader.FieldCount; i++)
                 {
-                    Id = Convert.ToInt32(reader["Id"]),
-                    Name = reader["Name"].ToString() ?? string.Empty
+                    if (string.Equals(reader.GetName(i), "AlreadyExists", StringComparison.OrdinalIgnoreCase))
+                    {
+                        alreadyExists = !reader.IsDBNull(i) && reader.GetBoolean(i);
+                        break;
+                    }
+                }
+
+                return new CategoryAddResult
+                {
+                    Category = new Category
+                    {
+                        Id = Convert.ToInt32(reader["Id"]),
+                        Name = reader["Name"].ToString() ?? string.Empty
+                    },
+                    AlreadyExists = alreadyExists
                 };
             }
 
             throw new Exception("Ошибка при создании или получении категории.");
+        }
+
+        public async Task<List<CategoryAdminItem>> GetCategoriesForAdminAsync()
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetCategoriesForAdmin", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            await connection.OpenAsync();
+            var list = new List<CategoryAdminItem>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(new CategoryAdminItem
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    ProductCount = reader.GetInt32(reader.GetOrdinal("ProductCount"))
+                });
+            }
+            return list;
+        }
+
+        public async Task<CategoryDeleteResult> DeleteCategoryAsync(int categoryId)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_DeleteCategory", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            command.Parameters.AddWithValue("@CategoryId", categoryId);
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new CategoryDeleteResult
+                {
+                    Success = reader.GetBoolean(reader.GetOrdinal("Success")),
+                    ErrorMessage = reader.IsDBNull(reader.GetOrdinal("ErrorMessage"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("ErrorMessage"))
+                };
+            }
+            return new CategoryDeleteResult
+            {
+                Success = false,
+                ErrorMessage = "Не удалось удалить категорию"
+            };
         }
 
         public async Task AddToCartAsync(int productId, int? userId, string? guestId, int quantity = 1)
