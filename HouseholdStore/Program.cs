@@ -24,6 +24,8 @@ namespace HouseholdStore
             builder.Services.AddHttpClient<ProductApiService>();
             builder.Services.AddHttpClient<ChatApiService>();
             builder.Services.AddScoped<EmailService>();
+            builder.Services.AddScoped<AdminReportBuilder>();
+            builder.Services.AddScoped<AdminReportExportService>();
 
 
             builder.Services.AddSingleton<Toolify.ProductService.Database.SqlConnectionFactory>(sp =>

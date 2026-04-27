@@ -19,13 +19,23 @@ namespace HouseholdStore.Controllers
         private readonly AuthApiService _authApi;
         private readonly ProductRepository _repo;
         private readonly EmailService _email;
+        private readonly AdminReportBuilder _reportBuilder;
+        private readonly AdminReportExportService _reportExporter;
 
-        public AdminController(ProductApiService api, AuthApiService authApi, ProductRepository repo, EmailService email)
+        public AdminController(
+            ProductApiService api,
+            AuthApiService authApi,
+            ProductRepository repo,
+            EmailService email,
+            AdminReportBuilder reportBuilder,
+            AdminReportExportService reportExporter)
         {
             _api = api;
             _authApi = authApi;
             _repo = repo;
             _email = email;
+            _reportBuilder = reportBuilder;
+            _reportExporter = reportExporter;
         }
 
         public async Task<IActionResult> Index()
@@ -486,6 +496,57 @@ namespace HouseholdStore.Controllers
                 ClientHistory = await _repo.GetClientHistoryReportAsync()
             };
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Reports(AdminReportsFilter filter)
+        {
+            if (AdminReportBuilder.HasInvalidDateRanges(filter, out var message))
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = message;
+                filter = new AdminReportsFilter();
+            }
+
+            var model = await _reportBuilder.BuildAsync(filter);
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportReports(AdminReportsFilter filter, string format, string reportType = "all")
+        {
+            if (AdminReportBuilder.HasInvalidDateRanges(filter, out var message))
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = message;
+                return RedirectToAction("Reports");
+            }
+
+            var model = await _reportBuilder.BuildAsync(filter);
+            var tables = _reportBuilder.BuildTables(model, reportType);
+            var fileStamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
+            var reportName = (reportType ?? "all").ToLowerInvariant() switch
+            {
+                "sales" => "Sales",
+                "average" => "AverageCheck",
+                "popularity" => "ProductPopularity",
+                "customers" => "CustomerHistory",
+                _ => "Reports"
+            };
+
+            return format?.ToLowerInvariant() switch
+            {
+                "pdf" => File(_reportExporter.ExportPdf(tables), "application/pdf", $"Toolify_{reportName}_{fileStamp}.pdf"),
+                "word" or "docx" => File(
+                    _reportExporter.ExportWord(tables),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    $"Toolify_{reportName}_{fileStamp}.docx"),
+                "excel" or "xlsx" => File(
+                    _reportExporter.ExportExcel(tables),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"Toolify_{reportName}_{fileStamp}.xlsx"),
+                _ => BadRequest("Неизвестный формат экспорта.")
+            };
         }
 
         private FileResult GenerateCsv(string csvContent, string fileName)
