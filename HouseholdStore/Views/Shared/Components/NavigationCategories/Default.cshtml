@@ -1,0 +1,28 @@
+@model List<Toolify.ProductService.Models.Category>
+
+<a href="/Home/Index?sort=hits" class="menu-item hit-item">
+    <i class="bi bi-fire"></i>
+    <span>Хиты продаж</span>
+</a>
+
+@foreach (var c in Model)
+{
+    <a href="@Url.Action("Catalog", "Home", new { categoryId = c.Id })" class="menu-item">
+        @if (!string.IsNullOrWhiteSpace(c.IconFileName))
+        {
+            <img src="~/image/category-icons/@c.IconFileName" alt="" class="menu-cat-icon" width="24" height="24" />
+        }
+        else
+        {
+            <i class="bi bi-grid"></i>
+        }
+        <span>@c.Name</span>
+    </a>
+}
+
+<div class="menu-divider"></div>
+
+<a href="/Home/Catalog?specialCategory=sale" class="menu-item sale-item">
+    <i class="bi bi-percent"></i>
+    <span>Распродажа</span>
+</a>

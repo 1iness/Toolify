@@ -22,8 +22,8 @@
         <p style="color: #b00020;">@TempData["CategoryError"]</p>
     }
 
-    <p style="color:#666; font-size: 14px; max-width: 640px;">
-        Удалить можно только категорию, в которой нет товаров. Пустые характеристики (поля) у такой категории удаляются вместе с ней.
+    <p style="color:#666; font-size: 14px; max-width: 720px;">
+        Удалить можно только пустую категорию (без товаров). Иконка для шапки и для блока на главной: картинка png/jpg и т.д., как у текущих карточек. Папка: <code>wwwroot/image/category-icons/</code>.
     </p>
 
     <table class="admin-table">
@@ -32,6 +32,7 @@
                 <th>Id</th>
                 <th>Название</th>
                 <th>Товаров</th>
+                <th>Иконка</th>
                 <th>Действия</th>
             </tr>
         </thead>
@@ -44,6 +45,22 @@
                     <td>@c.Id</td>
                     <td><strong>@c.Name</strong></td>
                     <td>@c.ProductCount</td>
+                    <td style="min-width: 200px; vertical-align: top;">
+                        @if (!string.IsNullOrEmpty(c.IconFileName))
+                        {
+                            <div><img src="~/image/category-icons/@c.IconFileName" alt="" style="max-height: 44px; object-fit: contain;" /></div>
+                        }
+                        else
+                        {
+                            <span style="color:#999;">—</span>
+                        }
+                        <form asp-action="UploadCategoryIcon" method="post" enctype="multipart/form-data" style="margin-top:8px;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@c.Id" />
+                            <input type="file" name="iconFile" accept=".png,.jpg,.jpeg,.webp,.gif" style="max-width: 180px; font-size: 12px;" />
+                            <button type="submit" class="btn-create" style="font-size: 12px; padding: 4px 10px; margin-top: 4px;">Сохранить</button>
+                        </form>
+                    </td>
                     <td>
                         @if (c.ProductCount == 0)
                         {
@@ -63,7 +80,7 @@
         }
         else
         {
-            <tr><td colspan="4">Категорий нет.</td></tr>
+            <tr><td colspan="5">Категорий нет.</td></tr>
         }
         </tbody>
     </table>

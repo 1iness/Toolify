@@ -44,42 +44,7 @@
             </button>
 
             <div class="catalog-menu">
-                <a href="/Home/Index?sort=hits" class="menu-item hit-item">
-                    <i class="bi bi-fire"></i>
-                    <span>Хиты продаж</span>
-                </a>
-
-                <a href="/Home/Catalog?categoryId=7" class="menu-item">
-                    <i class="bi bi-house-door"></i>
-                    <span>Для дома</span>
-                </a>
-
-                <a href="/Home/Catalog?categoryId=10" class="menu-item">
-                    <i class="bi bi-magic"></i>
-                    <span>Косметика</span>
-                </a>
-
-                <a href="/Home/Catalog?categoryId=3" class="menu-item">
-                    <i class="bi bi-car-front"></i>
-                    <span>Для авто</span>
-                </a>
-
-                <a href="/Home/Catalog?categoryId=2" class="menu-item">
-                    <i class="bi bi-bucket"></i>
-                    <span>Бытовая химия</span>
-                </a>
-
-                <a href="/Home/Catalog?categoryId=13" class="menu-item">
-                    <i class="bi bi-laptop"></i>
-                    <span>Техника</span>
-                </a>
-
-                <div class="menu-divider"></div>
-
-                <a href="/Home/Catalog?specialCategory=sale" class="menu-item sale-item">
-                    <i class="bi bi-percent"></i>
-                    <span>Распродажа</span>
-                </a>
+                @await Component.InvokeAsync("NavigationCategories")
             </div>
         </div>
 

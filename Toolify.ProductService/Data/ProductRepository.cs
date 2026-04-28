@@ -156,12 +156,37 @@ namespace Toolify.ProductService.Data
 
             var categories = new List<Category>();
             using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync()) categories.Add(new Category
+            while (await reader.ReadAsync())
             {
-                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                Name = reader.GetString(reader.GetOrdinal("Name"))
-            });
+                var cat = new Category
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Name = reader.GetString(reader.GetOrdinal("Name"))
+                };
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    if (string.Equals(reader.GetName(i), "IconFileName", StringComparison.OrdinalIgnoreCase) && !reader.IsDBNull(i))
+                        cat.IconFileName = reader.GetString(i);
+                }
+                categories.Add(cat);
+            }
             return categories;
+        }
+
+        public async Task<bool> SetCategoryIconAsync(int categoryId, string? iconFileName)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_SetCategoryIcon", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@CategoryId", categoryId);
+            command.Parameters.AddWithValue("@IconFileName", (object?)iconFileName ?? DBNull.Value);
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                var ord = reader.GetOrdinal("Ok");
+                return !reader.IsDBNull(ord) && reader.GetBoolean(ord);
+            }
+            return false;
         }
 
         public async Task<CategoryAddResult> AddCategoryAsync(Category category)
@@ -187,12 +212,20 @@ namespace Toolify.ProductService.Data
                     }
                 }
 
+                string? icon = null;
+                for (int j = 0; j < reader.FieldCount; j++)
+                {
+                    if (string.Equals(reader.GetName(j), "IconFileName", StringComparison.OrdinalIgnoreCase) && !reader.IsDBNull(j))
+                        icon = reader.GetString(j);
+                }
+
                 return new CategoryAddResult
                 {
                     Category = new Category
                     {
                         Id = Convert.ToInt32(reader["Id"]),
-                        Name = reader["Name"].ToString() ?? string.Empty
+                        Name = reader["Name"].ToString() ?? string.Empty,
+                        IconFileName = icon
                     },
                     AlreadyExists = alreadyExists
                 };
@@ -213,12 +246,18 @@ namespace Toolify.ProductService.Data
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                list.Add(new CategoryAdminItem
+                var item = new CategoryAdminItem
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     Name = reader.GetString(reader.GetOrdinal("Name")),
                     ProductCount = reader.GetInt32(reader.GetOrdinal("ProductCount"))
-                });
+                };
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    if (string.Equals(reader.GetName(i), "IconFileName", StringComparison.OrdinalIgnoreCase) && !reader.IsDBNull(i))
+                        item.IconFileName = reader.GetString(i);
+                }
+                list.Add(item);
             }
             return list;
         }

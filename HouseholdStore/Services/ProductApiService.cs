@@ -197,6 +197,15 @@ namespace HouseholdStore.Services
             }
             return (false, await response.Content.ReadAsStringAsync());
         }
+
+        public async Task<bool> SetCategoryIconFileNameAsync(int categoryId, string? iconFileName)
+        {
+            var response = await _http.PutAsJsonAsync(
+                $"/api/Product/categories/{categoryId}/icon",
+                new { iconFileName });
+            return response.IsSuccessStatusCode;
+        }
+
         public async Task<List<Product>> SearchProductsAsync(string query, int? userId = null)
         {
             var q = Uri.EscapeDataString(query);

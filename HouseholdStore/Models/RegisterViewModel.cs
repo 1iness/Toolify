@@ -1,9 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using HouseholdStore.Helpers;
 
 namespace HouseholdStore.Models
 {
-    public class RegisterViewModel 
+    public class RegisterViewModel : IValidatableObject
     {
         [Required(ErrorMessage = "Введите имя")]
         public string FirstName { get; set; }
@@ -35,5 +37,11 @@ namespace HouseholdStore.Models
         [DataType(DataType.Password)]
         [Compare("Password", ErrorMessage = "Пароли не совпадают")]
         public string ConfirmPassword { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!string.IsNullOrEmpty(Password) && !PasswordPolicy.MeetsPolicy(Password, out var msg))
+                yield return new ValidationResult(msg, new[] { nameof(Password) });
+        }
     }
 }

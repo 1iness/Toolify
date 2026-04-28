@@ -33,6 +33,9 @@ public class AuthController : ControllerBase
         if (request.Password != request.ConfirmPassword)
             return BadRequest("Passwords do not match");
 
+        if (!PasswordPolicy.MeetsPolicy(request.Password, out var pwdError))
+            return BadRequest(pwdError);
+
         if (_repo.UserExists(request.Email))
             return BadRequest("User already exists");
 
@@ -197,6 +200,9 @@ public class AuthController : ControllerBase
     [HttpPost("reset-password")]
     public IActionResult ResetPassword(ResetPasswordRequest request)
     {
+        if (!PasswordPolicy.MeetsPolicy(request.NewPassword, out var pwdError))
+            return BadRequest(pwdError);
+
         var hash = PasswordHasher.Hash(request.NewPassword);
         _repo.UpdatePassword(request.Email, hash);
         return Ok();

@@ -1,6 +1,7 @@
 ﻿using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Toolify.AuthService.Services;
@@ -21,6 +22,7 @@ namespace HouseholdStore.Controllers
         private readonly EmailService _email;
         private readonly AdminReportBuilder _reportBuilder;
         private readonly AdminReportExportService _reportExporter;
+        private readonly IWebHostEnvironment _env;
 
         public AdminController(
             ProductApiService api,
@@ -28,7 +30,8 @@ namespace HouseholdStore.Controllers
             ProductRepository repo,
             EmailService email,
             AdminReportBuilder reportBuilder,
-            AdminReportExportService reportExporter)
+            AdminReportExportService reportExporter,
+            IWebHostEnvironment env)
         {
             _api = api;
             _authApi = authApi;
@@ -36,6 +39,7 @@ namespace HouseholdStore.Controllers
             _email = email;
             _reportBuilder = reportBuilder;
             _reportExporter = reportExporter;
+            _env = env;
         }
 
         public async Task<IActionResult> Index()
@@ -62,8 +66,58 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var (ok, error) = await _api.DeleteCategoryAsync(id);
-            if (ok) TempData["CategoryMessage"] = "Категория удалена.";
+            if (ok)
+            {
+                var iconsDir = Path.Combine(_env.WebRootPath, "image", "category-icons");
+                if (Directory.Exists(iconsDir))
+                {
+                    foreach (var f in Directory.GetFiles(iconsDir, $"{id}.*"))
+                    {
+                        try { System.IO.File.Delete(f); } catch { }
+                    }
+                }
+                TempData["CategoryMessage"] = "Категория удалена.";
+            }
             else TempData["CategoryError"] = error ?? "Не удалось удалить категорию";
+            return RedirectToAction(nameof(Categories));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(2_000_000)]
+        public async Task<IActionResult> UploadCategoryIcon(int id, IFormFile? iconFile)
+        {
+            if (iconFile == null || iconFile.Length == 0)
+            {
+                TempData["CategoryError"] = "Выберите файл изображения.";
+                return RedirectToAction(nameof(Categories));
+            }
+            var ext = Path.GetExtension(iconFile.FileName).ToLowerInvariant();
+            if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".webp" && ext != ".gif")
+            {
+                TempData["CategoryError"] = "Допустимы форматы: png, jpg, jpeg, webp, gif.";
+                return RedirectToAction(nameof(Categories));
+            }
+            var fileName = $"{id}{ext}";
+            var dir = Path.Combine(_env.WebRootPath, "image", "category-icons");
+            Directory.CreateDirectory(dir);
+            var fullPath = Path.Combine(dir, fileName);
+            foreach (var old in Directory.GetFiles(dir, $"{id}.*"))
+            {
+                if (!string.Equals(old, fullPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    try { System.IO.File.Delete(old); } catch {  }
+                }
+            }
+            await using (var stream = new FileStream(fullPath, FileMode.Create))
+                await iconFile.CopyToAsync(stream);
+
+            if (!await _api.SetCategoryIconFileNameAsync(id, fileName))
+            {
+                TempData["CategoryError"] = "Файл сохранён, но в БД не записано имя.";
+                return RedirectToAction(nameof(Categories));
+            }
+            TempData["CategoryMessage"] = "Иконка категории обновлена.";
             return RedirectToAction(nameof(Categories));
         }
 

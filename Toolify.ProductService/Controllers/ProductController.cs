@@ -71,6 +71,17 @@ namespace Toolify.ProductService.Controllers
             return Ok(new { addResult.Category.Id, addResult.Category.Name, alreadyExists = false });
         }
 
+        [HttpPut("categories/{id:int}/icon")]
+        public async Task<IActionResult> SetCategoryIcon(int id, [FromBody] SetCategoryIconRequest body)
+        {
+            if (id < 1) return BadRequest("Некорректный идентификатор");
+            if (body == null) return BadRequest("Тело запроса пустое");
+
+            var ok = await _repo.SetCategoryIconAsync(id, body.IconFileName);
+            if (!ok) return NotFound("Категория не найдена");
+            return Ok();
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int? userId = null)
         {
