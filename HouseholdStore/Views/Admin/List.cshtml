@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Toolify.ProductService.Models.Product>
+@model IEnumerable<Toolify.ProductService.Models.Product>
 
 @{
     ViewData["Title"] = "Список товаров";
@@ -42,7 +42,7 @@
                              onerror="this.onerror=null; this.src='/image/no-image.png';" />
                     </td>
                     <td><strong>@item.Name</strong></td>
-                    <td>@item.Price.ToString("C")</td>
+                    <td>@item.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span></td>
                     <td style="text-align:center;">
                         <span class="no-discount">См. правила</span>
                     </td>

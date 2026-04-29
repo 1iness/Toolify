@@ -144,7 +144,7 @@ namespace HouseholdStore.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> Profile()
+        public async Task<IActionResult> Profile(string? tab = null)
         {
             var userEmail = User.Identity?.Name;
 
@@ -177,6 +177,7 @@ namespace HouseholdStore.Controllers
                 Orders = userOrders
             };
 
+            ViewBag.ProfileTab = string.IsNullOrWhiteSpace(tab) ? null : tab.Trim().ToLowerInvariant();
             return View(model);
         }
 

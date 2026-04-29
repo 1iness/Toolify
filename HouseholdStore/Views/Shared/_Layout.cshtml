@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,9 +99,20 @@
     </main>
 
     <div id="chatWidgetRoot" class="chat-widget-root">
-        <button id="chatToggleBtn" type="button" class="chat-toggle-btn" aria-label="Открыть чат с админом">
-            <img src="~/image/admin-chat.png" alt="Chat with admin" />
-        </button>
+        <div id="chatLauncher" class="chat-launcher">
+            <button type="button"
+                    id="chatLauncherBubble"
+                    class="chat-launcher-bubble"
+                    aria-label="Открыть чат">
+                Мы поможем!
+            </button>
+            <button type="button"
+                    id="chatToggleBtn"
+                    class="chat-launcher-mascot"
+                    aria-label="Открыть чат с администратором">
+                <img src="~/image/chat-enot.png" alt="" width="192" height="220" decoding="async" />
+            </button>
+        </div>
 
         <div id="chatPanel" class="chat-panel d-none">
             <div class="chat-panel-header">

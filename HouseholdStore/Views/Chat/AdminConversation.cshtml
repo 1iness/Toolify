@@ -1,4 +1,4 @@
-﻿@model List<HouseholdStore.Models.ChatMessageVm>
+@model List<HouseholdStore.Models.ChatMessageVm>
 @{
     ViewData["Title"] = "Диалог";
     Layout = null;
@@ -49,6 +49,7 @@
 
 @using System.Text.RegularExpressions
 @using System.Text.Encodings.Web
+@using System.Globalization
 
 @functions {
     private static string MessageToHtml(string? text)
@@ -94,7 +95,7 @@
                     var messageDay = localTime.Date;
                     if (previousDay == null || previousDay.Value != messageDay)
                     {
-                        <div class="chat-day-divider"><span>@localTime.ToString("d MMMM")</span></div>
+                        <div class="chat-day-divider"><span>@localTime.ToString("d MMMM", CultureInfo.GetCultureInfo("ru-RU"))</span></div>
                         previousDay = messageDay;
                     }
 

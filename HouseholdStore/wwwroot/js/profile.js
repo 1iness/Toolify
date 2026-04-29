@@ -2,6 +2,13 @@
     const menuItems = document.querySelectorAll(".menu-item");
     const sections = document.querySelectorAll(".profile-section");
 
+    function activateTab(targetTab) {
+        if (!targetTab) return;
+        const item = document.querySelector(`.menu-item[data-tab="${targetTab}"]`);
+        if (!item) return;
+        item.click();
+    }
+
     menuItems.forEach(item => {
         item.addEventListener("click", function () {
             const targetTab = this.getAttribute("data-tab");
@@ -18,6 +25,11 @@
             });
         });
     });
+
+    const initialTab = document.querySelector(".profile-container")?.dataset.profileTab;
+    if (initialTab) {
+        activateTab(initialTab);
+    }
 });
 
 function enableEdit() {
@@ -34,11 +46,7 @@ function cancelEdit() {
 
 document.querySelector('[data-tab="favourites"]')?.addEventListener('click', async function () {
     const grid = document.getElementById('favourites-grid');
-    if (grid.dataset.loaded) return; 
-
-    const res = await fetch('/Favourites/Index', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    });
+    if (grid.dataset.loaded) return;
 
     const jsonRes = await fetch('/Favourites/GetJson');
     if (!jsonRes.ok) { grid.innerHTML = '<p>Ошибка загрузки</p>'; return; }
@@ -59,25 +67,29 @@ document.querySelector('[data-tab="favourites"]')?.addEventListener('click', asy
             : `<span style="font-weight:700;">${p.price} ${BYN_HTML}</span>`;
 
         return `
-        <div class="product-card" style="border:1px solid #eee;border-radius:12px;padding:15px;">
-            <a href="/Home/Details/${p.id}" style="text-decoration:none;color:inherit;">
-                <img src="https://localhost:7188/api/Product/${p.id}/image"
-                     style="width:100%;height:160px;object-fit:contain;margin-bottom:10px;"
-                     onerror="this.src='/image/no-image.png'"/>
-                <div style="font-weight:500;margin-bottom:8px;">${p.name}</div>
-            </a>
-            <div style="margin-bottom:10px;">${price}</div>
-           <button onclick="removeFavourite(${p.id}, this)"
-                style="width:100%;padding:8px;border:1px solid #ff4d4f;color:#ff4d4f;
-                   background:#fff;border-radius:8px;cursor:pointer;font-weight:600;
-                   display:flex;align-items:center;justify-content:center;gap:6px;">
-                <i class="bi bi-heart-fill" style="font-size:15px;"></i> Удалить
+        <div class="favourite-card">
+            <button type="button" class="favourite-remove" onclick="removeFavourite(${p.id}, this)"
+                    aria-label="Удалить из избранного" title="Удалить из избранного">
+                <i class="bi bi-heart-fill" aria-hidden="true"></i>
             </button>
+            <a class="favourite-card-link" href="/Home/Details/${p.id}">
+                <img src="https://localhost:7188/api/Product/${p.id}/image"
+                     alt=""
+                     onerror="this.src='/image/no-image.png'"/>
+                <div class="favourite-card-name">${p.name}</div>
+            </a>
+            <div class="favourite-card-price">${price}</div>
         </div>`;
     }).join('');
 });
 
 async function removeFavourite(productId, btn) {
     await fetch(`/Favourites/Toggle?productId=${productId}`, { method: 'POST' });
-    btn.closest('.product-card').remove();
+    const card = btn.closest('.favourite-card');
+    card?.remove();
+
+    const grid = document.getElementById('favourites-grid');
+    if (grid && !grid.querySelector('.favourite-card')) {
+        grid.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;border:2px dashed #f0f0f0;border-radius:20px;"><p>Избранных товаров нет</p><a href="/Home/Index" style="color:#28a745;font-weight:700;">В каталог</a></div>';
+    }
 }

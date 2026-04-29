@@ -38,11 +38,9 @@ namespace HouseholdStore.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var userId = GetUserId();
-            var products = await _productApi.GetFavouritesAsync(userId);
-            return View(products);
+            return RedirectToAction("Profile", "Account", new { tab = "favourites" });
         }
 
         [HttpGet]

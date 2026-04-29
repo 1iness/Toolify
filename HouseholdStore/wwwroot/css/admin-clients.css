@@ -126,7 +126,9 @@ body {
 .clients-profile-email {
   margin-top: 0.35rem;
   color: #7a879b;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .clients-profile-badges {
@@ -250,6 +252,9 @@ body {
 .clients-table {
   margin-top: 1rem;
   vertical-align: middle;
+  width: 100%;
+  max-width: 100%;
+  table-layout: auto;
 }
 
 .clients-table thead th {
@@ -267,6 +272,12 @@ body {
   padding: 1rem 1.1rem;
   color: #475569;
   border-color: #eef2f7;
+  word-break: normal;
+}
+
+.clients-table thead th:nth-child(4),
+.clients-table tbody td:nth-child(4) {
+  white-space: nowrap;
 }
 
 .clients-table tbody tr {
@@ -293,19 +304,56 @@ body {
   font-size: 0.82rem;
 }
 
-.clients-email-cell {
-  word-break: break-word;
-}
-
 .clients-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  justify-content: flex-end;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.28rem;
+  min-width: 0;
 }
 
 .clients-actions .btn {
-  border-radius: 10px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.28rem 0.5rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.clients-actions form {
+  display: block !important;
+  margin: 0;
+  width: 100%;
+}
+
+.clients-actions form .btn {
+  width: 100%;
+}
+
+.clients-table thead th:nth-child(3),
+.clients-table td.clients-email-cell {
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  min-width: 11rem;
+  max-width: none;
+  font-size: 0.875rem;
+}
+
+.clients-table td.clients-email-cell a {
+  white-space: nowrap !important;
+  word-break: normal !important;
+}
+
+.clients-table thead th:last-child,
+.clients-table tbody td:last-child {
+  width: 1%;
+  min-width: 8.5rem;
+  white-space: nowrap;
+  vertical-align: middle;
+  padding-left: 0.65rem;
 }
 
 .clients-empty-state {

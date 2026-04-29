@@ -1,5 +1,7 @@
-﻿(function () {
-    const toggleBtn = document.getElementById("chatToggleBtn");
+(function () {
+    const launcher = document.getElementById("chatLauncher");
+    const bubbleBtn = document.getElementById("chatLauncherBubble");
+    const mascotBtn = document.getElementById("chatToggleBtn");
     const panel = document.getElementById("chatPanel");
     const closeBtn = document.getElementById("chatCloseBtn");
     const messagesBox = document.getElementById("chatMessages");
@@ -8,7 +10,7 @@
     const guestEmailWrap = document.getElementById("chatGuestEmailWrap");
     const guestEmailInput = document.getElementById("chatGuestEmailInput");
 
-    if (!toggleBtn || !panel || !messagesBox || !sendBtn || !input) return;
+    if (!launcher || !panel || !messagesBox || !sendBtn || !input) return;
 
     let loadGeneration = 0;
 
@@ -113,18 +115,21 @@
         }
     }
 
-    toggleBtn.addEventListener("click", async () => {
-        panel.classList.toggle("d-none");
-        toggleBtn.classList.add("d-none");
-        if (!panel.classList.contains("d-none")) {
-            await loadChat();
-        }
-    });
+    async function openChatPanel() {
+        panel.classList.remove("d-none");
+        launcher.classList.add("d-none");
+        await loadChat();
+    }
 
-    closeBtn?.addEventListener("click", () => {
+    function closeChatPanel() {
         panel.classList.add("d-none");
-        toggleBtn.classList.remove("d-none");
-    });
+        launcher.classList.remove("d-none");
+    }
+
+    bubbleBtn?.addEventListener("click", openChatPanel);
+    mascotBtn?.addEventListener("click", openChatPanel);
+
+    closeBtn?.addEventListener("click", closeChatPanel);
     sendBtn.addEventListener("click", sendMessage);
     input.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {

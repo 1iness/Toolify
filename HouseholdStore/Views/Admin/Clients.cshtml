@@ -17,14 +17,11 @@
 <link rel="stylesheet" href="~/css/admin-clients.css" asp-append-version="true" />
 
 <div class="admin-clients-page">
-    <div class="container py-4 admin-clients">
+    <div class="container-fluid admin-clients px-3 px-lg-4 py-4">
         <div class="clients-hero mb-4">
             <div>
                 <div class="clients-hero-label">Админ-панель</div>
                 <h1 class="clients-hero-title">Управление учетными записями</h1>
-                <p class="clients-hero-text mb-0">
-                    Просмотр пользователей, быстрый поиск, смена роли, блокировка и отправка письма для сброса пароля.
-                </p>
             </div>
             <a asp-action="Index" class="btn btn-outline-secondary clients-back-btn">Назад в панель</a>
         </div>
@@ -81,7 +78,7 @@
         else
         {
             <div class="row g-4 align-items-start">
-                <div class="col-12 col-xl-4">
+                <div class="col-12 col-xl-3">
                     <div class="clients-profile-card">
                         <div class="clients-profile-label">Карточка пользователя</div>
                         <div class="clients-profile-name" id="selectedUserName">
@@ -116,14 +113,10 @@
                                 <div class="clients-profile-item-value" id="selectedUserCreatedAt">@(selectedUser?.CreatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</div>
                             </div>
                         </div>
-
-                        <div class="clients-profile-note">
-                            Карточка помогает быстро проверить, что отображаются статус, роль, email и дата регистрации без открытия дополнительных страниц.
-                        </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-xl-8">
+                <div class="col-12 col-xl-9">
                     <div class="clients-table-card">
                         <div class="clients-toolbar">
                             <div class="row g-2 align-items-end">
@@ -185,7 +178,7 @@
                                                 <div class="clients-user-name">@displayName</div>
                                                 <div class="clients-user-subtext">@(u.EmailConfirmed ? "Email подтвержден" : "Email не подтвержден")</div>
                                             </td>
-                                            <td class="clients-email-cell">@u.Email</td>
+                                            <td class="clients-email-cell text-nowrap">@u.Email</td>
                                             <td>@(string.IsNullOrWhiteSpace(u.Phone) ? "—" : u.Phone)</td>
                                             <td>
                                                 <span class="clients-pill @(u.Role == "Admin" ? "clients-pill-primary" : "clients-pill-muted")">@u.Role</span>
@@ -230,7 +223,7 @@
                                                     <form asp-action="SendPasswordReset" method="post" class="d-inline">
                                                         <input type="hidden" name="email" value="@u.Email" />
                                                         <button type="submit" class="btn btn-sm btn-outline-dark">
-                                                            Сбросить пароль
+                                                            Сброс пароля
                                                         </button>
                                                     </form>
                                                 </div>
