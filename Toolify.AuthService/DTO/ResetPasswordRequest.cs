@@ -1,8 +1,15 @@
-﻿namespace Toolify.AuthService.DTO
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Toolify.AuthService.DTO
 {
     public class ResetPasswordRequest
     {
-        public string Email { get; set; }
-        public string NewPassword { get; set; }
+        [Required]
+        [EmailAddress]
+        [MaxLength(254)]
+        public string Email { get; set; } = null!;
+
+        [Required]
+        public string NewPassword { get; set; } = null!;
     }
 }

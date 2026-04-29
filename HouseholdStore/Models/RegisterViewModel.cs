@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using HouseholdStore.Helpers;
 
 namespace HouseholdStore.Models
@@ -15,10 +14,7 @@ namespace HouseholdStore.Models
 
         [Required(ErrorMessage = "Введите Email")]
         [EmailAddress(ErrorMessage = "Некорректный формат Email")]
-        [RegularExpression(
-          @"^[a-zA-Z0-9]+([._%+-]?[a-zA-Z0-9]+)*@(gmail\.com|mail\.ru)$",
-           ErrorMessage = "Допустимы только gmail.com или mail.ru"
-       )]
+        [MaxLength(254, ErrorMessage = "Email слишком длинный")]
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Введите номер телефона")]

@@ -167,7 +167,7 @@ public class AuthController : ControllerBase
             DateTime.UtcNow.AddMinutes(10)
         );
 
-        _email.SendResetPasswordCode(request.Email, code);
+        _email.SendRegistrationCode(request.Email, code);
 
         return Ok();
     }

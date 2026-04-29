@@ -1,7 +1,12 @@
-﻿namespace Toolify.AuthService.DTO
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Toolify.AuthService.DTO
 {
     public class ResendConfirmCodeRequest
     {
-        public string Email { get; set; }
+        [Required]
+        [EmailAddress]
+        [MaxLength(254)]
+        public string Email { get; set; } = null!;
     }
 }

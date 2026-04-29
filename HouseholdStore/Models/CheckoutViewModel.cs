@@ -27,6 +27,7 @@ namespace HouseholdStore.Models
 
         [Required(ErrorMessage = "Введите Email")]
         [EmailAddress(ErrorMessage = "Некорректный Email")]
+        [MaxLength(254, ErrorMessage = "Email слишком длинный")]
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Введите телефон")]
