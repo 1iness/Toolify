@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Mail;
 using System.Text;
 
@@ -52,10 +52,9 @@ namespace Toolify.AuthService.Services
             smtp.Send(message);
         }
 
-        //сообщени на почту при оформлении заказа
+        //сообщени на почту при оформлении заказа 
         public async Task SendOrderConfirmedAsync(string toEmail, int orderId)
         {
-
             var smtp = CreateClient();
 
             var message = new MailMessage
@@ -67,12 +66,28 @@ namespace Toolify.AuthService.Services
                 Спасибо за покупку в магазине Toolify Store
                 Номер вашего заказа: #{orderId}
                 С уважением,
-                Toolify Store",  
+                Toolify Store",
                 IsBodyHtml = false
             };
 
             message.To.Add(toEmail);
 
+            await smtp.SendMailAsync(message);
+        }
+
+        public async Task SendOrderConfirmedHtmlAsync(string toEmail, int orderId, string htmlBody)
+        {
+            var smtp = CreateClient();
+
+            var message = new MailMessage
+            {
+                From = new MailAddress("toolify.store@gmail.com", "Toolify Store"),
+                Subject = $"Ваш заказ №{orderId} оформлен",
+                Body = htmlBody,
+                IsBodyHtml = true
+            };
+
+            message.To.Add(toEmail);
             await smtp.SendMailAsync(message);
         }
         public async Task SendOrderStatusChangedAsync(

@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Data.SqlClient;
 using Toolify.ProductService.Database;
 using Toolify.ProductService.Models;
@@ -611,6 +611,52 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
             var result = await command.ExecuteScalarAsync();
             return result == DBNull.Value ? null : result?.ToString();
+        }
+
+        public async Task<OrderEmailPayload?> GetOrderEmailDetailsAsync(int orderId)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_GetOrderEmailDetails", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.AddWithValue("@OrderId", orderId);
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) return null;
+
+            var header = new OrderEmailDetails
+            {
+                OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                TotalAmount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
+                DeliveryFee = reader.GetDecimal(reader.GetOrdinal("DeliveryFee")),
+                DeliveryType = reader.GetString(reader.GetOrdinal("DeliveryType")),
+                PaymentMethod = reader.GetString(reader.GetOrdinal("PaymentMethod")),
+                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? string.Empty : reader.GetString(reader.GetOrdinal("Address")),
+                GuestPhone = reader.IsDBNull(reader.GetOrdinal("GuestPhone")) ? string.Empty : reader.GetString(reader.GetOrdinal("GuestPhone")),
+                GuestEmail = reader.IsDBNull(reader.GetOrdinal("GuestEmail")) ? string.Empty : reader.GetString(reader.GetOrdinal("GuestEmail")),
+                PromoCode = reader.IsDBNull(reader.GetOrdinal("PromoCode")) ? null : reader.GetString(reader.GetOrdinal("PromoCode")),
+                PromoDiscountPercent = reader.GetInt32(reader.GetOrdinal("PromoDiscountPercent")),
+                GoodsTotal = reader.GetDecimal(reader.GetOrdinal("GoodsTotal"))
+            };
+
+            var lines = new List<OrderEmailLine>();
+            if (await reader.NextResultAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    lines.Add(new OrderEmailLine
+                    {
+                        ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
+                        ProductName = reader.GetString(reader.GetOrdinal("ProductName")),
+                        ArticleNumber = reader.GetString(reader.GetOrdinal("ArticleNumber")),
+                        Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                        UnitPricePaid = reader.GetDecimal(reader.GetOrdinal("UnitPricePaid")),
+                        UnitListPrice = reader.GetDecimal(reader.GetOrdinal("UnitListPrice")),
+                        LineTotalPaid = reader.GetDecimal(reader.GetOrdinal("LineTotalPaid")),
+                        LineTotalList = reader.GetDecimal(reader.GetOrdinal("LineTotalList"))
+                    });
+                }
+            }
+
+            return new OrderEmailPayload { Header = header, Lines = lines };
         }
 
         public async Task<List<Review>> GetReviewsByProductIdAsync(int productId)

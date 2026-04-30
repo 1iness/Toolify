@@ -170,7 +170,14 @@ namespace HouseholdStore.Controllers
 
             if (!string.IsNullOrEmpty(email))
             {
-                await _emailService.SendOrderConfirmedAsync(email, id);
+                var details = await _productRepo.GetOrderEmailDetailsAsync(id);
+                if (details != null)
+                {
+                    var html = OrderConfirmationEmailHtmlBuilder.Build(details);
+                    await _emailService.SendOrderConfirmedHtmlAsync(email, id, html);
+                }
+                else
+                    await _emailService.SendOrderConfirmedAsync(email, id);
             }
 
             return View(id);
