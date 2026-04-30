@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
+using Toolify.AuthService.Models;
 using Toolify.ProductService.Models;
 
 namespace HouseholdStore.Controllers
@@ -14,11 +15,13 @@ namespace HouseholdStore.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ProductApiService _productApi;
+        private readonly AuthApiService _authApi;
 
-        public HomeController(ILogger<HomeController> logger, ProductApiService productApi)
+        public HomeController(ILogger<HomeController> logger, ProductApiService productApi, AuthApiService authApi)
         {
             _logger = logger;
             _productApi = productApi;
+            _authApi = authApi;
         }
         public async Task<IActionResult> Index(string? category)
         {
@@ -106,6 +109,22 @@ namespace HouseholdStore.Controllers
                     isFavourite = await _productApi.IsFavouriteAsync(uid, id);
             }
             ViewBag.IsFavourite = isFavourite;
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var emailForProfile = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+                if (!string.IsNullOrEmpty(emailForProfile))
+                {
+                    var u = await _authApi.GetUserByEmailAsync(emailForProfile);
+                    if (u != null)
+                    {
+                        var fullName = string.Join(" ", new[] { u.FirstName, u.LastName }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                        ViewBag.ReviewUserName = fullName;
+                        ViewBag.ReviewUserEmail = u.Email;
+                    }
+                }
+            }
+
             return View(product);
         }
 

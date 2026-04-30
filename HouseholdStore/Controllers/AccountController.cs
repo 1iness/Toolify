@@ -51,9 +51,12 @@ namespace HouseholdStore.Controllers
             var emailClaim = jwt.Claims.FirstOrDefault(c => c.Type == "email" || c.Type == JwtRegisteredClaimNames.Sub)?.Value;
             var claims = new List<Claim>(jwt.Claims);
 
-            if (!string.IsNullOrEmpty(emailClaim) && !claims.Any(c => c.Type == ClaimTypes.Name))
+            if (!string.IsNullOrEmpty(emailClaim))
             {
-                claims.Add(new Claim(ClaimTypes.Name, emailClaim));
+                if (!claims.Any(c => c.Type == ClaimTypes.Email))
+                    claims.Add(new Claim(ClaimTypes.Email, emailClaim));
+                if (!claims.Any(c => c.Type == ClaimTypes.Name))
+                    claims.Add(new Claim(ClaimTypes.Name, emailClaim));
             }
             var identity = new ClaimsIdentity(
                 claims,

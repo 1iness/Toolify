@@ -321,15 +321,19 @@
             </div>
 
             <div class="user-row">
+                @{
+                    var reviewName = ViewBag.ReviewUserName as string;
+                    var reviewEmail = ViewBag.ReviewUserEmail as string;
+                }
                 <div class="form-group">
-                    <label class="form-label">Как вас зовут</label>
+                    <label class="form-label">Как вас зовут?</label>
                     <input type="text" name="UserName" class="form-input" required
-                           value="@(User.Identity.IsAuthenticated? User.Identity.Name : "")" />
+                           value="@(User.Identity.IsAuthenticated ? reviewName ?? "" : "")" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Ваш e-mail</label>
                     <input type="email" name="UserEmail" class="form-input" required
-                           value="@(User.Identity.IsAuthenticated? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value : "")" />
+                           value="@(User.Identity.IsAuthenticated ? reviewEmail ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? User.Identity.Name ?? "" : "")" />
                 </div>
             </div>
 
