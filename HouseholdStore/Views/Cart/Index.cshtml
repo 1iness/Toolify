@@ -4,6 +4,8 @@
     ViewData["Title"] = "Моя корзина";
     bool isEmpty = !Model.Any();
     decimal grandTotal = Model.Sum(x => x.TotalPrice);
+    bool canCheckout = Model.Any(x => x.PurchasableQuantity > 0);
+    int purchasableUnits = Model.Sum(x => x.PurchasableQuantity);
 }
 
 <link rel="stylesheet" href="~/css/cart.css" />
@@ -47,7 +49,7 @@
         <div class="cart-items-wrapper">
             @foreach (var item in Model)
             {
-                <div class="cart-item-card">
+                <div class="cart-item-card @(item.IsUnavailable ? "cart-item-card--unavailable" : item.HasStockShortage ? "cart-item-card--shortage" : null)">
                     <div class="item-left">
                         <img src="https://localhost:7188/api/Product/@(item.ProductId)/image"
                              alt="@item.ProductName"
@@ -57,7 +59,16 @@
 
                         <div class="item-info">
                             <h3 class="item-name">@item.ProductName</h3>
-                            <div class="item-id">Артикул: @item.ArticleNumber</div> <div class="price-single-mobile">
+                            <div class="item-id">Артикул: @item.ArticleNumber@(item.StockKnown ? $" · на складе: {item.StockQuantity} шт" : "")</div>
+                            @if (item.IsUnavailable)
+                            {
+                                <div class="cart-stock-note cart-stock-note--bad">Нет в наличии. Уменьшите количество или удалите позицию — оформить эту позицию сейчас нельзя.</div>
+                            }
+                            else if (item.HasStockShortage)
+                            {
+                                <div class="cart-stock-note">В наличии только @item.StockQuantity шт, в корзине @item.Quantity шт. При оформлении будет списано не больше @item.StockQuantity шт.</div>
+                            }
+                            <div class="price-single-mobile">
                                 <span class="price-val">@item.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                             </div>
                         </div>
@@ -71,7 +82,7 @@
                                 <div class="old-price-sm">@item.OldPrice.Value.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
                             }
                             <div class="current-price-sm">@item.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
-                            <div class="price-label">цена за 1 шт</div>
+                            <div class="price-label">@(item.IsUnavailable ? "оформление недоступно" : "цена за 1 шт (по доступному кол-ву)")</div>
                         </div>
 
                         <div class="col-quantity">
@@ -81,7 +92,7 @@
                             <span class="qty-val">@item.Quantity</span>
 
                             <a asp-action="ChangeQuantity" asp-route-id="@item.ProductId" asp-route-change="1"
-                               class="qty-btn">+</a>
+                               class="qty-btn @((item.StockKnown && item.Quantity >= item.StockQuantity) || item.IsUnavailable ? "disabled" : "")">+</a>
                         </div>
 
                         <div class="col-total">
@@ -90,7 +101,20 @@
                                 <div class="total-old">@item.TotalOldPrice.Value.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
                             }
                             <div class="total-current">@item.TotalPrice.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
-                            <div class="total-count">@item.Quantity шт</div>
+                            <div class="total-count">
+                                @if (item.IsUnavailable)
+                                {
+                                    <span>@item.Quantity шт в списке</span>
+                                }
+                                else if (item.HasStockShortage)
+                                {
+                                    <span>к оплате @item.PurchasableQuantity из @item.Quantity шт</span>
+                                }
+                                else
+                                {
+                                    <span>@item.Quantity шт</span>
+                                }
+                            </div>
                         </div>
 
                         <div class="col-delete">
@@ -107,11 +131,15 @@
             <div class="summary-info-card">
                 <h3>Информация</h3>
                 <div class="summary-row">
-                    <span>Товаров в корзине</span>
+                    <span>Позиций в корзине (всего шт)</span>
                     <span>@Model.Sum(x => x.Quantity) шт</span>
                 </div>
                 <div class="summary-row">
-                    <span>Сумма заказа</span>
+                    <span>Доступно к оформлению</span>
+                    <span>@purchasableUnits шт</span>
+                </div>
+                <div class="summary-row">
+                    <span>Сумма по доступному к заказу</span>
                     <span>@grandTotal.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                 </div>
             </div>
@@ -119,7 +147,14 @@
             <div class="summary-total-card">
                 <h3>Итого</h3>
                 <div class="total-block">
-                    <a href="/Order/Checkout" class="checkout-btn">Оформить заказ</a>
+                    @if (canCheckout)
+                    {
+                        <a href="/Order/Checkout" class="checkout-btn">Оформить заказ</a>
+                    }
+                    else
+                    {
+                        <span class="checkout-btn checkout-btn--disabled">Нет позиций, доступных к заказу</span>
+                    }
                     <div class="final-price">
                         <span>@grandTotal.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
                     </div>

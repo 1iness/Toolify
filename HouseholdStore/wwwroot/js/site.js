@@ -444,6 +444,19 @@ function addToCartAnimated(event, productId, btnElement) {
                     timer: 2500,
                     timerProgressBar: true
                 });
+            } else if (data.message) {
+                updateCartHeaderCount(typeof data.count === 'number' ? data.count : 0);
+                var pqFail = typeof data.productQuantity === 'number' ? data.productQuantity : 0;
+                applyCartInlineStateForProduct(productId, pqFail);
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'warning',
+                    title: data.message,
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true
+                });
             }
         })
         .catch(error => console.error('Ошибка:', error))

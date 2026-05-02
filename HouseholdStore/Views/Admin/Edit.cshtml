@@ -10,10 +10,16 @@
 <div class="admin-form-wrapper">
     <h1>Редактировать товар</h1>
 
+    @if (TempData["AdminError"] is string adminErr && !string.IsNullOrEmpty(adminErr))
+    {
+        <div style="margin-bottom:16px;padding:12px 16px;background:#fde8e8;border:1px solid #e8b4b4;border-radius:8px;color:#8a2a2a;">@adminErr</div>
+    }
+
     <form method="post" enctype="multipart/form-data" asp-action="Edit">
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="ImagePath" />
         <input type="hidden" asp-for="ArticleNumber">
+        <input type="hidden" asp-for="Discount" />
 
         <div class="form-group">
             <p><b>Категория:</b></p>

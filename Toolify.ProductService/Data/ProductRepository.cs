@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
 using Toolify.ProductService.Database;
 using Toolify.ProductService.Models;
@@ -130,11 +130,32 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@FullDescription", (object?)product.FullDescription ?? DBNull.Value);
             command.Parameters.AddWithValue("@Price", product.Price);
             command.Parameters.AddWithValue("@StockQuantity", product.StockQuantity);
+            command.Parameters.AddWithValue("@Discount", product.Discount);
             command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
+
+            var featuresTable = BuildFeatureTableType(product.Configurations);
+            var featuresParam = command.Parameters.AddWithValue("@Features", featuresTable);
+            featuresParam.SqlDbType = SqlDbType.Structured;
+            featuresParam.TypeName = "dbo.FeatureTableType";
 
             await connection.OpenAsync();
             int rows = await command.ExecuteNonQueryAsync();
-            return rows > 0;
+            return rows > 0 || rows == -1;
+        }
+
+        private static DataTable BuildFeatureTableType(IEnumerable<ProductConfiguration>? configurations)
+        {
+            var t = new DataTable();
+            t.Columns.Add("FeatureId", typeof(int));
+            t.Columns.Add("FeatureValue", typeof(string));
+            if (configurations == null) return t;
+            foreach (var c in configurations)
+            {
+                if (c.FeatureId <= 0) continue;
+                if (string.IsNullOrWhiteSpace(c.FeatureValue)) continue;
+                t.Rows.Add(c.FeatureId, c.FeatureValue);
+            }
+            return t;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -310,7 +331,7 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@GuestId", (object?)guestId ?? DBNull.Value);
 
             await connection.OpenAsync();
-            var raw = new List<(int ProductId, string Name, decimal ListPrice, int Quantity, string? Article)>();
+            var raw = new List<(int ProductId, string Name, decimal ListPrice, int Quantity, string? Article, int StockQuantity)>();
             using (var reader = await command.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
@@ -321,7 +342,8 @@ namespace Toolify.ProductService.Data
                         reader.GetString(reader.GetOrdinal("Name")),
                         listPrice,
                         reader.GetInt32(reader.GetOrdinal("Quantity")),
-                        reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber"))
+                        reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber")),
+                        ReadCartStockQuantityColumn(reader)
                     ));
                 }
             }
@@ -336,17 +358,36 @@ namespace Toolify.ProductService.Data
             {
                 briefByProduct.TryGetValue(row.ProductId, out var brief);
                 var categoryId = brief?.CategoryId ?? 0;
+                var pricingQty = row.StockQuantity < 0
+                    ? row.Quantity
+                    : (row.StockQuantity <= 0 ? 0 : Math.Min(row.Quantity, row.StockQuantity));
+
+                if (pricingQty == 0)
+                {
+                    var listOnly = brief?.Price ?? row.ListPrice;
+                    items.Add(new CartItem
+                    {
+                        ProductId = row.ProductId,
+                        ProductName = row.Name,
+                        Price = listOnly,
+                        OldPrice = null,
+                        Quantity = row.Quantity,
+                        StockQuantity = row.StockQuantity,
+                        ArticleNumber = row.Article
+                    });
+                    continue;
+                }
 
                 var (bestPct, buyQty, payQty, _) =
-                    await GetBestLineDiscountAsync(row.ProductId, categoryId, row.Quantity, now);
+                    await GetBestLineDiscountAsync(row.ProductId, categoryId, pricingQty, now);
 
-                var percentTotal = row.ListPrice * row.Quantity * (1 - bestPct / 100m);
+                var percentTotal = row.ListPrice * pricingQty * (1 - bestPct / 100m);
                 var bundleTotal = (buyQty.HasValue && payQty.HasValue)
-                    ? CalcBundleTotal(row.ListPrice, row.Quantity, buyQty.Value, payQty.Value)
+                    ? CalcBundleTotal(row.ListPrice, pricingQty, buyQty.Value, payQty.Value)
                     : decimal.MaxValue;
 
                 var bestTotal = Math.Min(percentTotal, bundleTotal);
-                var finalUnit = Math.Round(bestTotal / row.Quantity, 2, MidpointRounding.AwayFromZero);
+                var finalUnit = Math.Round(bestTotal / pricingQty, 2, MidpointRounding.AwayFromZero);
 
                 decimal? oldPrice = null;
                 if (finalUnit < row.ListPrice - 0.005m)
@@ -359,11 +400,22 @@ namespace Toolify.ProductService.Data
                     Price = finalUnit,
                     OldPrice = oldPrice,
                     Quantity = row.Quantity,
+                    StockQuantity = row.StockQuantity,
                     ArticleNumber = row.Article
                 });
             }
 
             return items;
+        }
+        private static int ReadCartStockQuantityColumn(SqlDataReader reader)
+        {
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), "StockQuantity", StringComparison.OrdinalIgnoreCase))
+                    return reader.IsDBNull(i) ? 0 : reader.GetInt32(i);
+            }
+
+            return -1;
         }
 
         private static decimal CalcBundleTotal(decimal unitPrice, int qty, int buyQty, int payQty)
@@ -1393,6 +1445,7 @@ namespace Toolify.ProductService.Data
                 CategoryId = reader.GetInt32(reader.GetOrdinal("CategoryId")),
                 Name = reader.GetString(reader.GetOrdinal("Name")),
                 Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                Discount = TryGetInt32(reader, "Discount", 0),
                 StockQuantity = reader.GetInt32(reader.GetOrdinal("StockQuantity")),
                 ArticleNumber = reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber")),
                 ShortDescription = reader.IsDBNull(reader.GetOrdinal("ShortDescription")) ? null : reader.GetString(reader.GetOrdinal("ShortDescription")),

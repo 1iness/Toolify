@@ -10,9 +10,12 @@ namespace HouseholdStore.Models
         public decimal Price { get; set; }      // Текущая цена
         public decimal? OldPrice { get; set; }  // Цена до скидки
         public int Quantity { get; set; }
+        public int StockQuantity { get; set; }
+        public bool StockKnown => StockQuantity >= 0;
+        public int PurchasableQuantity =>
+            !StockKnown ? Quantity : (StockQuantity <= 0 ? 0 : Math.Min(Quantity, StockQuantity));
 
-        // Считаем итоговую сумму для этой позиции
-        public decimal TotalPrice => Price * Quantity;
-        public decimal? TotalOldPrice => OldPrice * Quantity;
+        public decimal TotalPrice => Price * PurchasableQuantity;
+        public decimal? TotalOldPrice => OldPrice * PurchasableQuantity;
     }
 }

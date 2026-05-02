@@ -155,11 +155,13 @@ namespace HouseholdStore.Controllers
 
             if (ModelState.IsValid)
             {
-                await _api.UpdateAsync(product);
-
-                if (product.Configurations != null)
+                var updated = await _api.UpdateAsync(product);
+                if (!updated)
                 {
-                    await _api.UpdateConfigurationsAsync(product.Id, product.Configurations);
+                    TempData["AdminError"] = "Не удалось сохранить товар.";
+                    var categoryOptions = await _api.GetCategoriesAsync();
+                    ViewBag.Categories = new SelectList(categoryOptions, "Id", "Name", product.CategoryId);
+                    return View(product);
                 }
 
                 if (image != null)

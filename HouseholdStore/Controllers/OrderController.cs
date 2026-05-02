@@ -3,10 +3,11 @@ using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Data.SqlClient;
 using System.Security.Claims;
+using Toolify.AuthService.Services;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
-using Toolify.AuthService.Services;
 
 namespace HouseholdStore.Controllers
 {
@@ -34,6 +35,13 @@ namespace HouseholdStore.Controllers
 
             if (cartItems.Count == 0)
             {
+                return RedirectToAction("Index", "Cart");
+            }
+
+            if (!cartItems.Any(c => c.PurchasableQuantity > 0))
+            {
+                TempData["ToastMessage"] = "Сейчас нет товаров, доступных для заказа — проверьте остатки в корзине.";
+                TempData["ToastType"] = "error";
                 return RedirectToAction("Index", "Cart");
             }
 
@@ -135,6 +143,14 @@ namespace HouseholdStore.Controllers
                 return View("Checkout", model);
             }
 
+            var cartBeforePay = await _productRepo.GetCartItemsAsync(userId, guestId);
+            if (!cartBeforePay.Any(c => c.PurchasableQuantity > 0))
+            {
+                TempData["ToastMessage"] = "Сейчас нет товаров, доступных для заказа — проверьте остатки в корзине.";
+                TempData["ToastType"] = "error";
+                return RedirectToAction("Index", "Cart");
+            }
+
             var order = new Order
             {
                 UserId = userId,
@@ -149,9 +165,19 @@ namespace HouseholdStore.Controllers
 
             };
 
-            int orderId = await _productRepo.CreateOrderAsync(order, guestId, model.PromoCode);
-
-            return RedirectToAction("Confirmed", new { id = orderId });
+            try
+            {
+                int orderId = await _productRepo.CreateOrderAsync(order, guestId, model.PromoCode);
+                return RedirectToAction("Confirmed", new { id = orderId });
+            }
+            catch (SqlException ex) when (ex.Number == 50001 || ex.Number == 50002)
+            {
+                TempData["ToastMessage"] = ex.Number == 50002
+                    ? "Корзина пуста. Оформление отменено."
+                    : "Нет товаров, доступных для заказа. Проверьте наличие.";
+                TempData["ToastType"] = "error";
+                return RedirectToAction("Index", "Cart");
+            }
         }
 
         public async Task<IActionResult> Confirmed(int id)

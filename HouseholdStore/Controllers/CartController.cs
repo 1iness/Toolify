@@ -25,10 +25,22 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> AddToCart(int id)
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
+            var before = (await _productRepo.GetCartItemsAsync(userId, guestId))
+                .FirstOrDefault(x => x.ProductId == id)?.Quantity ?? 0;
             await _productRepo.AddToCartAsync(id, userId, guestId);
+            var after = (await _productRepo.GetCartItemsAsync(userId, guestId))
+                .FirstOrDefault(x => x.ProductId == id)?.Quantity ?? 0;
 
-            TempData["ToastMessage"] = "Товар добавлен в корзину";
-            TempData["ToastType"] = "success";
+            if (after <= before)
+            {
+                TempData["ToastMessage"] = "Недостаточно товара на складе";
+                TempData["ToastType"] = "error";
+            }
+            else
+            {
+                TempData["ToastMessage"] = "Товар добавлен в корзину";
+                TempData["ToastType"] = "success";
+            }
             return RedirectToAction("Index");
         }
 
@@ -64,12 +76,12 @@ namespace HouseholdStore.Controllers
                 TempData["ToastMessage"] = "Недостаточно товара на складе";
                 TempData["ToastType"] = "error";
             }
-            else
+            else if (isUpdated)
             {
                 TempData["ToastMessage"] = "Количество обновлено";
                 TempData["ToastType"] = "success";
             }
-                return RedirectToAction("Index");
+            return RedirectToAction("Index");
         }
 
         [HttpPost] 
@@ -77,10 +89,23 @@ namespace HouseholdStore.Controllers
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
 
+            var before = (await _productRepo.GetCartItemsAsync(userId, guestId))
+                .FirstOrDefault(x => x.ProductId == id)?.Quantity ?? 0;
             await _productRepo.AddToCartAsync(id, userId, guestId);
             var cartItems = await _productRepo.GetCartItemsAsync(userId, guestId);
             var totalCount = cartItems.Sum(x => x.Quantity);
             var productQuantity = cartItems.FirstOrDefault(x => x.ProductId == id)?.Quantity ?? 0;
+            if (productQuantity <= before)
+            {
+                return Json(new
+                {
+                    success = false,
+                    count = totalCount,
+                    productQuantity,
+                    message = "Недостаточно товара на складе"
+                });
+            }
+
             return Json(new { success = true, count = totalCount, productQuantity });
         }
 
