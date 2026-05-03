@@ -2,24 +2,14 @@
 @using Microsoft.AspNetCore.Html
 @{
     ViewData["Title"] = "Отчеты";
-    Layout = null;
+    Layout = "_AdminLayout";
     var selectedSalesCategories = Model.Filter.SalesCategoryIds?.ToHashSet() ?? new HashSet<int>();
     var selectedPopularityCategories = Model.Filter.PopularityCategoryIds?.ToHashSet() ?? new HashSet<int>();
 }
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/nbrb-currency.css" asp-append-version="true" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(180deg, #f8fbf8 0%, #f3f7f4 100%);
+<style>
+        .reports-root {
+            background: transparent;
             color: #223;
             font-family: 'Montserrat', sans-serif;
         }
@@ -138,15 +128,10 @@
             border-color: #b9d4c1;
         }
     </style>
-</head>
-<body>
+
+<div class="reports-root">
     <div class="reports-container py-4 px-3">
-        <div class="d-flex justify-content-between align-items-center mb-4 page-header">
-            <div>
-                <h2 class="h3"><i class="fas fa-file-lines me-2" style="color:#28a745;"></i>Аналитические отчеты</h2>
-            </div>
-            <a href="/Admin/Index" class="btn btn-back"><i class="fas fa-arrow-left me-1"></i> В админ-панель</a>
-        </div>
+
 
         <div class="card report-section mb-4">
             <div class="card-header">
@@ -408,8 +393,8 @@
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         (function () {
             var resetMap = {
@@ -438,23 +423,6 @@
             });
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @if (TempData["ToastMessage"] != null)
-    {
-        <script>
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: '@TempData["ToastType"]',
-                title: '@TempData["ToastMessage"]',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-        </script>
-    }
-</body>
-</html>
 
 @functions {
     private IHtmlContent RenderExportButtons(string reportType)

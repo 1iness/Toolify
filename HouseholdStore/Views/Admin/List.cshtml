@@ -2,24 +2,26 @@
 
 @{
     ViewData["Title"] = "Список товаров";
-    Layout = null; 
+    Layout = "_AdminLayout";
 }
 
 <link rel="stylesheet" href="~/css/site.css" />
-<link rel="stylesheet" href="~/css/list.css" />
 
-<div class="admin-list-container">
-    <h1>Список товаров</h1>
-    <p>
-        <a href="/Admin/Create" class="btn-create">
-            <i class="bi bi-plus-lg"></i> Добавить новый товар
-        </a>
-        <a href="/Admin/Categories" class="btn-create" style="background:#6c757d;">
-            Категории
-        </a>
-    </p>
+<div class="admin-flush-page" data-admin-heading="Список товаров">
+    <h1 class="visually-hidden">Список товаров</h1>
+    <div class="admin-products-list-toolbar">
+        <div class="admin-products-list-actions">
+            <a href="/Admin/Create" class="btn-create">
+                <i class="bi bi-plus-lg"></i> Добавить новый товар
+            </a>
+            <a href="/Admin/Categories" class="btn-create btn-create--secondary">
+                Категории
+            </a>
+        </div>
+    </div>
 
-    <table class="admin-table">
+    <div class="admin-products-table-wrap">
+    <table class="admin-table admin-table--products">
         <thead>
             <tr>
                 <th>Id</th>
@@ -31,10 +33,11 @@
                 <th>Действия</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="products-filter-tbody">
             @foreach (var item in Model)
             {
-                <tr>
+                var productSearchBlob = (item.Name ?? "").Trim().ToLowerInvariant();
+                <tr data-product-search="@productSearchBlob">
                     <td>@item.Id</td>
                     <td>
                         <img src="https://localhost:7188/api/Product/@(item.Id)/image"
@@ -57,4 +60,5 @@
             }
         </tbody>
     </table>
+    </div>
 </div>

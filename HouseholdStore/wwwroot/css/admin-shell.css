@@ -1,0 +1,479 @@
+:root {
+    --admin-green: #218838;
+    --admin-green-soft: rgba(33, 136, 56, 0.12);
+    --admin-green-muted: #e8f5ea;
+    --admin-shell-bg: linear-gradient(160deg, #f4faf6 0%, #eef5f1 35%, #f8faf9 100%);
+    --admin-card-shadow: 0 12px 40px rgba(22, 60, 40, 0.08);
+    --admin-sidebar-w: 272px;
+}
+
+.admin-shell-body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Montserrat', sans-serif;
+    background: var(--admin-shell-bg);
+    color: #1f3329;
+}
+
+.admin-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-shell-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 40, 28, 0.35);
+    z-index: 1040;
+}
+
+.admin-sidebar-open .admin-shell-overlay {
+    display: block;
+}
+
+.admin-sidebar {
+    width: var(--admin-sidebar-w);
+    flex-shrink: 0;
+    background: #fff;
+    box-shadow: 4px 0 24px rgba(22, 60, 40, 0.06);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    z-index: 1050;
+    border-radius: 0 22px 22px 0;
+}
+
+.admin-sidebar-brand {
+    padding: 22px 20px 12px;
+    border-bottom: 1px solid var(--admin-green-muted);
+}
+
+.admin-brand-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #173824;
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+.admin-brand-link:hover {
+    color: var(--admin-green);
+}
+
+.admin-brand-logo {
+    border-radius: 14px;
+    object-fit: cover;
+}
+
+.admin-sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px 18px;
+}
+
+.admin-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    margin-bottom: 4px;
+    border-radius: 14px;
+    color: #3d5349;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.93rem;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+.admin-nav-item i {
+    font-size: 1.15rem;
+    opacity: 0.85;
+}
+
+.admin-nav-item:hover {
+    background: var(--admin-green-muted);
+    color: var(--admin-green);
+}
+
+.admin-nav-item.is-active {
+    background: linear-gradient(90deg, var(--admin-green-soft), transparent);
+    color: var(--admin-green);
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 var(--admin-green);
+}
+
+.admin-nav-group {
+    margin-bottom: 8px;
+}
+
+.admin-nav-sub {
+    padding-left: 38px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin-nav-sub-item {
+    padding: 7px 10px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    color: #5c7168;
+    text-decoration: none;
+}
+
+.admin-nav-sub-item:hover {
+    background: #f4faf7;
+    color: var(--admin-green);
+}
+
+.admin-nav-sub-item.is-active {
+    background: var(--admin-green-muted);
+    color: var(--admin-green);
+    font-weight: 600;
+}
+
+.admin-sidebar-footer {
+    padding: 14px 16px 20px;
+    border-top: 1px solid var(--admin-green-muted);
+}
+
+.admin-footer-store {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: #5c7168;
+    text-decoration: none;
+}
+
+.admin-footer-store:hover {
+    color: var(--admin-green);
+}
+
+.admin-shell-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px 12px;
+    flex-wrap: wrap;
+}
+
+.admin-sidebar-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: var(--admin-card-shadow);
+    color: var(--admin-green);
+}
+
+.admin-topbar-text {
+    flex: 1;
+    min-width: 140px;
+}
+
+.admin-greeting {
+    font-size: 0.95rem;
+    color: #5c7168;
+}
+
+.admin-page-heading {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #173824;
+    line-height: 1.25;
+}
+
+.admin-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.admin-header-search-wrap {
+    position: relative;
+    min-width: 260px;
+    max-width: min(440px, 42vw);
+}
+
+.admin-header-search {
+    width: 100%;
+    border-radius: 999px;
+    border: 1px solid #d5e8db;
+    padding: 10px 14px 10px 40px;
+    font-size: 0.9rem;
+    background: #fff;
+}
+
+.admin-header-search:focus {
+    outline: none;
+    border-color: var(--admin-green);
+    box-shadow: 0 0 0 3px var(--admin-green-soft);
+}
+
+.admin-header-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7a9389;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.admin-bell-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: var(--admin-card-shadow);
+    color: #3d5349;
+    text-decoration: none;
+}
+
+.admin-bell-link:hover {
+    color: var(--admin-green);
+}
+
+.admin-chat-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+
+.admin-panel-root {
+    flex: 1;
+    padding: 8px 24px 32px;
+    max-width: 1480px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Контент на всю ширину колонки (как топбар); для чата класс не ставится — остаётся max-width */
+.admin-panel-root--wide {
+    max-width: none;
+}
+
+.admin-panel-root--wide .orders-container {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.admin-panel-root--wide .reports-container {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.admin-panel-root.admin-panel-loading {
+    opacity: 0.55;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.admin-panel-card {
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: var(--admin-card-shadow);
+    padding: 22px 24px;
+    border: 1px solid rgba(33, 136, 56, 0.08);
+}
+
+.admin-home-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 26px;
+    min-height: 52vh;
+    padding: clamp(72px, 14vh, 140px) 24px 32px;
+    text-align: center;
+}
+
+.admin-home-logo {
+    display: block;
+    width: min(460px, 54vw);
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+}
+
+.admin-home-text {
+    margin: 0;
+    color: #5c7168;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* Списки товаров / категории: дополняют list.css */
+.admin-list-container {
+    background: #fff;
+    border-radius: 22px;
+    padding: 22px 24px;
+    box-shadow: var(--admin-card-shadow);
+    border: 1px solid rgba(33, 136, 56, 0.08);
+    max-width: 100%;
+}
+
+.admin-table {
+    width: 100%;
+}
+
+/* Плоская страница списка (товары, категории, …) */
+.admin-flush-page {
+    width: 100%;
+    min-width: 0;
+}
+
+.admin-products-list-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.admin-products-list-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-products-list-actions .btn-create {
+    margin-bottom: 0;
+}
+
+.admin-products-table-wrap {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+    border: 1px solid rgba(33, 136, 56, 0.12);
+    background: #fff;
+}
+
+.admin-table.admin-table--products {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border-collapse: collapse;
+}
+
+.admin-table.admin-table--products thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* Chart.js: при maintainAspectRatio: false нужна явная высота родителя */
+.admin-dashboard-inner .admin-chart-slot {
+    height: 280px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.admin-dashboard-inner .admin-chart-slot canvas {
+    display: block;
+    max-height: 100%;
+}
+
+.admin-dashboard-history-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.admin-dashboard-history-table th:nth-child(1),
+.admin-dashboard-history-table td:nth-child(1) {
+    width: 18%;
+}
+
+.admin-dashboard-history-table th:nth-child(2),
+.admin-dashboard-history-table td:nth-child(2) {
+    width: 28%;
+    word-break: break-word;
+}
+
+.admin-dashboard-history-table th:nth-child(3),
+.admin-dashboard-history-table td:nth-child(3) {
+    width: 12%;
+    text-align: center;
+}
+
+.admin-dashboard-history-table th:nth-child(4),
+.admin-dashboard-history-table td:nth-child(4) {
+    width: 22%;
+}
+
+.admin-dashboard-history-table th:nth-child(5),
+.admin-dashboard-history-table td:nth-child(5) {
+    width: 20%;
+    white-space: nowrap;
+}
+
+@media (max-width: 991.98px) {
+    .admin-sidebar-toggle {
+        display: inline-flex;
+    }
+
+    .admin-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        transform: translateX(-102%);
+        transition: transform 0.26s ease;
+        border-radius: 0 18px 18px 0;
+    }
+
+    .admin-sidebar-open .admin-sidebar {
+        transform: translateX(0);
+    }
+
+    .admin-header-search-wrap {
+        width: 100%;
+        max-width: none;
+        order: 3;
+        flex-basis: 100%;
+    }
+
+    .admin-topbar {
+        align-items: flex-start;
+    }
+}

@@ -26,6 +26,15 @@
         color: white;
     }
 
+.btn-create--secondary {
+    background-color: #6c757d;
+}
+
+.btn-create--secondary:hover {
+    background-color: #5a6268;
+    color: white;
+}
+
 /* Таблица */
 .admin-table {
     width: 100%;

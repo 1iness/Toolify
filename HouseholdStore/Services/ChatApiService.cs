@@ -74,6 +74,12 @@ namespace HouseholdStore.Services
                    ?? new List<ChatConversationVm>();
         }
 
+        public async Task<int> GetAdminUnreadConversationCountAsync()
+        {
+            var list = await GetAdminConversationsAsync();
+            return list.Count(c => c.HasUnreadForAdmin);
+        }
+
         public async Task<bool> SendAdminReplyAsync(int conversationId, string text)
         {
             var response = await _http.PostAsJsonAsync($"{BaseUrl}/admin/reply", new

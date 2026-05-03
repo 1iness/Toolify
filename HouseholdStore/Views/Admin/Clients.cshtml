@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Пользователи";
-    Layout = null;
+    Layout = "_AdminLayout";
 
     var users = Model?.ToList() ?? new List<Toolify.AuthService.Models.User>();
     var total = users.Count;
@@ -18,13 +18,6 @@
 
 <div class="admin-clients-page">
     <div class="container-fluid admin-clients px-3 px-lg-4 py-4">
-        <div class="clients-hero mb-4">
-            <div>
-                <div class="clients-hero-label">Админ-панель</div>
-                <h1 class="clients-hero-title">Управление учетными записями</h1>
-            </div>
-            <a asp-action="Index" class="btn btn-outline-secondary clients-back-btn">Назад в панель</a>
-        </div>
 
         <div class="row g-3 mb-4">
             <div class="col-12 col-sm-6 col-xl-3">

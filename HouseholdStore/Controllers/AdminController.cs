@@ -1,4 +1,5 @@
-﻿using HouseholdStore.Models;
+﻿using HouseholdStore.Helpers;
+using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -42,23 +43,33 @@ namespace HouseholdStore.Controllers
             _env = env;
         }
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var products = await _api.GetAllAsync();
-            return View(products);
+            ViewData["Title"] = "Админ-панель";
+            ViewBag.AdminSectionTitle = "Панель управления";
+            ViewBag.AdminPanelKey = "home";
+            ViewBag.AdminSearchTarget = "none";
+            if (AdminPartialHelper.IsPartial(Request))
+            {
+                Response.Headers["X-Admin-Panel"] = "home";
+                Response.Headers["X-Admin-Search"] = "none";
+                Response.Headers["X-Admin-Page-Title"] = AdminPageTitleHelper.EncodeForHeader("Панель управления");
+                return PartialView("_AdminHomeInner");
+            }
+
+            return View();
         }
 
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> List()
         {
             var products = await _api.GetAllAsync();
-            return View(products);
+            return AdminShellView(products, "products-list", "products-list");
         }
 
         public async Task<IActionResult> Categories()
         {
             var list = await _api.GetCategoriesForAdminAsync();
-            return View(list);
+            return AdminShellView(list, "products-categories", "none");
         }
 
         [HttpPost]
@@ -129,7 +140,7 @@ namespace HouseholdStore.Controllers
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name", product.CategoryId);
 
-            return View(product);
+            return AdminShellView(product, "products-edit", "none");
         }
 
         [HttpPost]
@@ -161,7 +172,7 @@ namespace HouseholdStore.Controllers
                     TempData["AdminError"] = "Не удалось сохранить товар.";
                     var categoryOptions = await _api.GetCategoriesAsync();
                     ViewBag.Categories = new SelectList(categoryOptions, "Id", "Name", product.CategoryId);
-                    return View(product);
+                    return AdminShellView(product, "products-edit", "none");
                 }
 
                 if (image != null)
@@ -174,7 +185,7 @@ namespace HouseholdStore.Controllers
 
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name", product.CategoryId);
-            return View(product);
+            return AdminShellView(product, "products-edit", "none");
         }
 
 
@@ -182,7 +193,7 @@ namespace HouseholdStore.Controllers
         {
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
-            return View(new Product());
+            return AdminShellView(new Product(), "products-create", "none");
 
         }
 
@@ -241,7 +252,7 @@ namespace HouseholdStore.Controllers
 
             var categories = await _api.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
-            return View(product);
+            return AdminShellView(product, "products-create", "none");
         }
 
         public async Task<IActionResult> Delete(int id)
@@ -261,7 +272,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> PromoCodes()
         {
             var promos = await _api.GetAllPromoCodesAsync();
-            return View(promos);
+            return AdminShellView(promos, "promocodes", "none");
         }
 
         [HttpPost]
@@ -301,7 +312,7 @@ namespace HouseholdStore.Controllers
             ViewBag.CategoriesList = categories;
             ViewBag.ProductsList = products;
 
-            return View(new AdminPromotionsViewModel { Promotions = promos });
+            return AdminShellView(new AdminPromotionsViewModel { Promotions = promos }, "promotions", "none");
         }
 
         [HttpPost]
@@ -373,7 +384,7 @@ namespace HouseholdStore.Controllers
             ViewBag.CategoriesList = categories;
             ViewBag.ProductsList = products;
 
-            return View(new AdminDiscountsViewModel { Discounts = discounts });
+            return AdminShellView(new AdminDiscountsViewModel { Discounts = discounts }, "discounts", "none");
         }
 
         [HttpPost]
@@ -425,12 +436,12 @@ namespace HouseholdStore.Controllers
             try
             {
                 var users = await _authApi.GetAllUsersAsync();
-                return View(users);
+                return AdminShellView(users, "clients", "clients");
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                return View(new List<Toolify.AuthService.Models.User>());
+                return AdminShellView(new List<Toolify.AuthService.Models.User>(), "clients", "clients");
             }
         }
 
@@ -507,7 +518,7 @@ namespace HouseholdStore.Controllers
             ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
             ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
 
-            return View(orders);
+            return AdminShellView(orders, "orders", "orders");
         }
 
         [HttpPost]
@@ -577,7 +588,7 @@ namespace HouseholdStore.Controllers
                 ProductsByCategory = await _repo.GetProductsByCategoryReportAsync(),
                 ClientHistory = await _repo.GetClientHistoryReportAsync()
             };
-            return View(model);
+            return AdminShellView(model, "dashboard", "none");
         }
 
         [HttpGet]
@@ -591,7 +602,7 @@ namespace HouseholdStore.Controllers
             }
 
             var model = await _reportBuilder.BuildAsync(filter);
-            return View(model);
+            return AdminShellView(model, "reports", "none");
         }
 
         [HttpGet]
@@ -664,6 +675,29 @@ namespace HouseholdStore.Controllers
             sb.AppendLine("Клиент,Email,Всего заказов,Общая сумма (BYN),Дата последнего заказа");
             foreach (var item in data) sb.AppendLine($"\"{item.ClientName}\",\"{item.ClientEmail}\",{item.TotalOrders},{item.TotalSpent.ToString("F2")},{item.LastOrderDate.ToShortDateString()}");
             return GenerateCsv(sb.ToString(), "ClientHistory.csv");
+        }
+
+        private IActionResult AdminShellView(object model, string panelKey, string searchTarget = "none")
+        {
+            ViewBag.AdminPanelKey = panelKey;
+            ViewBag.AdminSearchTarget = searchTarget;
+            var sectionTitle = AdminPageTitleHelper.GetForPanel(panelKey);
+            if (!string.IsNullOrEmpty(sectionTitle))
+            {
+                ViewBag.AdminSectionTitle = sectionTitle;
+                ViewData["Title"] = sectionTitle;
+            }
+
+            if (AdminPartialHelper.IsPartial(Request))
+            {
+                Response.Headers["X-Admin-Panel"] = panelKey;
+                Response.Headers["X-Admin-Search"] = searchTarget;
+                if (!string.IsNullOrEmpty(sectionTitle))
+                    Response.Headers["X-Admin-Page-Title"] = AdminPageTitleHelper.EncodeForHeader(sectionTitle);
+                return PartialView(model);
+            }
+
+            return View(model);
         }
     }
 }

@@ -1,32 +1,29 @@
 @model List<Toolify.ProductService.Models.CategoryAdminItem>
 @{
     ViewData["Title"] = "Категории";
-    Layout = null;
+    Layout = "_AdminLayout";
 }
 <link rel="stylesheet" href="~/css/site.css" />
-<link rel="stylesheet" href="~/css/list.css" />
 
-<div class="admin-list-container">
-    <h1>Категории</h1>
-    <p>
-        <a href="/Admin/Create" class="btn-create">Добавить товар</a>
-        <a href="/Admin/List" class="btn-create" style="background:#6c757d;">К списку товаров</a>
-    </p>
-
+<div class="admin-flush-page" data-admin-heading="Категории">
+    <h1 class="visually-hidden">Категории</h1>
     @if (TempData["CategoryMessage"] != null)
     {
-        <p style="color: green;">@TempData["CategoryMessage"]</p>
+        <p class="text-success mb-2">@TempData["CategoryMessage"]</p>
     }
     @if (TempData["CategoryError"] != null)
     {
-        <p style="color: #b00020;">@TempData["CategoryError"]</p>
+        <p class="text-danger mb-2">@TempData["CategoryError"]</p>
     }
+    <div class="admin-products-list-toolbar">
+        <div class="admin-products-list-actions">
+            <a href="/Admin/Create" class="btn-create">Добавить товар</a>
+            <a href="/Admin/List" class="btn-create btn-create--secondary">К списку товаров</a>
+        </div>
+    </div>
 
-    <p style="color:#666; font-size: 14px; max-width: 720px;">
-        Удалить можно только пустую категорию (без товаров). Иконка для шапки и для блока на главной: картинка png/jpg и т.д., как у текущих карточек. Папка: <code>wwwroot/image/category-icons/</code>.
-    </p>
-
-    <table class="admin-table">
+    <div class="admin-products-table-wrap">
+    <table class="admin-table admin-table--products">
         <thead>
             <tr>
                 <th>Id</th>
@@ -84,4 +81,5 @@
         }
         </tbody>
     </table>
+    </div>
 </div>

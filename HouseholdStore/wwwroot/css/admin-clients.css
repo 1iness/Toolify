@@ -1,16 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
-body {
-  margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(78, 115, 223, 0.12), transparent 28%),
-    linear-gradient(180deg, #f6f8fc 0%, #eef2f9 100%);
-  font-family: 'Montserrat', sans-serif;
-  color: #334155;
-}
-
 .admin-clients-page {
-  min-height: 100vh;
+  min-height: 0;
 }
 
 .admin-clients {
@@ -102,9 +93,11 @@ body {
 }
 
 .clients-profile-card {
-  position: sticky;
-  top: 1.5rem;
+  position: relative;
+  top: auto;
   padding: 1.5rem;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .clients-profile-label {
@@ -175,8 +168,8 @@ body {
 
 .clients-profile-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.9rem;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
 }
 
 .clients-profile-item {
@@ -375,7 +368,7 @@ body {
 
 @media (max-width: 1199.98px) {
   .clients-profile-card {
-    position: static;
+    position: relative;
   }
 }
 

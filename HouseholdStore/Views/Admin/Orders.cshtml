@@ -2,28 +2,10 @@
 
 @{
     ViewData["Title"] = "Управление заказами";
-    Layout = null;
+    Layout = "_AdminLayout";
 }
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/nbrb-currency.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/orders.css" />
-</head>
-<body>
-
-    <div class="orders-container py-4 px-3">
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="h3 fw-bold text-dark mb-0">Учет заказов</h2>
-            <a href="/Admin/Index" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> В админ-панель</a>
-        </div>
+<div class="orders-container py-2 px-1">
 
         @if (TempData["Success"] != null)
         {
@@ -33,7 +15,7 @@
             </div>
         }
 
-        <div class="card mb-4">
+        <div class="card mb-4 admin-panel-card border-0">
             <div class="card-body bg-light rounded-top">
                 <form method="get" asp-action="Orders" class="row g-3 align-items-end">
                     <div class="col-md-3">
@@ -52,26 +34,30 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card admin-panel-card border-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
                             <th width="8%">№ Заказа</th>
                             <th width="15%">Дата</th>
-                            <th width="25%">Клиент</th>
+                            <th width="30%">Клиент</th>
                             <th width="12%">Сумма</th>
                             <th width="10%">Промокод</th>
-                            <th width="20%">Статус</th>
+                            <th width="18%">Статус</th>
                             <th width="10%" class="text-center">Действие</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="orders-filter-tbody">
                         @if (Model != null && Model.Any())
                         {
                             foreach (var order in Model)
                             {
-                                <tr>
+                                var guestFirst = order.GuestFirstName ?? "";
+                                var guestLast = order.GuestLastName ?? "";
+                                var guestMail = order.GuestEmail ?? "";
+                                var orderSearchBlob = $"{guestFirst} {guestLast} {guestMail}".Trim().ToLowerInvariant();
+                                <tr data-order-search="@orderSearchBlob">
                                     <td class="fw-bold text-primary">#@order.Id</td>
                                     <td>@order.OrderDate.ToString("dd.MM.yyyy HH:mm")</td>
                                     <td>
@@ -112,7 +98,7 @@
                                         </form>
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-info" title="Посмотреть детали">
+                                        <button type="button" class="btn btn-sm btn-outline-info" title="Посмотреть детали">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                     </td>
@@ -132,23 +118,4 @@
                 </table>
             </div>
         </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @if (TempData["ToastMessage"] != null)
-    {
-        <script>
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: '@TempData["ToastType"]',
-                title: '@TempData["ToastMessage"]',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-        </script>
-    }
-</body>
-</html>
+</div>

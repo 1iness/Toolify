@@ -1,4 +1,5 @@
-﻿using HouseholdStore.Models;
+﻿using HouseholdStore.Helpers;
+using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,10 +59,32 @@ namespace HouseholdStore.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
+        public async Task<IActionResult> AdminUnreadCount()
+        {
+            var count = await _chatApi.GetAdminUnreadConversationCountAsync();
+            return Json(new { count });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
         public async Task<IActionResult> Admin()
         {
             var conversations = await _chatApi.GetAdminConversationsAsync();
             ViewBag.UserEmailMap = await GetUserEmailMapAsync();
+            ViewBag.AdminPanelKey = "chat";
+            ViewBag.AdminSearchTarget = "none";
+            var chatTitle = AdminPageTitleHelper.GetForPanel("chat");
+            ViewBag.AdminSectionTitle = chatTitle;
+
+            if (AdminPartialHelper.IsPartial(Request))
+            {
+                Response.Headers["X-Admin-Panel"] = "chat";
+                Response.Headers["X-Admin-Search"] = "none";
+                if (!string.IsNullOrEmpty(chatTitle))
+                    Response.Headers["X-Admin-Page-Title"] = AdminPageTitleHelper.EncodeForHeader(chatTitle);
+                return PartialView(conversations);
+            }
+
             return View(conversations);
         }
 
