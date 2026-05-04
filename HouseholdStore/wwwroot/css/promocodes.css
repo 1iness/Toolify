@@ -5,15 +5,15 @@
 }
 
 .promo-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    border: 1px solid rgba(33, 136, 56, 0.1);
+    border-radius: 14px;
+    box-shadow: 0 8px 28px rgba(22, 60, 40, 0.07);
     margin-bottom: 1.5rem;
 }
 
 .promo-card-header {
-    background-color: #f8f9fc;
-    border-bottom: 1px solid #e3e6f0;
+    background-color: #f4faf7;
+    border-bottom: 1px solid #e0ebe3;
     border-radius: 12px 12px 0 0 !important;
     padding: 1rem 1.25rem;
 }
@@ -21,7 +21,7 @@
 .promo-card-title {
     margin: 0;
     font-weight: 700;
-    color: #4e73df;
+    color: #173824;
     font-size: 1rem;
 }
 
@@ -35,7 +35,7 @@
         text-transform: uppercase;
         font-size: 0.85rem;
         color: #858796;
-        border-bottom: 2px solid #e3e6f0;
+        border-bottom: 2px solid #e5ebe7;
         padding: 1rem;
     }
 

@@ -6,8 +6,8 @@
 
 .admin-clients {
   --clients-card-radius: 18px;
-  --clients-soft-border: #e7ecf5;
-  --clients-soft-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.12);
+  --clients-soft-border: #e3ebe5;
+  --clients-soft-shadow: 0 8px 28px rgba(22, 60, 40, 0.08);
 }
 
 .clients-hero {
@@ -17,7 +17,7 @@
   gap: 1rem;
   padding: 1.5rem 1.75rem;
   border-radius: 24px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f6fbf8 100%);
   border: 1px solid var(--clients-soft-border);
   box-shadow: var(--clients-soft-shadow);
 }
@@ -28,8 +28,8 @@
   padding: 0.35rem 0.75rem;
   margin-bottom: 0.9rem;
   border-radius: 999px;
-  background: rgba(78, 115, 223, 0.10);
-  color: #4e73df;
+  background: rgba(33, 136, 56, 0.12);
+  color: #218838;
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -40,12 +40,12 @@
   margin: 0 0 0.65rem;
   font-size: 2rem;
   font-weight: 700;
-  color: #243b63;
+  color: #173824;
 }
 
 .clients-hero-text {
   max-width: 760px;
-  color: #64748b;
+  color: #5c7168;
   line-height: 1.7;
 }
 
@@ -80,7 +80,7 @@
 .clients-stat-value {
   font-size: 1.9rem;
   font-weight: 700;
-  color: #243b63;
+  color: #173824;
 }
 
 .clients-alert {
@@ -102,7 +102,7 @@
 
 .clients-profile-label {
   margin-bottom: 0.75rem;
-  color: #4e73df;
+  color: #218838;
   font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -112,7 +112,7 @@
 .clients-profile-name {
   font-size: 1.55rem;
   font-weight: 700;
-  color: #243b63;
+  color: #173824;
   line-height: 1.25;
 }
 
@@ -143,9 +143,9 @@
 }
 
 .clients-pill-primary {
-  background: rgba(78, 115, 223, 0.12);
-  color: #4e73df;
-  border-color: rgba(78, 115, 223, 0.20);
+  background: rgba(33, 136, 56, 0.12);
+  color: #1a5630;
+  border-color: rgba(33, 136, 56, 0.25);
 }
 
 .clients-pill-muted {

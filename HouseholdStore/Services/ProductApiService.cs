@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Toolify.ProductService.Models;
 
 namespace HouseholdStore.Services
@@ -21,6 +22,12 @@ namespace HouseholdStore.Services
         private JsonSerializerOptions jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
+        };
+
+        private static readonly JsonSerializerOptions JsonWriteOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
         public async Task<List<Product>> GetAllAsync()
@@ -73,7 +80,7 @@ namespace HouseholdStore.Services
 
         public async Task<int?> CreateAsync(Product product)
         {
-            var body = JsonSerializer.Serialize(product);
+            var body = JsonSerializer.Serialize(product, JsonWriteOptions);
             var response = await _http.PostAsync(
                 "/api/admin/products",
                 new StringContent(body, Encoding.UTF8, "application/json"));
@@ -91,7 +98,7 @@ namespace HouseholdStore.Services
 
         public async Task<bool> UpdateAsync(Product product)
         {
-            var body = JsonSerializer.Serialize(product);
+            var body = JsonSerializer.Serialize(product, JsonWriteOptions);
             var response = await _http.PutAsync(
                 $"/api/admin/products/{product.Id}",
                 new StringContent(body, Encoding.UTF8, "application/json"));

@@ -5,94 +5,100 @@
     Layout = "_AdminLayout";
 }
 
-<link rel="stylesheet" href="~/css/create-product.css" />
+<link rel="stylesheet" href="~/css/create-product.css" asp-append-version="true" />
 
-<div class="admin-form-wrapper">
+<div class="admin-flush-page" data-admin-heading="Добавить товар">
+    <h1 class="visually-hidden">Добавить товар</h1>
 
-    <div asp-validation-summary="All" style="color:red; margin-bottom: 15px;"></div>
+    <div class="admin-form-wrapper">
 
-    <form method="post" enctype="multipart/form-data" asp-action="Create">
+        <div asp-validation-summary="All" class="text-danger mb-3 small"></div>
 
-        <div class="category-box">
-            <div class="form-group">
-                <p>Категория:</p>
-                <select name="CategoryId" asp-items="ViewBag.Categories" class="form-select" style="max-width: 300px;">
-                    <option value="">-- Выберите из списка --</option>
-                </select>
+        <form method="post" enctype="multipart/form-data" asp-action="Create" class="admin-product-form">
+
+            <div class="category-box">
+                <div class="category-box-inner">
+                    <div class="form-group mb-0">
+                        <p class="form-label-inline"><b>Категория</b></p>
+                        <select name="CategoryId" asp-items="ViewBag.Categories" class="form-select form-select-admin">
+                            <option value="">— Выберите из списка —</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <p class="form-label-inline"><b>Новая категория</b> <span class="text-muted fw-normal small">(если не из списка)</span></p>
+                        <input type="text" name="NewCategoryName" placeholder="Название" class="form-input" />
+                    </div>
+                </div>
             </div>
 
-            <p style="margin: 10px 0; color: #888; font-size: 12px;"><em>--- ИЛИ создайте новую ---</em></p>
+            <div class="admin-product-form-grid">
+                <div class="admin-product-form-col admin-product-form-col--main">
+                    <div class="form-group">
+                        <p class="form-label-inline"><b>Название</b></p>
+                        <input type="text" name="Name" value="@Model?.Name" class="form-input" required />
+                    </div>
 
-            <div class="form-group">
-                <input type="text" name="NewCategoryName" placeholder="Название новой категории" class="form-input" style="max-width: 300px;" />
+                    <div class="form-group">
+                        <p class="form-label-inline"><b>Краткое описание</b></p>
+                        <input type="text" name="ShortDescription" value="@Model?.ShortDescription" class="form-input" />
+                    </div>
+
+                    <div class="form-group">
+                        <p class="form-label-inline"><b>Полное описание</b></p>
+                        <textarea name="FullDescription" rows="3" class="form-textarea form-textarea-compact">@Model?.FullDescription</textarea>
+                    </div>
+                </div>
+
+                <aside class="admin-product-form-col admin-product-form-col--meta">
+                    <div class="form-group mb-0">
+                        <p class="form-label-inline"><b>Цена (<span class="nbrb-icon">&#xE901;</span>)</b></p>
+                        <input type="number" name="Price" value="@Model?.Price" step="0.01" class="form-input" required />
+                    </div>
+                    <div class="form-group">
+                        <p class="form-label-inline"><b>На складе, шт.</b></p>
+                        <input type="number" name="StockQuantity" value="@(Model?.StockQuantity ?? 0)" min="0" class="form-input" required />
+                    </div>
+                    <div class="form-group mb-0">
+                        <p class="form-label-inline"><b>Изображение</b></p>
+                        <input type="file" name="image" class="form-input form-input-file" accept="image/*" />
+                    </div>
+                </aside>
             </div>
-        </div>
 
-        <div id="features-section" class="features-section" style="display:none;">
-            <h3 style="font-size: 16px; margin-top: 0; margin-bottom: 15px;">Характеристики для выбранной категории</h3>
-            <div id="features-container">
-                @if (Model?.Configurations != null && Model.Configurations.Any())
-                {
-                    for (int i = 0; i < Model.Configurations.Count; i++)
+            <div id="features-section" class="features-section" style="display:none;">
+                <h3 class="features-section-title">Характеристики категории</h3>
+                <div id="features-container">
+                    @if (Model?.Configurations != null && Model.Configurations.Any())
                     {
-                        var config = Model.Configurations[i];
-                        <div class="feature-row">
-                            <div style="flex-grow: 1;">
-                                <label style="display:block; font-weight:500; margin-bottom: 5px;">@config.FeatureName:</label>
-                                <input type="hidden" name="Configurations[@i].FeatureId" value="@config.FeatureId" />
-                                <input type="hidden" name="Configurations[@i].FeatureName" value="@config.FeatureName" />
-                                <input type="text" name="Configurations[@i].FeatureValue" value="@config.FeatureValue" class="form-input" />
+                        for (int i = 0; i < Model.Configurations.Count; i++)
+                        {
+                            var config = Model.Configurations[i];
+                            <div class="feature-row">
+                                <div class="feature-row-fields">
+                                    <label class="feature-label">@config.FeatureName</label>
+                                    <input type="hidden" name="Configurations[@i].FeatureId" value="@config.FeatureId" />
+                                    <input type="hidden" name="Configurations[@i].FeatureName" value="@config.FeatureName" />
+                                    <input type="text" name="Configurations[@i].FeatureValue" value="@config.FeatureValue" class="form-input" />
+                                </div>
+                                <button type="button" onclick="removeFeature(this)" class="btn btn-outline-danger btn-sm align-self-end">✕</button>
                             </div>
-                            <button type="button" onclick="removeFeature(this)" class="btn btn-danger" style="margin-top: 22px;">✕</button>
-                        </div>
+                        }
                     }
-                }
+                </div>
+
+                <button type="button" onclick="addCustomFeature()" class="btn btn-outline-primary btn-sm mt-2">
+                    + Добавить своё поле
+                </button>
             </div>
-        </div>
 
-        <div id="custom-features-container"></div>
+            <div id="custom-features-container"></div>
 
-        <div class="form-group" style="margin-top: 10px; margin-bottom: 25px;">
-            <button type="button" onclick="addCustomFeature()" class="btn btn-secondary">
-                + Добавить свое поле
-            </button>
-        </div>
-
-        <div class="form-group">
-            <p>Название:</p>
-            <input type="text" name="Name" value="@Model?.Name" class="form-input" required />
-        </div>
-
-        <div class="form-group">
-            <p>Описание (краткое):</p>
-            <input type="text" name="ShortDescription" value="@Model?.ShortDescription" class="form-input" />
-        </div>
-
-        <div class="form-group">
-            <p>Описание (полное):</p>
-            <textarea name="FullDescription" rows="4" class="form-textarea">@Model?.FullDescription</textarea>
-        </div>
-
-        <div class="form-group">
-            <p>Цена:</p>
-            <input type="number" name="Price" value="@Model?.Price" step="0.01" class="form-input" required />
-        </div>
-
-        <div class="form-group">
-            <p>Количество на складе:</p>
-            <input type="number" name="StockQuantity" value="@(Model?.StockQuantity ?? 0)" min="0" class="form-input" required />
-        </div>
-
-        <div class="form-group">
-            <p>Изображение:</p>
-            <input type="file" name="image" class="form-input" style="padding: 7px 15px;" />
-        </div>
-
-        <div style="margin-top: 30px;">
-            <button type="submit" class="btn btn-primary">Добавить</button>
-            <a href="/Admin/Index" class="btn btn-cancel">Отмена</a>
-        </div>
-    </form>
+            <div class="form-actions form-actions--sticky">
+                <button type="submit" class="btn btn-primary">Добавить</button>
+                <a href="/Admin/List" class="btn btn-cancel">Отмена</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -103,6 +109,7 @@
         container.innerHTML = '';
 
         if (!categoryId) {
+            container.innerHTML = '';
             section.style.display = 'none';
             return;
         }
@@ -111,29 +118,29 @@
             const response = await fetch(`/Admin/GetFeatures?categoryId=${categoryId}`);
             const data = await response.json();
 
+            section.style.display = 'block';
+            container.innerHTML = '';
+
             if (data && data.length > 0) {
-                section.style.display = 'block';
                 data.forEach((feature, index) => {
                     const div = document.createElement('div');
                     div.className = 'feature-row';
                     div.innerHTML = `
-                        <div style="flex-grow: 1; display: flex; gap: 15px;">
-                            <div style="flex-grow: 1;">
-                                <label style="display:block; font-size: 12px; color: gray; margin-bottom: 5px;">Характеристика:</label>
-                                <input type="text" name="Configurations[${index}].FeatureName" value="${feature.name}" readonly class="form-input" style="background: #f0f0f0;" />
+                        <div class="feature-row-fields feature-row-fields--split">
+                            <div>
+                                <label class="feature-label small text-muted">Характеристика</label>
+                                <input type="text" name="Configurations[${index}].FeatureName" value="${feature.name}" readonly class="form-input form-input-readonly" />
                             </div>
-                            <div style="flex-grow: 1;">
-                                <label style="display:block; font-size: 12px; color: gray; margin-bottom: 5px;">Значение:</label>
-                                <input type="text" name="Configurations[${index}].FeatureValue" placeholder="Введите значение..." required class="form-input" />
+                            <div>
+                                <label class="feature-label small text-muted">Значение</label>
+                                <input type="text" name="Configurations[${index}].FeatureValue" placeholder="Введите значение…" required class="form-input" />
                             </div>
                             <input type="hidden" name="Configurations[${index}].FeatureId" value="${feature.id}" />
                         </div>
-                        <button type="button" onclick="removeFeature(this)" class="btn btn-danger" style="margin-top: 22px;">✕</button>
+                        <button type="button" onclick="removeFeature(this)" class="btn btn-outline-danger btn-sm align-self-end">✕</button>
                     `;
                     container.appendChild(div);
                 });
-            } else {
-                section.style.display = 'none';
             }
         } catch (error) {
             console.error('Ошибка:', error);
@@ -148,16 +155,16 @@
         const div = document.createElement('div');
         div.className = 'feature-row';
         div.innerHTML = `
-            <div style="flex-grow: 1; display: flex; gap: 15px;">
-                <div style="flex-grow: 1;">
+            <div class="feature-row-fields feature-row-fields--split">
+                <div>
                     <input type="text" placeholder="Название (напр. Вес)" name="Configurations[X].FeatureName" required class="form-input" />
                 </div>
-                <div style="flex-grow: 1;">
+                <div>
                     <input type="text" placeholder="Значение" name="Configurations[X].FeatureValue" required class="form-input" />
                 </div>
                 <input type="hidden" name="Configurations[X].FeatureId" value="0" />
             </div>
-            <button type="button" onclick="removeFeature(this)" class="btn btn-danger">✕</button>
+            <button type="button" onclick="removeFeature(this)" class="btn btn-outline-danger btn-sm">✕</button>
         `;
         container.appendChild(div);
         reindexFeatures();
@@ -183,7 +190,7 @@
             inputs.forEach(input => {
                 const name = input.getAttribute('name');
                 if (name) {
-                    input.setAttribute('name', name.replace(/\[\d+\]|\[X\]/, `[${i}]`));
+                    input.setAttribute('name', name.replace(/Configurations\[(?:\d+|X)\]/, `Configurations[${i}]`));
                 }
             });
         }

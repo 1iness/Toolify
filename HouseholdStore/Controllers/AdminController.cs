@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Toolify.AuthService.Services;
+using System.Globalization;
 using System.Text;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
@@ -146,6 +147,8 @@ namespace HouseholdStore.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit(Product product, IFormFile? image)
         {
+            ApplyStockQuantityFromForm(product);
+
             if (product.Configurations != null && product.Configurations.Any())
             {
                 foreach (var config in product.Configurations)
@@ -200,6 +203,8 @@ namespace HouseholdStore.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(Product product, IFormFile? image, string? NewCategoryName)
         {
+            ApplyStockQuantityFromForm(product);
+
             var rnd = new Random();
             product.ArticleNumber = rnd.Next(10000, 99999).ToString();
 
@@ -698,6 +703,19 @@ namespace HouseholdStore.Controllers
             }
 
             return View(model);
+        }
+
+        private void ApplyStockQuantityFromForm(Product product)
+        {
+            if (!Request.HasFormContentType) return;
+            var raw = Request.Form["StockQuantity"].ToString();
+            if (string.IsNullOrWhiteSpace(raw)) return;
+            if (int.TryParse(raw.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var stock)
+                || int.TryParse(raw.Trim(), NumberStyles.Integer, CultureInfo.CurrentCulture, out stock))
+            {
+                if (stock >= 0)
+                    product.StockQuantity = stock;
+            }
         }
     }
 }

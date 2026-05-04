@@ -477,3 +477,82 @@
         align-items: flex-start;
     }
 }
+
+.admin-shell .btn-primary,
+.admin-shell a.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #218838;
+    --bs-btn-border-color: #1c7430;
+    --bs-btn-hover-bg: #1e7a34;
+    --bs-btn-hover-border-color: #18692c;
+    --bs-btn-focus-shadow-rgb: 33, 136, 56;
+    --bs-btn-active-bg: #18692c;
+    --bs-btn-active-border-color: #155d28;
+    --bs-btn-active-color: #fff;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #85b896;
+    --bs-btn-disabled-border-color: #85b896;
+}
+
+.admin-shell .btn-outline-primary {
+    --bs-btn-color: #218838;
+    --bs-btn-border-color: #4caf6a;
+    --bs-btn-hover-bg: #218838;
+    --bs-btn-hover-border-color: #218838;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-focus-shadow-rgb: 33, 136, 56;
+    --bs-btn-active-bg: #1a6e30;
+    --bs-btn-active-border-color: #1a6e30;
+    --bs-btn-active-color: #fff;
+}
+
+.admin-shell .badge.text-bg-primary,
+.admin-shell .badge.bg-primary {
+    background-color: var(--admin-green) !important;
+    color: #fff !important;
+}
+
+.admin-shell .bg-primary-subtle,
+.admin-shell .badge.bg-primary-subtle {
+    background-color: rgba(33, 136, 56, 0.14) !important;
+    color: #14532a !important;
+}
+
+.admin-shell .admin-panel-root .table tbody td.fw-bold.text-primary {
+    color: #1a1a1a !important;
+}
+
+.admin-shell .admin-panel-root .admin-table:not(.clients-table) tbody td:first-child {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.admin-shell .admin-panel-root .table tbody td {
+    color: #333;
+}
+
+.admin-shell .admin-panel-card .card-header.bg-light,
+.admin-shell .orders-container .card .bg-light {
+    background: #f6fbf8 !important;
+    border-color: #e5ebe7 !important;
+}
+
+.admin-shell .btn-success,
+.admin-shell a.btn-success {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #218838;
+    --bs-btn-border-color: #1c7430;
+    --bs-btn-hover-bg: #1a6e30;
+    --bs-btn-hover-border-color: #155d28;
+    --bs-btn-active-bg: #155d28;
+    --bs-btn-active-border-color: #14532a;
+    --bs-btn-focus-shadow-rgb: 33, 136, 56;
+}
+
+.admin-shell .admin-panel-root summary.text-primary {
+    color: var(--admin-green) !important;
+}
+
+.admin-shell .clients-stat-value.text-primary {
+    color: var(--admin-green) !important;
+}

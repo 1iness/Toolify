@@ -5,121 +5,128 @@
     Layout = "_AdminLayout";
 }
 
-<link rel="stylesheet" href="~/css/create-product.css" />
+<link rel="stylesheet" href="~/css/create-product.css" asp-append-version="true" />
 
-<div class="admin-form-wrapper">
-    <h1>Редактировать товар</h1>
+<div class="admin-flush-page" data-admin-heading="Редактировать товар">
+    <div class="admin-form-wrapper">
 
-    @if (TempData["AdminError"] is string adminErr && !string.IsNullOrEmpty(adminErr))
-    {
-        <div style="margin-bottom:16px;padding:12px 16px;background:#fde8e8;border:1px solid #e8b4b4;border-radius:8px;color:#8a2a2a;">@adminErr</div>
-    }
+        @if (TempData["AdminError"] is string adminErr && !string.IsNullOrEmpty(adminErr))
+        {
+            <div class="mb-3 p-3 rounded-2 border" style="background:#fde8e8;border-color:#e8b4b4 !important;color:#8a2a2a;">@adminErr</div>
+        }
 
-    <form method="post" enctype="multipart/form-data" asp-action="Edit">
-        <input type="hidden" asp-for="Id" />
-        <input type="hidden" asp-for="ImagePath" />
-        <input type="hidden" asp-for="ArticleNumber">
-        <input type="hidden" asp-for="Discount" />
+        <form method="post" enctype="multipart/form-data" asp-action="Edit" class="admin-product-form">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ImagePath" />
+            <input type="hidden" asp-for="ArticleNumber">
+            <input type="hidden" asp-for="Discount" />
 
-        <div class="form-group">
-            <p><b>Категория:</b></p>
-            <select asp-for="CategoryId" asp-items="ViewBag.Categories" required class="form-select" style="max-width: 300px;">
-                <option value="">-- Выберите категорию --</option>
-            </select>
-        </div>
+            <div class="category-box">
+                <div class="form-group mb-0">
+                    <p class="form-label-inline"><b>Категория</b></p>
+                    <select asp-for="CategoryId" asp-items="ViewBag.Categories" required class="form-select form-select-admin">
+                        <option value="">— Выберите категорию —</option>
+                    </select>
+                </div>
+            </div>
 
-        <div class="form-group">
-            <p><b>Название:</b></p>
-            <input type="text" asp-for="Name" required class="form-input" />
-        </div>
+            <div class="admin-product-form-grid">
+                <div class="admin-product-form-col admin-product-form-col--main">
+                    <div class="form-group">
+                        <p class="form-label-inline"><b>Название</b></p>
+                        <input type="text" asp-for="Name" required class="form-input" />
+                    </div>
 
-        <div class="form-group">
-            <p><b>Краткое описание:</b></p>
-            <input type="text" asp-for="ShortDescription" class="form-input" />
-        </div>
+                    <div class="form-group">
+                        <p class="form-label-inline"><b>Краткое описание</b></p>
+                        <input type="text" asp-for="ShortDescription" class="form-input" />
+                    </div>
 
-        <div class="form-group">
-            <p><b>Полное описание:</b></p>
-            <textarea asp-for="FullDescription" rows="4" class="form-textarea"></textarea>
-        </div>
+                    <div class="form-group">
+                        <p class="form-label-inline"><b>Полное описание</b></p>
+                        <textarea asp-for="FullDescription" rows="3" class="form-textarea form-textarea-compact"></textarea>
+                    </div>
+                </div>
 
-        <div id="features-section" class="features-section">
-            <h3 style="font-size: 16px; margin-top: 0; margin-bottom: 15px;">Характеристики товара</h3>
-
-            <div id="features-container">
-                @if (Model.Configurations != null && Model.Configurations.Any())
-                {
-                    for (int i = 0; i < Model.Configurations.Count; i++)
-                    {
-                        var config = Model.Configurations[i];
-                        <div class="feature-row">
-                            <div style="flex-grow: 1;">
-                                <label style="display:block; font-weight:500; margin-bottom: 5px;">@config.FeatureName:</label>
-                                <input type="hidden" name="Configurations[@i].FeatureId" value="@config.FeatureId" />
-                                <input type="hidden" name="Configurations[@i].FeatureName" value="@config.FeatureName" />
-                                <input type="text" name="Configurations[@i].FeatureValue" value="@config.FeatureValue" class="form-input" />
-                            </div>
-                            <button type="button" onclick="removeFeature(this)" class="btn btn-danger" style="margin-top: 22px;">✕</button>
+                <aside class="admin-product-form-col admin-product-form-col--meta">
+                    <div class="form-group mb-0">
+                        <p class="form-label-inline"><b>Цена (<span class="nbrb-icon">&#xE901;</span>)</b></p>
+                        <input type="number" asp-for="Price" step="0.01" required class="form-input" />
+                    </div>
+                    <div class="form-group">
+                        <p class="form-label-inline"><b>На складе, шт.</b></p>
+                        <input type="number" asp-for="StockQuantity" required class="form-input" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <p class="form-label-inline"><b>Текущее изображение</b></p>
+                        <div class="admin-product-image-preview">
+                            <img src="https://localhost:7188/api/Product/@(Model.Id)/image"
+                                 width="150"
+                                 style="max-width: 100%; height: auto;"
+                                 alt=""
+                                 onerror="this.onerror=null; this.src='/images/no-image.png';" />
                         </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <p class="form-label-inline"><b>Загрузить новое</b> <span class="text-muted fw-normal small">(если нужно)</span></p>
+                        <input type="file" name="image" class="form-input form-input-file" accept="image/*" />
+                    </div>
+                </aside>
+            </div>
+
+            <div id="features-section" class="features-section">
+                <h3 class="features-section-title">Характеристики товара</h3>
+
+                <div id="features-container">
+                    @if (Model.Configurations != null && Model.Configurations.Any())
+                    {
+                        for (int i = 0; i < Model.Configurations.Count; i++)
+                        {
+                            var config = Model.Configurations[i];
+                            <div class="feature-row">
+                                <div class="feature-row-fields">
+                                    <label class="feature-label">@config.FeatureName</label>
+                                    <input type="hidden" name="Configurations[@i].FeatureId" value="@config.FeatureId" />
+                                    <input type="hidden" name="Configurations[@i].FeatureName" value="@config.FeatureName" />
+                                    <input type="text" name="Configurations[@i].FeatureValue" value="@config.FeatureValue" class="form-input" />
+                                </div>
+                                <button type="button" onclick="removeFeature(this)" class="btn btn-outline-danger btn-sm align-self-end">✕</button>
+                            </div>
+                        }
                     }
-                }
+                </div>
+
+                <button type="button" onclick="addCustomFeature()" class="btn btn-outline-primary btn-sm mt-2">
+                    + Добавить своё поле
+                </button>
             </div>
 
-            <button type="button" onclick="addCustomFeature()" class="btn btn-secondary" style="margin-top: 10px;">
-                + Добавить свое поле
-            </button>
-        </div>
-
-        <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-            <div style="flex: 1;">
-                <p><b>Цена (₽):</b></p>
-                <input type="number" asp-for="Price" step="0.01" required class="form-input" />
+            <div class="form-actions form-actions--sticky">
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                <a href="/Admin/List" class="btn btn-cancel">Отмена</a>
             </div>
-
-        </div>
-
-        <div class="form-group">
-            <p><b>Количество на складе:</b></p>
-            <input type="number" asp-for="StockQuantity" required class="form-input" style="max-width: 200px;" />
-        </div>
-
-        <div class="form-group">
-            <p><b>Текущее изображение:</b></p>
-            <div style="min-height: 150px; border: 1px dashed #ccc; padding: 15px; border-radius: 8px; display: inline-block; background: #fff;">
-                <img src="https://localhost:7188/api/Product/@(Model.Id)/image"
-                     width="150"
-                     style="display: block; border-radius: 4px;"
-                     onerror="this.onerror=null; this.src='/images/no-image.png';" />
-            </div>
-        </div>
-
-        <div class="form-group">
-            <p><b>Загрузить новое (если нужно заменить):</b></p>
-            <input type="file" name="image" class="form-input" accept="image/*" style="padding: 7px 15px;" />
-        </div>
-
-        <div style="margin-top: 30px;">
-            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
-            <a href="/Admin/Index" class="btn btn-cancel">Отмена</a>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 <script>
-    function removeFeature(btn) {
-        const row = btn.closest('.feature-row');
+    function reindexFeatureRows() {
         const container = document.getElementById('features-container');
-        row.remove();
-
         const rows = container.querySelectorAll('.feature-row');
         rows.forEach((row, index) => {
             row.querySelectorAll('input').forEach(input => {
                 const name = input.getAttribute('name');
                 if (name) {
-                    input.setAttribute('name', name.replace(/\[\d+\]/, `[${index}]`));
+                    input.setAttribute('name', name.replace(/Configurations\[\d+\]/, `Configurations[${index}]`));
                 }
             });
         });
+    }
+
+    function removeFeature(btn) {
+        const row = btn.closest('.feature-row');
+        row.remove();
+        reindexFeatureRows();
     }
 
     function addCustomFeature() {
@@ -130,18 +137,18 @@
         div.className = 'feature-row';
 
         div.innerHTML = `
-            <div style="flex-grow: 1; display: flex; gap: 15px;">
-                <div style="flex-grow: 1;">
-                    <label style="display:block; font-size: 12px; color: gray; margin-bottom: 5px;">Название:</label>
+            <div class="feature-row-fields feature-row-fields--split">
+                <div>
+                    <label class="feature-label small text-muted">Название</label>
                     <input type="text" placeholder="Напр. Вес" name="Configurations[${index}].FeatureName" class="form-input" required />
                 </div>
-                <div style="flex-grow: 1;">
-                    <label style="display:block; font-size: 12px; color: gray; margin-bottom: 5px;">Значение:</label>
-                    <input type="text" placeholder="Напр. 500г" name="Configurations[${index}].FeatureValue" class="form-input" required />
+                <div>
+                    <label class="feature-label small text-muted">Значение</label>
+                    <input type="text" placeholder="Значение" name="Configurations[${index}].FeatureValue" class="form-input" required />
                 </div>
                 <input type="hidden" name="Configurations[${index}].FeatureId" value="0" />
             </div>
-            <button type="button" onclick="removeFeature(this)" class="btn btn-danger" style="margin-top: 22px;">✕</button>
+            <button type="button" onclick="removeFeature(this)" class="btn btn-outline-danger btn-sm align-self-end">✕</button>
         `;
         container.appendChild(div);
     }

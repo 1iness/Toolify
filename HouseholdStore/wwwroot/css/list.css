@@ -12,17 +12,18 @@
 /* Кнопка добавления */
 .btn-create {
     display: inline-block;
-    background-color: #007bff;
+    background-color: #218838;
     color: white;
     padding: 10px 20px;
-    border-radius: 6px;
+    border-radius: 10px;
     text-decoration: none;
     margin-bottom: 25px;
     transition: background-color 0.2s;
+    font-weight: 500;
 }
 
     .btn-create:hover {
-        background-color: #0056b3;
+        background-color: #1a6e30;
         color: white;
     }
 
@@ -89,12 +90,14 @@
 /* Действия (ссылки) */
 .action-links a {
     text-decoration: none;
-    color: #007bff;
+    color: #218838;
     font-size: 14px;
+    font-weight: 500;
 }
 
     .action-links a:hover {
         text-decoration: underline;
+        color: #1a6e30;
     }
 
 .delete-link {
