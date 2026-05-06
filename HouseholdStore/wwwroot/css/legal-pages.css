@@ -1,0 +1,58 @@
+.legal-document {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 3rem;
+    font-family: 'Montserrat', sans-serif;
+    color: #1f3329;
+    line-height: 1.55;
+    font-size: 0.95rem;
+}
+
+.legal-document h1 {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #173824;
+    margin: 0 0 0.75rem;
+    line-height: 1.25;
+}
+
+.legal-document .legal-updated {
+    font-size: 0.82rem;
+    color: #5c7369;
+    margin-bottom: 1.75rem;
+}
+
+.legal-document h2 {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: #218838;
+    margin: 1.65rem 0 0.6rem;
+}
+
+.legal-document p,
+.legal-document li {
+    margin: 0.5rem 0;
+}
+
+.legal-document ul {
+    margin: 0.4rem 0 1rem;
+    padding-left: 1.35rem;
+}
+
+.legal-document a {
+    color: #218838;
+    font-weight: 500;
+    text-underline-offset: 2px;
+}
+
+.legal-document a:hover {
+    color: #1a6e30;
+}
+
+.legal-document .legal-intro {
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.1rem;
+    background: #f7fbf8;
+    border: 1px solid #e0ebe3;
+    border-radius: 12px;
+}

@@ -176,11 +176,18 @@
             </div>
         </div>
 
-        <div class="footer-bottom">
-            <div class="disclaimer-text">
-                Предложение не является публичной офертой. <br>
-                Окончательная стоимость с учетом бонусов и скидок, а также наличие товара подтверждается продавцом перед оплатой товара.
-            </div>
+            <div class="footer-bottom">
+                <div class="footer-bottom-left">
+                    <div class="footer-legal-links">
+                        <a asp-controller="Home" asp-action="TermsOfUse">Условия использования</a>
+                        <span class="footer-legal-sep">|</span>
+                        <a asp-controller="Home" asp-action="Privacy">Политика конфиденциальности</a>
+                    </div>
+                    <div class="disclaimer-text">
+                        Предложение не является публичной офертой. <br>
+                        Окончательная стоимость с учетом бонусов и скидок, а также наличие товара подтверждается продавцом перед оплатой товара.
+                    </div>
+                </div>
             <div class="copyright-block">
                 <div class="copyright-text">
                     &copy; 2025 Toolify <br>

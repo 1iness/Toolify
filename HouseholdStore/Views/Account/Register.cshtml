@@ -80,9 +80,10 @@
 
                 <div class="form-group">
                     <label class="checkbox-label">
-                        <input type="checkbox" name="terms" required />
-                        <span>Я соглашаюсь с <a href="#" class="terms-link">условиями использования</a> и <a href="#" class="terms-link">политикой конфиденциальности</a></span>
+                        <input asp-for="AcceptTerms" />
+                        <span>Я соглашаюсь с <a asp-controller="Home" asp-action="TermsOfUse" class="terms-link" target="_blank" rel="noopener noreferrer">условиями использования</a> и <a asp-controller="Home" asp-action="Privacy" class="terms-link" target="_blank" rel="noopener noreferrer">политикой конфиденциальности</a></span>
                     </label>
+                    <span asp-validation-for="AcceptTerms" style="color:red; font-size:12px; display:block;"></span>
                 </div>
 
                 <button type="submit" class="auth-btn primary-btn">Создать аккаунт</button>

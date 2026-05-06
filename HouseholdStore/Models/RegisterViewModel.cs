@@ -34,8 +34,17 @@ namespace HouseholdStore.Models
         [Compare("Password", ErrorMessage = "Пароли не совпадают")]
         public string ConfirmPassword { get; set; }
 
+
+        [Display(Name = "Согласие с условиями")]
+        public bool AcceptTerms { get; set; }
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            if (!AcceptTerms)
+                yield return new ValidationResult(
+                    "Необходимо принять условия использования и политику конфиденциальности",
+                    new[] { nameof(AcceptTerms) });
+
             if (!string.IsNullOrEmpty(Password) && !PasswordPolicy.MeetsPolicy(Password, out var msg))
                 yield return new ValidationResult(msg, new[] { nameof(Password) });
         }

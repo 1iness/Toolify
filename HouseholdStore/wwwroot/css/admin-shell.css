@@ -102,10 +102,9 @@
 }
 
 .admin-nav-item.is-active {
-    background: linear-gradient(90deg, var(--admin-green-soft), transparent);
+    background: var(--admin-green-muted);
     color: var(--admin-green);
     font-weight: 600;
-    box-shadow: inset 3px 0 0 var(--admin-green);
 }
 
 .admin-nav-group {
