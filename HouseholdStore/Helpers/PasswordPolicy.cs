@@ -6,8 +6,8 @@ namespace HouseholdStore.Helpers
         public const int MinLength = 8;
         public const int MinLetterCount = 2;
         public const int MinSymbolCount = 1;
-        public const string CompactRequirementsMessage = "Пароль: от 8 символов, 2 буквы и 1 спецзнак (!@#-).";
-        public const string LettersAndSymbolPattern = @"^(?=(?:.*[A-Za-zА-Яа-яЁё]){2,})(?=.*[^A-Za-zА-Яа-яЁё0-9\s]).*$";
+        public const string CompactRequirementsMessage = "Пароль: от 8 символов, без пробелов, 2 буквы и 1 спецзнак (!@#-).";
+        public const string LettersAndSymbolPattern = @"^(?!.*\s)(?=(?:.*[A-Za-zА-Яа-яЁё]){2,})(?=.*[^A-Za-zА-Яа-яЁё0-9]).*$";
 
         public static int CountLetters(string password)
         {
@@ -30,6 +30,11 @@ namespace HouseholdStore.Helpers
                 return false;
             }
             if (password.Length < MinLength)
+            {
+                errorMessage = CompactRequirementsMessage;
+                return false;
+            }
+            if (password.Any(char.IsWhiteSpace))
             {
                 errorMessage = CompactRequirementsMessage;
                 return false;

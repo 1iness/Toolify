@@ -9,7 +9,8 @@ namespace HouseholdStore.Models
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Введите пароль")]
-        [MinLength(8, ErrorMessage = "Пароль должен содержать минимум 8 символов")]
+        [MinLength(PasswordPolicy.MinLength, ErrorMessage = PasswordPolicy.CompactRequirementsMessage)]
+        [RegularExpression(PasswordPolicy.LettersAndSymbolPattern, ErrorMessage = PasswordPolicy.CompactRequirementsMessage)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 

@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Главная";
+    var favouriteIds = ViewBag.FavouriteIds as System.Collections.Generic.HashSet<int>
+                      ?? new System.Collections.Generic.HashSet<int>();
+    bool canToggleFavourite = User.Identity?.IsAuthenticated == true;
 }
 
 <!-- БАННЕР ДО КАТЕГОРИЙ -->
@@ -87,6 +90,7 @@
             bool isOutOfStock = product.StockQuantity <= 0;
             decimal finalPrice = CatalogProductPricing.FinalUnitPrice(product);
             var badgePct = CatalogProductPricing.BadgePercent(product);
+            bool isFavourite = favouriteIds.Contains(product.Id);
 
             <div class="product-card page-item" style="display:none;">
                 <div class="card-top">
@@ -96,6 +100,25 @@
                         <span class="badge discount">-@badgePct%</span>
                     }
                 </div>
+                @if (canToggleFavourite)
+                {
+                    <button type="button"
+                            class="card-favourite js-fav-toggle @(isFavourite ? "is-active" : "")"
+                            data-product-id="@product.Id"
+                            data-is-favourite="@isFavourite.ToString().ToLower()"
+                            aria-label="Добавить в избранное">
+                        <i class="bi @(isFavourite ? "bi-heart-fill" : "bi-heart")"></i>
+                    </button>
+                }
+                else
+                {
+                    <a href="/Account/Login"
+                       class="card-favourite card-favourite-link"
+                       title="Войдите чтобы добавить в избранное"
+                       aria-label="В избранное">
+                        <i class="bi bi-heart"></i>
+                    </a>
+                }
 
                 <a href="/Home/Details/@product.Id" style="text-decoration: none; color: inherit;">
                     <img src="https://localhost:7188/api/Product/@(product.Id)/image"
@@ -320,6 +343,56 @@
         }
 
         showPage(1);
+    })();
+
+    (function () {
+        const favButtons = Array.from(document.querySelectorAll('.js-fav-toggle'));
+        if (!favButtons.length) return;
+
+        function setFavButtonState(button, isFavourite) {
+            const icon = button.querySelector('i');
+            if (!icon) return;
+            button.dataset.isFavourite = isFavourite ? 'true' : 'false';
+            button.classList.toggle('is-active', isFavourite);
+            button.setAttribute('aria-label', isFavourite ? 'Убрать из избранного' : 'Добавить в избранное');
+            icon.className = isFavourite ? 'bi bi-heart-fill' : 'bi bi-heart';
+        }
+
+        function showFavToast(icon, title) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: icon,
+                    title: title,
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true
+                });
+            }
+        }
+
+        favButtons.forEach(function (button) {
+            button.addEventListener('click', async function () {
+                const productId = this.dataset.productId;
+                if (!productId || this.dataset.busy === '1') return;
+
+                this.dataset.busy = '1';
+                try {
+                    const response = await fetch(`/Favourites/Toggle?productId=${encodeURIComponent(productId)}`, { method: 'POST' });
+                    if (!response.ok) throw new Error('Request failed');
+                    const data = await response.json();
+                    const isFavourite = !!data.isFavourite;
+
+                    setFavButtonState(this, isFavourite);
+                    showFavToast('success', isFavourite ? 'Добавлено в избранное' : 'Удалено из избранного');
+                } catch (e) {
+                    showFavToast('error', 'Не удалось обновить избранное');
+                } finally {
+                    delete this.dataset.busy;
+                }
+            });
+        });
     })();
 
 </script>

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
 using Toolify.AuthService.Models;
+using Toolify.ProductService.Helpers;
 using Toolify.ProductService.Models;
 
 namespace HouseholdStore.Controllers
@@ -48,6 +49,17 @@ namespace HouseholdStore.Controllers
             }
 
             ViewBag.ProductRatings = ratings;
+            var favouriteIds = new HashSet<int>();
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("id");
+                if (int.TryParse(idStr, out var userId))
+                {
+                    var favourites = await _productApi.GetFavouritesAsync(userId);
+                    favouriteIds = favourites.Select(p => p.Id).ToHashSet();
+                }
+            }
+            ViewBag.FavouriteIds = favouriteIds;
             return View(products);
         }
         public IActionResult Privacy()
@@ -154,6 +166,13 @@ namespace HouseholdStore.Controllers
 
             model.CreatedAt = DateTime.Now;
 
+            if (ReviewProfanityGuard.ContainsProfanity(model.Pros, model.Cons, model.Comment))
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = ReviewProfanityGuard.StandardRejectMessage;
+                return RedirectToAction("Details", new { id = model.ProductId });
+            }
+
             try
             {
                 await _productApi.AddReviewAsync(model);
@@ -239,6 +258,8 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> SmartSelection(int? categoryId)
         {
             ViewBag.Categories = await _productApi.GetCategoriesAsync();
+            ViewBag.SmartMinPrice = TempData["SmartMinPrice"] as string;
+            ViewBag.SmartMaxPrice = TempData["SmartMaxPrice"] as string;
             if (categoryId.HasValue)
             {
                 ViewBag.SelectedCategoryId = categoryId.Value;
@@ -251,6 +272,18 @@ namespace HouseholdStore.Controllers
         [HttpGet]
         public async Task<IActionResult> SmartSelectionResults(CatalogFilterViewModel filter)
         {
+            var budgetError = ValidateSmartSelectionBudget(filter.MinPrice, filter.MaxPrice);
+            if (budgetError != null)
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = budgetError;
+                if (filter.MinPrice.HasValue)
+                    TempData["SmartMinPrice"] = filter.MinPrice.Value.ToString(CultureInfo.InvariantCulture);
+                if (filter.MaxPrice.HasValue)
+                    TempData["SmartMaxPrice"] = filter.MaxPrice.Value.ToString(CultureInfo.InvariantCulture);
+                return RedirectToAction(nameof(SmartSelection), new { categoryId = filter.CategoryId });
+            }
+
             var products = await _productApi.GetStoreCatalogAsync(GetCurrentUserId());
 
             if (filter.CategoryId.HasValue)
@@ -300,6 +333,17 @@ namespace HouseholdStore.Controllers
             if (User.Identity?.IsAuthenticated != true) return null;
             var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("id");
             return int.TryParse(idStr, out var uid) ? uid : null;
+        }
+
+        private static string? ValidateSmartSelectionBudget(decimal? minPrice, decimal? maxPrice)
+        {
+            if (minPrice.HasValue && minPrice.Value < 0)
+                return "Цена «от» не может быть отрицательной.";
+            if (maxPrice.HasValue && maxPrice.Value < 0)
+                return "Цена «до» не может быть отрицательной.";
+            if (minPrice.HasValue && maxPrice.HasValue && minPrice.Value >= maxPrice.Value)
+                return "Цена «от» должна быть строго меньше цены «до».";
+            return null;
         }
     }
 }

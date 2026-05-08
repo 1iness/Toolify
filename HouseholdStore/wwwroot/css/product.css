@@ -109,6 +109,43 @@
     z-index: 2;
 }
 
+.product-card .card-favourite {
+    position: absolute;
+    top: 10px;
+    right: 10px !important;
+    left: auto !important;
+    inset-inline-end: 10px;
+    inset-inline-start: auto;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    text-decoration: none;
+    z-index: 3;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.product-card .card-favourite:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+}
+
+.product-card .card-favourite .bi {
+    font-size: 17px;
+    line-height: 1;
+}
+
+.product-card .card-favourite.is-active {
+    color: #ff4d4f;
+}
+
 .badge {
     padding: 4px 8px;
     font-size: 12px;

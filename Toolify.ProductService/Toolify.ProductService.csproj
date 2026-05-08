@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Helpers\ReviewProfanityBlocklist.gz" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="View\" />
   </ItemGroup>
 

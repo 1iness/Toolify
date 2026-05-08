@@ -30,6 +30,42 @@
     if (initialTab) {
         activateTab(initialTab);
     }
+
+    const editForm = document.querySelector('#edit-mode form');
+    if (!editForm) {
+        return;
+    }
+
+    const nameInputs = editForm.querySelectorAll('input[name="FirstName"], input[name="LastName"]');
+
+    function normalizeNameInput(rawValue, trimEnd) {
+        if (!rawValue) {
+            return '';
+        }
+
+        let normalized = rawValue.replace(/^\s+/, '').replace(/\s{2,}/g, ' ');
+        if (trimEnd) {
+            normalized = normalized.trim();
+        }
+
+        return normalized;
+    }
+
+    nameInputs.forEach(input => {
+        input.addEventListener('input', function () {
+            this.value = normalizeNameInput(this.value, false);
+        });
+
+        input.addEventListener('blur', function () {
+            this.value = normalizeNameInput(this.value, true);
+        });
+    });
+
+    editForm.addEventListener('submit', function () {
+        nameInputs.forEach(input => {
+            input.value = normalizeNameInput(input.value, true);
+        });
+    });
 });
 
 function enableEdit() {

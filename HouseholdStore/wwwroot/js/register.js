@@ -73,10 +73,49 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    function isPhoneField(element) {
+        return element && element.name === 'Phone';
+    }
+
+    function isPhoneComplete(element) {
+        if (!isPhoneField(element)) {
+            return true;
+        }
+
+        const digits = (element.value || '').replace(/\D/g, '');
+        return digits.length === 12; 
+    }
+
+    function clearFieldError(element) {
+        const $element = $(element);
+        const fieldName = $element.attr('name');
+        if (!fieldName) {
+            return;
+        }
+
+        $element.removeClass('input-validation-error');
+        $element.removeAttr('aria-invalid');
+
+        const $message = $form.find('[data-valmsg-for="' + fieldName + '"]');
+        $message
+            .removeClass('field-validation-error')
+            .addClass('field-validation-valid')
+            .text('');
+    }
+
     validator.settings.onkeyup = function (element) {
+        if (isPhoneField(element) && !isPhoneComplete(element)) {
+            clearFieldError(element);
+            return;
+        }
         this.element(element);
     };
+
     validator.settings.onfocusout = function (element) {
+        if (isPhoneField(element) && !isPhoneComplete(element)) {
+            clearFieldError(element);
+            return;
+        }
         this.element(element);
     };
 

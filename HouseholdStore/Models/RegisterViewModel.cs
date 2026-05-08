@@ -30,7 +30,7 @@ namespace HouseholdStore.Models
         [Required(ErrorMessage = "Введите номер телефона")]
         [RegularExpression(
             @"^\+375\s?\((25|29|33|44)\)\s?\d{3}-\d{2}-\d{2}$",
-            ErrorMessage = "Введите белорусский номер: +375 (29) XXX-XX-XX"
+            ErrorMessage = "Введите белорусский номер: +375 (25/29/33/44) XXX-XX-XX"
         )]
         public string Phone { get; set; }
 
@@ -55,6 +55,12 @@ namespace HouseholdStore.Models
                 yield return new ValidationResult(
                     "Необходимо принять условия использования и политику конфиденциальности",
                     new[] { nameof(AcceptTerms) });
+
+            if (ReservedDisplayNames.ContainsReservedToken(FirstName))
+                yield return new ValidationResult(ReservedDisplayNames.FirstNameError, new[] { nameof(FirstName) });
+
+            if (ReservedDisplayNames.ContainsReservedToken(LastName))
+                yield return new ValidationResult(ReservedDisplayNames.LastNameError, new[] { nameof(LastName) });
         }
     }
 }

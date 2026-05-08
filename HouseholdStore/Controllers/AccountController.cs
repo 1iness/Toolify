@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Toolify.ProductService.Data;
 
@@ -303,6 +304,24 @@ namespace HouseholdStore.Controllers
             if (string.IsNullOrEmpty(userEmail))
                 return RedirectToAction("Login");
 
+            model.FirstName = NormalizeProfileName(model.FirstName);
+            model.LastName = NormalizeProfileName(model.LastName);
+            model.Phone = (model.Phone ?? string.Empty).Trim();
+
+            if (!TryValidateModel(model))
+            {
+                var errorMessage = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .FirstOrDefault();
+
+                TempData["ToastMessage"] = string.IsNullOrWhiteSpace(errorMessage)
+                    ? "Проверьте корректность имени и фамилии"
+                    : errorMessage;
+                TempData["ToastType"] = "error";
+                return RedirectToAction("Profile", new { tab = "personal" });
+            }
+
             var success = await _auth.UpdateProfileAsync(userEmail, model.FirstName, model.LastName, model.Phone);
 
             if (success)
@@ -316,7 +335,15 @@ namespace HouseholdStore.Controllers
                 TempData["ToastType"] = "error";
             }
 
-            return RedirectToAction("Profile");
+            return RedirectToAction("Profile", new { tab = "personal" });
+        }
+
+        private static string NormalizeProfileName(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            return Regex.Replace(value.Trim(), @"\s+", " ");
         }
     }
 }

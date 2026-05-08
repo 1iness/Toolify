@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Toolify.ProductService.Data;
+using Toolify.ProductService.Helpers;
 using Toolify.ProductService.Models;
 
 namespace Toolify.ProductService.Controllers
@@ -31,6 +32,9 @@ namespace Toolify.ProductService.Controllers
             var doubled = review.Rating * 2;
             if (Math.Abs(doubled - Math.Round(doubled)) > 0.001)
                 return BadRequest("Рейтинг должен быть с шагом 0.5");
+
+            if (ReviewProfanityGuard.ContainsProfanity(review.Pros, review.Cons, review.Comment))
+                return BadRequest(ReviewProfanityGuard.StandardRejectMessage);
 
             await _repository.AddReviewAsync(review);
             return Ok();
