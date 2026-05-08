@@ -1,4 +1,4 @@
-﻿using HouseholdStore.Models;
+using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,6 +12,8 @@ namespace HouseholdStore.Controllers
 {
     public class AccountController : Controller
     {
+        private const int RememberMeDays = 14;
+
         private readonly AuthApiService _auth;
         private readonly ProductRepository _productRepo;
 
@@ -65,15 +67,38 @@ namespace HouseholdStore.Controllers
                 ClaimTypes.Role
             );
 
+            AuthenticationProperties authProperties;
+            var jwtCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                IsEssential = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
+            };
+
+            if (model.Remember)
+            {
+                var persistentExpires = DateTimeOffset.UtcNow.AddDays(RememberMeDays);
+                authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = persistentExpires
+                };
+                jwtCookieOptions.Expires = persistentExpires;
+            }
+            else
+            {
+                authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = false
+                };
+            }
+
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identity),
-                new AuthenticationProperties
-                {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60)
-                }
-            );
+                authProperties);
 
             var guestId = Request.Cookies["GuestId"];
             if (!string.IsNullOrEmpty(guestId) && !string.IsNullOrEmpty(userIdClaim))
@@ -85,8 +110,7 @@ namespace HouseholdStore.Controllers
                     Response.Cookies.Delete("GuestId");
                 }
             }
-
-            Response.Cookies.Append("jwt", token);
+            Response.Cookies.Append("jwt", token, jwtCookieOptions);
 
             TempData["ToastMessage"] = "Вы успешно вошли в аккаунт";
             TempData["ToastType"] = "success";

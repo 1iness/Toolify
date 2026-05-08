@@ -7,9 +7,19 @@ namespace HouseholdStore.Models
     public class RegisterViewModel : IValidatableObject
     {
         [Required(ErrorMessage = "Введите имя")]
+        [StringLength(40, MinimumLength = 2, ErrorMessage = "Имя должно содержать от 2 до 40 символов")]
+        [RegularExpression(
+            @"^[A-Za-zА-Яа-яЁё]+(?:[ '-][A-Za-zА-Яа-яЁё]+)*$",
+            ErrorMessage = "Имя: только буквы, пробел, - и '"
+        )]
         public string FirstName { get; set; }
 
         [Required(ErrorMessage = "Введите фамилию")]
+        [StringLength(40, MinimumLength = 2, ErrorMessage = "Фамилия должна содержать от 2 до 40 символов")]
+        [RegularExpression(
+            @"^[A-Za-zА-Яа-яЁё]+(?:[ '-][A-Za-zА-Яа-яЁё]+)*$",
+            ErrorMessage = "Фамилия: только буквы, пробел, - и '"
+        )]
         public string LastName { get; set; }
 
         [Required(ErrorMessage = "Введите Email")]
@@ -25,7 +35,8 @@ namespace HouseholdStore.Models
         public string Phone { get; set; }
 
         [Required(ErrorMessage = "Введите пароль")]
-        [MinLength(8, ErrorMessage = "Минимум 8 символов")]
+        [MinLength(PasswordPolicy.MinLength, ErrorMessage = PasswordPolicy.CompactRequirementsMessage)]
+        [RegularExpression(PasswordPolicy.LettersAndSymbolPattern, ErrorMessage = PasswordPolicy.CompactRequirementsMessage)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
@@ -44,9 +55,6 @@ namespace HouseholdStore.Models
                 yield return new ValidationResult(
                     "Необходимо принять условия использования и политику конфиденциальности",
                     new[] { nameof(AcceptTerms) });
-
-            if (!string.IsNullOrEmpty(Password) && !PasswordPolicy.MeetsPolicy(Password, out var msg))
-                yield return new ValidationResult(msg, new[] { nameof(Password) });
         }
     }
 }

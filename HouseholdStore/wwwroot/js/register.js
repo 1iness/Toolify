@@ -52,3 +52,45 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.jQuery === 'undefined' || typeof jQuery.validator === 'undefined') {
+        return;
+    }
+
+    const $form = $('.auth-form');
+    if ($form.length === 0) {
+        return;
+    }
+
+    let validator = $form.data('validator');
+    if (!validator && $.validator.unobtrusive) {
+        $.validator.unobtrusive.parse($form);
+        validator = $form.data('validator');
+    }
+
+    if (!validator) {
+        return;
+    }
+
+    validator.settings.onkeyup = function (element) {
+        this.element(element);
+    };
+    validator.settings.onfocusout = function (element) {
+        this.element(element);
+    };
+
+    ['FirstName', 'LastName', 'Password', 'ConfirmPassword'].forEach(function (fieldName) {
+        const $input = $form.find('[name="' + fieldName + '"]');
+        $input.on('input blur', function () {
+            validator.element(this);
+
+            if (fieldName === 'Password') {
+                const confirm = $form.find('[name="ConfirmPassword"]');
+                if (confirm.length > 0 && confirm.val()) {
+                    validator.element(confirm[0]);
+                }
+            }
+        });
+    });
+});
