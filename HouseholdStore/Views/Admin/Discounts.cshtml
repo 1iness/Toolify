@@ -91,10 +91,11 @@
                         <div class="row g-2 mt-1">
                             <div class="col-md-6">
                                 <label class="form-label small mb-0">Значение</label>
-                                <input type="number" name="Value" class="form-control form-control-sm" min="0" step="0.01" required />
+                                <input type="number" name="Value" class="form-control form-control-sm" min="0.01" step="0.01" required data-disc-value />
+                                <div class="form-text small disc-value-hint"></div>
                             </div>
                             <div class="col-md-6 disc-field" data-show-type="qty">
-                                <label class="form-label small mb-0">Мин. количество</label>
+                                <label class="form-label small mb-0">Мин. количество, шт.</label>
                                 <input type="number" name="MinQuantity" class="form-control form-control-sm" min="1" step="1" />
                             </div>
                         </div>
@@ -200,10 +201,11 @@
                                             <div class="row g-2 mt-1">
                                                 <div class="col-md-6">
                                                     <label class="form-label small mb-0">Значение</label>
-                                                    <input type="number" name="Value" class="form-control form-control-sm" min="0" step="0.01" value="@d.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" required />
+                                                    <input type="number" name="Value" class="form-control form-control-sm" min="0.01" step="0.01" value="@d.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" required data-disc-value />
+                                                    <div class="form-text small disc-value-hint"></div>
                                                 </div>
                                                 <div class="col-md-6 disc-field" data-show-type="qty">
-                                                    <label class="form-label small mb-0">Мин. количество</label>
+                                                    <label class="form-label small mb-0">Мин. количество, шт.</label>
                                                     <input type="number" name="MinQuantity" class="form-control form-control-sm" min="1" step="1" value="@(d.MinQuantity?.ToString() ?? "")" />
                                                 </div>
                                             </div>
@@ -258,8 +260,11 @@
     (function () {
         function setupForm(body) {
             var typeSel = body.querySelector('[data-disc-type]');
+            var kindSel = body.querySelector('[data-disc-kind]');
             var targetGroup = body.querySelector('[data-disc-target]');
             var warn = body.querySelector('.disc-warning');
+            var valueInput = body.querySelector('[data-disc-value]');
+            var valueHint = body.querySelector('.disc-value-hint');
 
             function currentKey(sel) {
                 if (!sel) return '';
@@ -269,11 +274,16 @@
 
             function apply() {
                 var tKey = currentKey(typeSel);
+                var kKey = currentKey(kindSel);
 
                 body.querySelectorAll('.disc-field').forEach(function (el) {
                     var want = (el.getAttribute('data-show-type') || '').split(',').filter(Boolean);
-                    if (want.length === 0 || want.indexOf(tKey) !== -1) el.classList.add('visible');
-                    else                                                el.classList.remove('visible');
+                    var visible = want.length === 0 || want.indexOf(tKey) !== -1;
+                    el.classList.toggle('visible', visible);
+                    el.querySelectorAll('input, select, textarea').forEach(function (field) {
+                        field.disabled = !visible;
+                        if (!visible) field.required = false;
+                    });
                 });
 
                 if (targetGroup) {
@@ -283,14 +293,41 @@
                         targetGroup.classList.remove('visible');
                 }
 
+                var productSelect = body.querySelector('select[name="ProductId"]');
+                var categorySelect = body.querySelector('select[name="CategoryId"]');
+                var minQty = body.querySelector('input[name="MinQuantity"]');
+
+                if (productSelect) productSelect.required = tKey === 'prod';
+                if (categorySelect) categorySelect.required = tKey === 'cat';
+                if (minQty) minQty.required = tKey === 'qty';
+
+                if (valueInput) {
+                    valueInput.min = '0.01';
+                    if (kKey === 'pct') valueInput.max = '100';
+                    else valueInput.removeAttribute('max');
+                }
+
+                if (valueHint) {
+                    valueHint.textContent = kKey === 'pct'
+                        ? 'Например, 10 = скидка 10%. Значение должно быть от 0.01 до 100.'
+                        : 'Фиксированная сумма скидки в BYN. Например, 5 = минус 5 BYN.';
+                }
+
                 if (warn) {
-                    warn.textContent = (tKey === 'qty')
-                        ? 'Для скидки «Количество» выберите товар ИЛИ категорию — не оба поля.'
-                        : '';
+                    if (tKey === 'qty') {
+                        warn.textContent = 'Сработает только при покупке от указанного количества. Выберите товар ИЛИ категорию — не оба поля.';
+                    } else if (tKey === 'prod') {
+                        warn.textContent = 'Скидка применяется только к выбранному товару.';
+                    } else if (tKey === 'cat') {
+                        warn.textContent = 'Скидка применяется ко всем товарам выбранной категории.';
+                    } else {
+                        warn.textContent = '';
+                    }
                 }
             }
 
             if (typeSel) typeSel.addEventListener('change', apply);
+            if (kindSel) kindSel.addEventListener('change', apply);
             apply();
         }
 

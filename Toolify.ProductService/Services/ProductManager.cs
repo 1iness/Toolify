@@ -62,13 +62,22 @@ namespace Toolify.ProductService.Services
                 throw new ArgumentNullException(nameof(product));
 
             if (string.IsNullOrWhiteSpace(product.Name))
-                throw new ArgumentException("Product name cannot be empty");
+                throw new ArgumentException("Укажите название товара.");
 
             if (product.CategoryId <= 0)
-                throw new ArgumentException("CategoryId must be greater than zero");
+                throw new ArgumentException("Выберите категорию или создайте новую.");
 
             if (product.Price <= 0)
-                throw new ArgumentException("Price must be greater than zero");
+                throw new ArgumentException("Цена должна быть больше 0.");
+
+            if (product.StockQuantity <= 0)
+                throw new ArgumentException("Количество товара на складе должно быть больше 0.");
+
+            if (string.IsNullOrWhiteSpace(product.ShortDescription))
+                throw new ArgumentException("Заполните краткое описание товара.");
+
+            if (string.IsNullOrWhiteSpace(product.FullDescription))
+                throw new ArgumentException("Заполните полное описание товара.");
         }
         public async Task<List<ProductFeature>> GetFeaturesByCategoryAsync(int categoryId)
         {

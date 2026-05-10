@@ -103,6 +103,12 @@ namespace HouseholdStore.Services
                 $"/api/admin/products/{product.Id}",
                 new StringContent(body, Encoding.UTF8, "application/json"));
 
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+
             return response.IsSuccessStatusCode;
         }
 

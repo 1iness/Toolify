@@ -82,8 +82,8 @@ namespace Toolify.ProductService.Controllers
             if (kind != DiscountValueKinds.Percent && kind != DiscountValueKinds.Fixed)
                 return "Неверный вид значения";
 
-            if (kind == DiscountValueKinds.Percent && (dto.Value < 0 || dto.Value > 100))
-                return "Процент должен быть от 0 до 100";
+            if (kind == DiscountValueKinds.Percent && (dto.Value <= 0 || dto.Value > 100))
+                return "Процент должен быть больше 0 и не больше 100";
             if (kind == DiscountValueKinds.Fixed && dto.Value <= 0)
                 return "Сумма должна быть больше 0";
 

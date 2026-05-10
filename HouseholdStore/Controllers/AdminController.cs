@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Toolify.AuthService.Services;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using Toolify.ProductService;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
@@ -149,6 +150,8 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Edit(Product product, IFormFile? image)
         {
             ApplyStockQuantityFromForm(product);
+            RemoveProductBindingNoise();
+            ValidateProductForAdmin(product);
 
             if (product.Configurations != null && product.Configurations.Any())
             {
@@ -165,26 +168,29 @@ namespace HouseholdStore.Controllers
                 }
             }
 
-            ModelState.Remove("image");
-            ModelState.Remove("ArticleNumber");
-
             if (ModelState.IsValid)
             {
-                var updated = await _api.UpdateAsync(product);
-                if (!updated)
+                try
                 {
-                    TempData["AdminError"] = "Не удалось сохранить товар.";
-                    var categoryOptions = await _api.GetCategoriesAsync();
-                    ViewBag.Categories = new SelectList(categoryOptions, "Id", "Name", product.CategoryId);
-                    return AdminShellView(product, "products-edit", "none");
-                }
+                    var updated = await _api.UpdateAsync(product);
+                    if (!updated)
+                    {
+                        ModelState.AddModelError(string.Empty, "Не удалось сохранить товар. Проверьте данные и попробуйте ещё раз.");
+                    }
+                    else
+                    {
+                        if (image != null)
+                        {
+                            await _api.UploadImageAsync(product.Id, image);
+                        }
 
-                if (image != null)
+                        return RedirectToAction("Index");
+                    }
+                }
+                catch (Exception ex)
                 {
-                    await _api.UploadImageAsync(product.Id, image);
+                    ModelState.AddModelError(string.Empty, ToAdminProductError(ex.Message));
                 }
-
-                return RedirectToAction("Index");
             }
 
             var categories = await _api.GetCategoriesAsync();
@@ -205,6 +211,8 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Create(Product product, IFormFile? image, string? NewCategoryName)
         {
             ApplyStockQuantityFromForm(product);
+            RemoveProductBindingNoise();
+            ValidateProductImageForCreate(image);
 
             var rnd = new Random();
             product.ArticleNumber = rnd.Next(10000, 99999).ToString();
@@ -231,6 +239,8 @@ namespace HouseholdStore.Controllers
                 ModelState.AddModelError("CategoryId", "Выберите категорию или создайте новую!");
             }
 
+            ValidateProductForAdmin(product);
+
             if (product.CategoryId > 0 && product.Configurations != null && product.Configurations.Any())
             {
                 foreach (var config in product.Configurations)
@@ -248,16 +258,23 @@ namespace HouseholdStore.Controllers
 
             if (ModelState.IsValid)
             {
-                var newProductId = await _api.CreateAsync(product);
-                if (image != null && newProductId.HasValue)
+                try
                 {
-                    await _api.UploadImageAsync(newProductId.Value, image);
+                    var newProductId = await _api.CreateAsync(product);
+                    if (image != null && newProductId.HasValue)
+                    {
+                        await _api.UploadImageAsync(newProductId.Value, image);
+                    }
+                    return RedirectToAction("Index");
                 }
-                return RedirectToAction("Index");
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, ToAdminProductError(ex.Message));
+                }
             }
 
             var categories = await _api.GetCategoriesAsync();
-            ViewBag.Categories = new SelectList(categories, "Id", "Name");
+            ViewBag.Categories = new SelectList(categories, "Id", "Name", product.CategoryId);
             return AdminShellView(product, "products-create", "none");
         }
 
@@ -789,10 +806,6 @@ namespace HouseholdStore.Controllers
             return View(model);
         }
 
-        /// <summary>
-        /// Строки для письма о смене статуса: сначала из БД (<see cref="ProductRepository.GetOrderEmailDetailsAsync"/>),
-        /// иначе из снимка заказа через API (позиции могут быть пустыми).
-        /// </summary>
         private async Task<List<OrderLine>> BuildOrderLinesForStatusEmailAsync(int orderId, Order order)
         {
             try
@@ -845,6 +858,87 @@ namespace HouseholdStore.Controllers
                 if (stock >= 0)
                     product.StockQuantity = stock;
             }
+        }
+
+        private void RemoveProductBindingNoise()
+        {
+            ModelState.Remove("image");
+            ModelState.Remove("ArticleNumber");
+            ModelState.Remove("CategoryId");
+        }
+
+        private void ValidateProductForAdmin(Product product)
+        {
+            if (product.CategoryId <= 0
+                && (!ModelState.TryGetValue(nameof(product.CategoryId), out var categoryState)
+                    || !categoryState.Errors.Any()))
+            {
+                ModelState.AddModelError(nameof(product.CategoryId), "Выберите категорию или создайте новую.");
+            }
+
+            if (string.IsNullOrWhiteSpace(product.Name))
+                ModelState.AddModelError(nameof(product.Name), "Укажите название товара.");
+
+            if (string.IsNullOrWhiteSpace(product.ShortDescription))
+                ModelState.AddModelError(nameof(product.ShortDescription), "Заполните краткое описание товара.");
+
+            if (string.IsNullOrWhiteSpace(product.FullDescription))
+                ModelState.AddModelError(nameof(product.FullDescription), "Заполните полное описание товара.");
+
+            if (product.Price <= 0)
+                ModelState.AddModelError(nameof(product.Price), "Цена должна быть больше 0.");
+
+            if (product.StockQuantity <= 0)
+                ModelState.AddModelError(nameof(product.StockQuantity), "Количество товара на складе должно быть больше 0.");
+
+            if (product.Configurations != null
+                && product.Configurations.Any(c =>
+                    (!string.IsNullOrWhiteSpace(c.FeatureName) || c.FeatureId > 0)
+                    && string.IsNullOrWhiteSpace(c.FeatureValue)))
+            {
+                ModelState.AddModelError(nameof(product.Configurations), "Заполните значения характеристик или удалите пустые строки.");
+            }
+        }
+
+        private void ValidateProductImageForCreate(IFormFile? image)
+        {
+            if (image == null || image.Length == 0)
+            {
+                ModelState.AddModelError("image", "Загрузите изображение товара.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(image.ContentType)
+                || !image.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("image", "Файл товара должен быть изображением.");
+            }
+        }
+
+        private static string ToAdminProductError(string raw)
+        {
+            var message = raw;
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                if (doc.RootElement.TryGetProperty("message", out var msg))
+                    message = msg.GetString() ?? raw;
+            }
+            catch (JsonException)
+            {
+            }
+
+            return message switch
+            {
+                "Price must be greater than zero" => "Цена должна быть больше 0.",
+                "Product name cannot be empty" => "Укажите название товара.",
+                "CategoryId must be greater than zero" => "Выберите категорию или создайте новую.",
+                "Invalid product ID" => "Некорректный идентификатор товара.",
+                "Product not found" => "Товар не найден.",
+                _ => string.IsNullOrWhiteSpace(message)
+                    ? "Не удалось сохранить товар. Проверьте данные и попробуйте ещё раз."
+                    : message
+            };
         }
     }
 }
