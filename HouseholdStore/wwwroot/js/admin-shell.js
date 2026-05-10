@@ -76,9 +76,14 @@
         var tbody = document.getElementById('orders-filter-tbody');
         if (!headerInput || !tbody) return;
         var q = (headerInput.value || '').toLowerCase().trim();
-        tbody.querySelectorAll('tr[data-order-search]').forEach(function (row) {
+        tbody.querySelectorAll('tr.order-row-summary[data-order-search]').forEach(function (row) {
             var hay = (row.getAttribute('data-order-search') || '').toLowerCase();
-            row.style.display = !q || hay.indexOf(q) !== -1 ? '' : 'none';
+            var match = !q || hay.indexOf(q) !== -1;
+            row.style.display = match ? '' : 'none';
+            var next = row.nextElementSibling;
+            if (next && next.classList && next.classList.contains('order-row-detail')) {
+                next.style.display = match ? '' : 'none';
+            }
         });
     }
 

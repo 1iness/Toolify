@@ -283,10 +283,13 @@ namespace HouseholdStore.Services
                    ?? new List<PromoCode>();
         }
 
-        public async Task CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end, int? maxUses = null, decimal? minGoodsAmount = null)
+        public async Task<(bool ok, string? error)> CreatePromoCodeAsync(string code, int discount, DateTime start, DateTime end, int? maxUses = null, decimal? minGoodsAmount = null)
         {
             var data = new { Code = code, DiscountPercent = discount, StartDate = start, EndDate = end, MaxUses = maxUses, MinGoodsAmount = minGoodsAmount };
-            await _http.PostAsJsonAsync("/api/admin/promocodes", data);
+            var response = await _http.PostAsJsonAsync("/api/admin/promocodes", data);
+            return response.IsSuccessStatusCode
+                ? (true, null)
+                : (false, await response.Content.ReadAsStringAsync());
         }
         public async Task<int?> GetPromoDiscountAsync(string code, decimal? goodsTotal = null)
         {

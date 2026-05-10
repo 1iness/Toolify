@@ -3,6 +3,7 @@ using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 using Toolify.AuthService.Services;
 
 namespace HouseholdStore
@@ -14,8 +15,11 @@ namespace HouseholdStore
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddHttpContextAccessor();
-            builder.Services.AddControllersWithViews();
-
+            builder.Services.AddControllersWithViews()
+                .AddJsonOptions(opts =>
+                {
+                    opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                });
             builder.Services.AddHttpClient();
             builder.Services.AddHttpClient<AuthApiService>(client =>
             {
@@ -80,6 +84,7 @@ namespace HouseholdStore
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+            app.MapControllers();
 
             app.Run();
 

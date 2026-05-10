@@ -1,4 +1,4 @@
-﻿@model HouseholdStore.Models.UserProfileViewModel
+@model HouseholdStore.Models.UserProfileViewModel
 @{
     ViewData["Title"] = "Личный кабинет";
 }
@@ -37,6 +37,9 @@
             </li>
             <li class="menu-item" data-tab="favourites">
                 <span class="menu-icon"></span> Избранное
+            </li>
+            <li class="menu-item" data-tab="offers">
+                <span class="menu-icon"></span> Акции и скидки
             </li>
         </ul>
 
@@ -185,6 +188,11 @@
                                 }
                             </div>
 
+                            <div class="order-delivery-line">
+                                <span class="order-delivery-label">Доставка:</span>
+                                <span class="order-delivery-value">@order.GetDeliveryDisplayLine()</span>
+                            </div>
+
                             <div class="order-card-footer">
                                 <span>Итого по заказу:</span>
                                 <span class="order-total-price">@order.TotalAmount.ToString("N2") <span class="nbrb-icon">&#xE901;</span></span>
@@ -278,6 +286,129 @@
                     </div>
                 </div>
             </div>
+        </section>
+
+        <section id="tab-offers" class="profile-section" style="display:none;">
+            <h2 class="section-title">Доступные акции, скидки и промокоды</h2>
+
+            @if ((Model.AvailablePromoCodes?.Any() ?? false)
+                || (Model.AvailablePromotions?.Any() ?? false)
+                || (Model.AvailableDiscounts?.Any() ?? false))
+            {
+                <div class="offers-groups">
+                    <div class="offer-group">
+                        <h3 class="offer-group-title">Промокоды</h3>
+                        @if (Model.AvailablePromoCodes != null && Model.AvailablePromoCodes.Any())
+                        {
+                            <div class="offers-grid">
+                                @foreach (var promo in Model.AvailablePromoCodes)
+                                {
+                                    <article class="offer-card offer-card--promo">
+                                        <div class="offer-card-top">
+                                            <span class="offer-badge">Промокод</span>
+                                            <span class="offer-date">до @promo.EndDate.ToString("dd.MM.yyyy")</span>
+                                        </div>
+                                        <h3>@promo.Code</h3>
+                                        <p>Скидка @promo.DiscountPercent%</p>
+                                        @if (promo.MinGoodsAmount.HasValue)
+                                        {
+                                            <div class="offer-note">от @promo.MinGoodsAmount.Value.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
+                                        }
+                                        @if (promo.MaxUses.HasValue)
+                                        {
+                                            <div class="offer-note">Осталось использований: @(promo.MaxUses.Value - promo.UsedCount)</div>
+                                        }
+                                    </article>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="offer-group-empty">Пока нет действующих промокодов</p>
+                        }
+                    </div>
+
+                    <div class="offer-group">
+                        <h3 class="offer-group-title">Акции</h3>
+                        @if (Model.AvailablePromotions != null && Model.AvailablePromotions.Any())
+                        {
+                            <div class="offers-grid">
+                                @foreach (var promo in Model.AvailablePromotions)
+                                {
+                                    <article class="offer-card offer-card--sale">
+                                        <div class="offer-card-top">
+                                            <span class="offer-badge offer-badge--sale">Акция</span>
+                                            <span class="offer-date">до @promo.EndDate.ToString("dd.MM.yyyy")</span>
+                                        </div>
+                                        <h3>@promo.Name</h3>
+                                        <p>@promo.PromotionType</p>
+                                        @if (!string.IsNullOrWhiteSpace(promo.Description))
+                                        {
+                                            <div class="offer-note">@promo.Description</div>
+                                        }
+                                        @if (promo.MinOrderAmount.HasValue)
+                                        {
+                                            <div class="offer-note">от @promo.MinOrderAmount.Value.ToString("N2") <span class="nbrb-icon">&#xE901;</span></div>
+                                        }
+                                    </article>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="offer-group-empty">Пока нет действующих акций</p>
+                        }
+                    </div>
+
+                    <div class="offer-group">
+                        <h3 class="offer-group-title">Скидки</h3>
+                        @if (Model.AvailableDiscounts != null && Model.AvailableDiscounts.Any())
+                        {
+                            <div class="offers-grid">
+                                @foreach (var discount in Model.AvailableDiscounts)
+                                {
+                                    <article class="offer-card offer-card--discount">
+                                        <div class="offer-card-top">
+                                            <span class="offer-badge offer-badge--discount">Скидка</span>
+                                            <span class="offer-date">@discount.DiscountType</span>
+                                        </div>
+                                        <h3>@discount.Name</h3>
+                                        <p>
+                                            @(discount.ValueKind == Toolify.ProductService.Models.DiscountValueKinds.Percent
+                                                ? $"{discount.Value:0.##}%"
+                                                : $"{discount.Value:N2} BYN")
+                                        </p>
+                                        @if (!string.IsNullOrWhiteSpace(discount.ProductName))
+                                        {
+                                            <div class="offer-note">Товар: @discount.ProductName</div>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(discount.CategoryName))
+                                        {
+                                            <div class="offer-note">Категория: @discount.CategoryName</div>
+                                        }
+                                        @if (discount.MinQuantity.HasValue)
+                                        {
+                                            <div class="offer-note">от @discount.MinQuantity.Value шт.</div>
+                                        }
+                                    </article>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="offer-group-empty">Пока нет действующих скидок</p>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="orders-empty-state">
+                    <i class="bi bi-percent" style="font-size:48px; color:#ddd; display:block; margin-bottom:15px;"></i>
+                    <p>Сейчас нет доступных акций, скидок и промокодов</p>
+                    <a asp-controller="Home" asp-action="Index" class="go-to-catalog">Перейти в каталог</a>
+                </div>
+            }
         </section>
     </main>
 </div>

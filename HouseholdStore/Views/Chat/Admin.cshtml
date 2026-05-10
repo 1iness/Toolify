@@ -4,21 +4,31 @@
     Layout = "_AdminLayout";
     var userEmailMap = ViewBag.UserEmailMap as Dictionary<int, string>
                        ?? new Dictionary<int, string>();
+    var userDisplayMap = ViewBag.UserDisplayMap as Dictionary<int, string>
+                         ?? new Dictionary<int, string>();
 
     string GetConversationPerson(HouseholdStore.Models.ChatConversationVm c)
     {
         if (c.UserId.HasValue)
-            return userEmailMap.TryGetValue(c.UserId.Value, out var e) && !string.IsNullOrWhiteSpace(e)
-                ? e : $"Пользователь {c.UserId.Value}";
-        if (!string.IsNullOrWhiteSpace(c.GuestEmail))
-            return $"Гость · {c.GuestEmail}";
-        return !string.IsNullOrWhiteSpace(c.GuestId) ? $"Гость · {c.GuestId}" : "Гость";
+            return userDisplayMap.TryGetValue(c.UserId.Value, out var name) && !string.IsNullOrWhiteSpace(name)
+                ? name
+                : (userEmailMap.TryGetValue(c.UserId.Value, out var e) && !string.IsNullOrWhiteSpace(e)
+                    ? e
+                    : $"Пользователь {c.UserId.Value}");
+        return "Гость";
     }
 
     string GetAvatarLetter(HouseholdStore.Models.ChatConversationVm c)
     {
-        var person = GetConversationPerson(c);
-        return person.Length > 0 ? person[0].ToString().ToUpper() : "?";
+        if (c.UserId.HasValue
+            && userDisplayMap.TryGetValue(c.UserId.Value, out var dn)
+            && !string.IsNullOrWhiteSpace(dn))
+            return dn.Trim()[0].ToString().ToUpperInvariant();
+        if (c.UserId.HasValue
+            && userEmailMap.TryGetValue(c.UserId.Value, out var em)
+            && !string.IsNullOrWhiteSpace(em))
+            return em.Trim()[0].ToString().ToUpperInvariant();
+        return "Г";
     }
 
     bool IsGuest(HouseholdStore.Models.ChatConversationVm c)
@@ -63,7 +73,7 @@
                     </div>
 
                     <div class="chat-item-body">
-                        <div class="chat-item-subject">#@c.Id · @c.Subject</div>
+                        <div class="chat-item-subject">#@c.Id · @ChatSubject.TitleForAdminList(c.Subject, c.LastMessagePreview, c.Id)</div>
                         <div class="chat-item-person">
                             <i class="bi @(isGuest ? "bi-person-dash" : "bi-person-check")"
                                style="margin-right:4px;"></i>@person

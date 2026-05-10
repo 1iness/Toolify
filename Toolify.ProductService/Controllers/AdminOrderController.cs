@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Toolify.ProductService;
 using Toolify.ProductService.Data;
 
 namespace Toolify.ProductService.Controllers
@@ -24,9 +25,18 @@ namespace Toolify.ProductService.Controllers
         [HttpPost("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
         {
-            if (string.IsNullOrEmpty(status)) return BadRequest();
+            if (string.IsNullOrWhiteSpace(status)) return BadRequest("Статус не указан.");
 
-            await _repo.UpdateOrderStatusAsync(id, status);
+            var current = await _repo.GetOrderStatusByIdAsync(id);
+            if (string.IsNullOrWhiteSpace(current)) return NotFound();
+
+            if (!OrderStatusWorkflow.TryNormalize(status, out var canonNext))
+                return BadRequest("Недопустимое значение нового статуса.");
+
+            if (!OrderStatusWorkflow.CanTransition(current, canonNext, out var err))
+                return BadRequest(err);
+
+            await _repo.UpdateOrderStatusAsync(id, canonNext);
             return Ok();
         }
     }

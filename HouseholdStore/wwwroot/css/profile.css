@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;600;700;900&display=swap');
 
 * {
     font-family: 'Montserrat', sans-serif;
@@ -121,6 +121,125 @@
     color: #888;
     font-size: 0.9rem;
     margin-top: 5px;
+}
+
+.offers-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.offer-group {
+    padding-bottom: 28px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.offer-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.offer-group-title {
+    margin: 0 0 16px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #222;
+    letter-spacing: -0.02em;
+}
+
+.offer-group-empty {
+    margin: 0;
+    padding: 16px 18px;
+    background: #fafafa;
+    border: 1px dashed #e0e0e0;
+    border-radius: 14px;
+    color: #888;
+    font-size: 14px;
+}
+
+.offers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+}
+
+.offer-card {
+    border: 1px solid #e7f3eb;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fdf9 100%);
+    padding: 18px;
+    box-shadow: 0 8px 22px rgba(40, 167, 69, 0.06);
+}
+
+.offer-card--promo {
+    border-color: #dbeafe;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.offer-card--discount {
+    border-color: #ffe4e6;
+    background: linear-gradient(180deg, #ffffff 0%, #fffafa 100%);
+}
+
+.offer-card--sale {
+    border-color: #e8f4fc;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.offer-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.offer-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: #e8f8ee;
+    color: #28a745;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 5px 10px;
+}
+
+.offer-badge--sale {
+    background: #e7f2ff;
+    color: #1565c0;
+}
+
+.offer-badge--discount {
+    background: #ffecec;
+    color: #c62828;
+}
+
+.offer-date {
+    color: #888;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.offer-card h3 {
+    margin: 0 0 8px;
+    color: #222;
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.offer-card p {
+    margin: 0 0 10px;
+    color: #28a745;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.offer-note {
+    color: #666;
+    font-size: 13px;
+    line-height: 1.45;
+    margin-top: 6px;
 }
 
 .profile-menu {
@@ -512,6 +631,30 @@
     color: #333;
     white-space: nowrap;
     flex-shrink: 0;
+}
+
+.order-delivery-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0 14px;
+    margin-top: 4px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.order-delivery-label {
+    flex-shrink: 0;
+    color: #888;
+    font-weight: 700;
+    min-width: 72px;
+}
+
+.order-delivery-value {
+    color: #333;
+    font-weight: 500;
+    word-break: break-word;
 }
 
 /* ===== ФУТЕР КАРТОЧКИ ===== */

@@ -118,30 +118,43 @@ namespace Toolify.AuthService.Services
             sb.AppendLine($"<div><span style=\"color:#666;\">Сумма заказа:</span> <b>{totalAmount:N2} BYN</b></div>");
             sb.AppendLine("</div>");
 
+            sb.AppendLine("<h3 style=\"margin:18px 0 10px;font-size:16px;\">Товары в этом заказе</h3>");
             if (lines != null)
             {
                 var list = lines.Where(l => l != null).ToList();
                 if (list.Count > 0)
                 {
-                    sb.AppendLine("<h3 style=\"margin:16px 0 10px;font-size:16px;\">Состав заказа</h3>");
-                    sb.AppendLine("<table cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;border-collapse:collapse;border:1px solid #eee;border-radius:12px;overflow:hidden;\">");
+                    sb.AppendLine("<table cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;max-width:640px;border-collapse:collapse;border:1px solid #eee;border-radius:12px;overflow:hidden;\">");
                     sb.AppendLine("<thead><tr style=\"background:#fafafa;\">");
                     sb.AppendLine("<th align=\"left\" style=\"padding:10px 12px;border-bottom:1px solid #eee;font-size:12px;color:#666;\">Товар</th>");
                     sb.AppendLine("<th align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #eee;font-size:12px;color:#666;white-space:nowrap;\">Кол-во</th>");
-                    sb.AppendLine("<th align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #eee;font-size:12px;color:#666;white-space:nowrap;\">Цена</th>");
+                    sb.AppendLine("<th align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #eee;font-size:12px;color:#666;white-space:nowrap;\">Цена за шт.</th>");
+                    sb.AppendLine("<th align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #eee;font-size:12px;color:#666;white-space:nowrap;\">Сумма</th>");
                     sb.AppendLine("</tr></thead><tbody>");
 
                     foreach (var l in list)
                     {
+                        var unit = l.Price;
+                        var rowTotal = l.LineTotal ?? l.Quantity * l.Price;
                         sb.AppendLine("<tr>");
                         sb.AppendLine($"<td style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;\">{WebUtility.HtmlEncode(l.Name ?? "—")}</td>");
                         sb.AppendLine($"<td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;\">{l.Quantity}</td>");
-                        sb.AppendLine($"<td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;\">{l.Price:N2} BYN</td>");
+                        sb.AppendLine($"<td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;\">{unit:N2} BYN</td>");
+                        sb.AppendLine($"<td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;\">{rowTotal:N2} BYN</td>");
                         sb.AppendLine("</tr>");
                     }
 
                     sb.AppendLine("</tbody></table>");
+                    sb.AppendLine("<p style=\"margin:12px 0 0;color:#666;font-size:13px;line-height:1.45;\">Если нужны уточнения по статусу — ответьте на это письмо или свяжитесь с поддержкой магазина.</p>");
                 }
+                else
+                {
+                    sb.AppendLine($"<p style=\"margin:0;color:#444;font-size:14px;line-height:1.5;\">Состав вашего заказа <b>№{orderId}</b> по данным нашей базы временно недоступен в письме. Ориентируйтесь на сумму заказа выше; при необходимости запросите детали в поддержке.</p>");
+                }
+            }
+            else
+            {
+                sb.AppendLine($"<p style=\"margin:0;color:#444;font-size:14px;line-height:1.5;\">Состав вашего заказа <b>№{orderId}</b> не был указан.</p>");
             }
 
             sb.AppendLine("<p style=\"margin:16px 0 0;color:#666;\">С уважением,<br/>Toolify Store</p>");
@@ -158,12 +171,30 @@ namespace Toolify.AuthService.Services
             message.To.Add(toEmail);
             await smtp.SendMailAsync(message);
         }
-        public async Task SendChatReplyAsync(string toEmail, string? subject, string replyText, int conversationId)
+        public async Task SendChatReplyAsync(
+            string toEmail,
+            string? subject,
+            string replyText,
+            int conversationId,
+            string? customerLastMessage = null)
         {
             if (string.IsNullOrWhiteSpace(toEmail)) return;
 
             var smtp = CreateClient();
-            var safeSubject = string.IsNullOrWhiteSpace(subject) ? "Вопрос по сайту" : subject.Trim();
+            var safeSubject = string.IsNullOrWhiteSpace(subject) ? "Обращение в поддержку" : subject.Trim();
+
+            string questionBlock = string.Empty;
+            if (!string.IsNullOrWhiteSpace(customerLastMessage))
+            {
+                var q = WebUtility.HtmlEncode(customerLastMessage.Trim())
+                    .Replace("\r\n", "<br/>")
+                    .Replace("\n", "<br/>");
+                questionBlock = $@"
+                      <p style=""margin:18px 0 8px;font-weight:600;"">Ваше сообщение</p>
+                      <div style=""background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px;margin-bottom:4px;"">
+                        {q}
+                      </div>";
+            }
 
             var message = new MailMessage
             {
@@ -173,8 +204,76 @@ namespace Toolify.AuthService.Services
                     <div style=""font-family:Montserrat,Arial,sans-serif;line-height:1.6;color:#222;"">
                       <h2 style=""margin:0 0 12px;"">Вы получили ответ от администратора</h2>
                       <p style=""margin:0 0 12px;""><b>Тема:</b> {WebUtility.HtmlEncode(safeSubject)}</p>
+                      {questionBlock}
+                      <p style=""margin:16px 0 8px;font-weight:600;"">Ответ</p>
                       <div style=""background:#f7f7f7;border:1px solid #eee;border-radius:12px;padding:14px;"">
-                        {WebUtility.HtmlEncode(replyText).Replace("\n", "<br/>")}
+                        {WebUtility.HtmlEncode(replyText).Replace("\r\n", "<br/>").Replace("\n", "<br/>")}
+                      </div>
+                      <p style=""margin:16px 0 0;color:#666;"">С уважением,<br/>Toolify Store</p>
+                    </div>",
+                IsBodyHtml = true
+            };
+
+            message.To.Add(toEmail);
+            await smtp.SendMailAsync(message);
+        }
+
+        public async Task SendIncomingUserChatToAdminAsync(
+            int conversationId,
+            string senderLabel,
+            string? contactEmail,
+            string? subject,
+            string messageText)
+        {
+            if (string.IsNullOrWhiteSpace(messageText)) return;
+
+            var smtp = CreateClient();
+            var safeSubject = string.IsNullOrWhiteSpace(subject) ? "Обращение в поддержку" : subject.Trim();
+            var safeSender = string.IsNullOrWhiteSpace(senderLabel) ? "Неизвестно" : senderLabel.Trim();
+            var safeContact = string.IsNullOrWhiteSpace(contactEmail) ? "—" : contactEmail.Trim();
+            var safeBody = string.IsNullOrWhiteSpace(messageText) ? "—" : messageText.Trim();
+
+            var message = new MailMessage
+            {
+                From = new MailAddress(_email, "Toolify Store — чат"),
+                Subject = $"Новое сообщение в чате #{conversationId}: {safeSender}",
+                Body = $@"
+                    <div style=""font-family:Montserrat,Arial,sans-serif;line-height:1.6;color:#222;"">
+                      <h2 style=""margin:0 0 12px;"">Сообщение в чате с клиентом</h2>
+                      <p style=""margin:0 0 8px;""><b>Диалог:</b> #{conversationId}</p>
+                      <p style=""margin:0 0 8px;""><b>Кто пишет:</b> {WebUtility.HtmlEncode(safeSender)}</p>
+                      <p style=""margin:0 0 8px;""><b>Контакт (email в чате):</b> {WebUtility.HtmlEncode(safeContact)}</p>
+                      <p style=""margin:0 0 12px;""><b>Тема:</b> {WebUtility.HtmlEncode(safeSubject)}</p>
+                      <div style=""background:#f7f7f7;border:1px solid #eee;border-radius:12px;padding:14px;"">
+                        {WebUtility.HtmlEncode(safeBody).Replace("\r\n", "<br/>").Replace("\n", "<br/>")}
+                      </div>
+                      <p style=""margin:16px 0 0;color:#666;font-size:13px;"">Ответьте клиенту в админ-панели (раздел «Чат с клиентами»).</p>
+                    </div>",
+                IsBodyHtml = true
+            };
+
+            message.To.Add(_email);
+            await smtp.SendMailAsync(message);
+        }
+
+        public async Task SendMarketingItemCreatedAsync(string toEmail, string itemTitle, string itemName)
+        {
+            if (string.IsNullOrWhiteSpace(toEmail)) return;
+
+            var smtp = CreateClient();
+            var safeTitle = string.IsNullOrWhiteSpace(itemTitle) ? "новое предложение" : itemTitle.Trim();
+            var safeName = string.IsNullOrWhiteSpace(itemName) ? "Без названия" : itemName.Trim();
+
+            var message = new MailMessage
+            {
+                From = new MailAddress(_email, "Toolify Store"),
+                Subject = $"Toolify: {safeTitle} «{safeName}»",
+                Body = $@"
+                    <div style=""font-family:Montserrat,Arial,sans-serif;line-height:1.6;color:#222;"">
+                      <h2 style=""margin:0 0 12px;"">В Toolify появилось новое предложение</h2>
+                      <p style=""margin:0 0 12px;"">Мы добавили: <b>{WebUtility.HtmlEncode(safeTitle)}</b></p>
+                      <div style=""background:#f7f7f7;border:1px solid #eee;border-radius:12px;padding:14px;"">
+                        Название: <b>{WebUtility.HtmlEncode(safeName)}</b>
                       </div>
                       <p style=""margin:16px 0 0;color:#666;"">С уважением,<br/>Toolify Store</p>
                     </div>",
@@ -190,6 +289,7 @@ namespace Toolify.AuthService.Services
         public string? Name { get; set; }
         public int Quantity { get; set; }
         public decimal Price { get; set; }
+        public decimal? LineTotal { get; set; }
     }
 }
 

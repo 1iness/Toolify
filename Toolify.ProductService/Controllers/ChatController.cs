@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Toolify.ProductService;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
 
@@ -24,11 +25,13 @@ namespace Toolify.ProductService.Controllers
             if (request.UserId == null && string.IsNullOrWhiteSpace(request.GuestId))
                 return BadRequest("Не передан идентификатор пользователя или гостя.");
 
+            var subjectResolved = ChatSubject.Resolve(request.Subject, request.MessageText.Trim());
+
             var conversationId = await _repo.CreateOrGetConversationAsync(
                 request.UserId,
                 request.GuestId,
                 request.GuestEmail,
-                request.Subject);
+                subjectResolved);
 
             await _repo.AddChatMessageAsync(conversationId, "user", request.MessageText.Trim());
 

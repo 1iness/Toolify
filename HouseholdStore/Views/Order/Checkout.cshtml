@@ -118,14 +118,15 @@
                         </div>
                     </div>
                     <div id="addressFieldsBlock">
+                        <p class="text-muted small mb-3 mb-md-2">Адрес только на территории Республики Беларусь.</p>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Город / Нас. пункт</label>
-                                <input type="text" id="CityInput" class="form-control address-part" placeholder="Минск" />
+                                <label class="form-label" for="CityInput">Город / Нас. пункт</label>
+                                <input type="text" id="CityInput" class="form-control address-part" placeholder="Например Минск" maxlength="120" />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Улица</label>
-                                <input type="text" id="StreetInput" class="form-control address-part" placeholder="пр. Независимости" />
+                                <label class="form-label" for="StreetInput">Улица, проспект, переулок…</label>
+                                <input type="text" id="StreetInput" class="form-control address-part" placeholder="Например ул. Советская" maxlength="200" />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Дом / Корпус</label>
@@ -415,7 +416,7 @@
 
                 let fullAddress = "";
                 if (city) fullAddress += "г. " + city + ", ";
-                if (street) fullAddress += "ул. " + street + ", ";
+                if (street) fullAddress += street + ", ";
                 if (house) fullAddress += "д. " + house;
                 if (apt) fullAddress += ", кв./оф. " + apt;
 
@@ -484,9 +485,12 @@
             document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 if (document.getElementById('delCourier').checked) {
                     updateFinalAddress();
-                    if (document.getElementById('FinalAddress').value.length < 10) {
+                    const cityOk = (document.getElementById('CityInput').value || '').trim().length >= 2;
+                    const streetOk = (document.getElementById('StreetInput').value || '').trim().length >= 2;
+                    const houseOk = (document.getElementById('HouseInput').value || '').trim().length >= 1;
+                    if (!cityOk || !streetOk || !houseOk) {
                         e.preventDefault();
-                        alert("Пожалуйста, заполните адрес доставки полностью.");
+                        alert("Укажите населённый пункт, улицу и дом — все поля курьерской доставки.");
                     }
                 }
             });

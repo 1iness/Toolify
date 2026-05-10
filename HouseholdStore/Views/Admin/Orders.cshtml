@@ -39,13 +39,14 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
+                            <th width="7%"></th>
                             <th width="8%">№ Заказа</th>
-                            <th width="15%">Дата</th>
-                            <th width="30%">Клиент</th>
-                            <th width="12%">Сумма</th>
-                            <th width="10%">Промокод</th>
-                            <th width="18%">Статус</th>
-                            <th width="10%" class="text-center">Действие</th>
+                            <th width="14%">Дата</th>
+                            <th width="28%">Клиент</th>
+                            <th width="11%">Сумма</th>
+                            <th width="9%">Промокод</th>
+                            <th width="16%">Статус</th>
+                            <th width="7%" class="text-center">Состав</th>
                         </tr>
                     </thead>
                     <tbody id="orders-filter-tbody">
@@ -57,7 +58,20 @@
                                 var guestLast = order.GuestLastName ?? "";
                                 var guestMail = order.GuestEmail ?? "";
                                 var orderSearchBlob = $"{guestFirst} {guestLast} {guestMail}".Trim().ToLowerInvariant();
-                                <tr data-order-search="@orderSearchBlob">
+                                var collapseId = $"order-lines-{order.Id}";
+                                var items = order.Items ?? new List<OrderItem>();
+                                <tr class="order-row-summary align-middle" data-order-search="@orderSearchBlob">
+                                    <td class="text-muted" style="width:1%;white-space:nowrap;">
+                                        <button type="button"
+                                                class="btn btn-sm btn-link order-toggle px-1 py-0 text-decoration-none"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#@collapseId"
+                                                aria-expanded="false"
+                                                aria-controls="@collapseId"
+                                                title="Показать или скрыть состав заказа">
+                                            <i class="bi bi-chevron-down toggle-icon" aria-hidden="true"></i>
+                                        </button>
+                                    </td>
                                     <td class="fw-bold text-primary">#@order.Id</td>
                                     <td>@order.OrderDate.ToString("dd.MM.yyyy HH:mm")</td>
                                     <td>
@@ -82,25 +96,87 @@
                                         }
                                     </td>
                                     <td>
+                                        @{
+                                            var selSource = OrderStatusWorkflow.TryNormalize(order.Status, out var c) ? c : order.Status;
+                                            var selClassRaw = selSource.Replace(" ", ".");
+                                            var statusChoices = OrderStatusWorkflow.GetSelectOptions(order.Status);
+                                            var terminal = OrderStatusWorkflow.IsTerminal(order.Status);
+                                        }
                                         <form asp-action="UpdateOrderStatus" method="post" class="m-0">
                                             <input type="hidden" name="orderId" value="@order.Id" />
-                                            @{
-                                                var selectClass = "status-" + order.Status.Replace(" ", ".");
-                                            }
-                                            <select name="status" class="form-select status-select @selectClass" onchange="this.form.submit()">
-                                                <option value="Новый" selected="@(order.Status == "Новый")">Новый</option>
-                                                <option value="В обработке" selected="@(order.Status == "В обработке")">В обработке</option>
-                                                <option value="Доставляется" selected="@(order.Status == "Доставляется")">Доставляется</option>
-                                                <option value="Доставлен" selected="@(order.Status == "Доставлен")">Доставлен</option>
-                                                <option value="Завершен" selected="@(order.Status == "Завершен")">Завершен</option>
-                                                <option value="Отменен" selected="@(order.Status == "Отменен")">Отменен</option>
+                                            <select name="status" class="form-select status-select status-@selClassRaw" @{
+                                                if (terminal) { WriteLiteral(" disabled"); }
+                                                else { WriteLiteral(@" onchange=""this.form.submit()"""); }
+                                            }>
+                                                @foreach (var opt in statusChoices)
+                                                {
+                                                    if (string.Equals(order.Status, opt, StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        <option value="@opt" selected>@opt</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@opt">@opt</option>
+                                                    }
+                                                }
                                             </select>
                                         </form>
                                     </td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-info" title="Посмотреть детали">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
+                                        <span class="badge rounded-pill bg-light text-dark border" title="Позиций в заказе">@items.Count</span>
+                                    </td>
+                                </tr>
+                                <tr class="order-row-detail border-0">
+                                    <td colspan="8" class="p-0 border-0">
+                                        <div id="@collapseId" class="collapse">
+                                            <div class="order-lines-panel px-3 py-3 mx-2 mb-2">
+                                                @if (!string.IsNullOrWhiteSpace(order.Address))
+                                                {
+                                                    <div class="order-detail-meta small text-muted mb-3">
+                                                        <span class="text-uppercase fw-semibold text-secondary" style="font-size:0.7rem;">Адрес доставки</span><br />
+                                                        <span class="text-dark">@order.Address</span>
+                                                    </div>
+                                                }
+                                                @if (items.Count > 0)
+                                                {
+                                                    <div class="table-responsive mb-0">
+                                                        <table class="table table-sm align-middle order-lines-inner mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>#</th>
+                                                                    <th>Товар</th>
+                                                                    <th class="text-end text-nowrap">Кол-во</th>
+                                                                    <th class="text-end text-nowrap">Цена за ед.</th>
+                                                                    <th class="text-end text-nowrap">Сумма</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @{ var lineNo = 0; }
+                                                                @foreach (var line in items)
+                                                                {
+                                                                    lineNo++;
+                                                                    var name = !string.IsNullOrWhiteSpace(line.ProductName)
+                                                                        ? line.ProductName!
+                                                                        : $"Товар №{line.ProductId}";
+                                                                    var lineTotal = line.Quantity * line.Price;
+                                                                    <tr>
+                                                                        <td class="text-muted small">@lineNo</td>
+                                                                        <td>@name</td>
+                                                                        <td class="text-end">@line.Quantity</td>
+                                                                        <td class="text-end">@line.Price.ToString("N2") <span class="nbrb-icon small">&#xE901;</span></td>
+                                                                        <td class="text-end fw-semibold">@lineTotal.ToString("N2") <span class="nbrb-icon small">&#xE901;</span></td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <p class="text-muted small mb-0">Состав заказа в базе не найден.</p>
+                                                }
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -108,7 +184,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
+                                <td colspan="8" class="text-center py-5 text-muted">
                                     <i class="fas fa-box-open fa-3x mb-3 text-light"></i><br />
                                     В выбранном диапазоне дат заказы не найдены.
                                 </td>

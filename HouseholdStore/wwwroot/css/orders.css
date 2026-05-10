@@ -98,8 +98,49 @@ body {
     border-color: #c8e6c9;
 }
 
-.status-Отменен {
-    background-color: #ffebee;
-    color: #c62828;
-    border-color: #ffcdd2;
+.order-toggle[aria-expanded="true"] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.order-toggle .toggle-icon {
+    transition: transform 0.2s ease;
+    display: inline-block;
+    font-size: 1.15rem;
+    vertical-align: middle;
+    color: #495057;
+}
+
+.order-lines-panel {
+    background: linear-gradient(180deg, #fafbfc 0%, #f3f5f7 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+}
+
+.order-detail-meta {
+    max-width: 720px;
+    line-height: 1.45;
+}
+
+.order-lines-inner thead th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6c757d;
+    border-bottom-width: 1px;
+    padding: 0.5rem 0.65rem;
+    background: transparent;
+}
+
+.order-lines-inner tbody td {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #ededed;
+}
+
+.order-lines-inner tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.order-row-detail td {
+    background: transparent;
 }

@@ -5,6 +5,7 @@
     var conversations = ViewBag.Conversations as List<HouseholdStore.Models.ChatConversationVm> ?? new List<HouseholdStore.Models.ChatConversationVm>();
     var selected = ViewBag.SelectedConversation as HouseholdStore.Models.ChatConversationVm;
     var userEmailMap = ViewBag.UserEmailMap as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var userDisplayMap = ViewBag.UserDisplayMap as Dictionary<int, string> ?? new Dictionary<int, string>();
 
     string GetConversationPerson(HouseholdStore.Models.ChatConversationVm? c)
     {
@@ -12,14 +13,11 @@
 
         if (c.UserId.HasValue)
         {
+            if (userDisplayMap.TryGetValue(c.UserId.Value, out var name) && !string.IsNullOrWhiteSpace(name))
+                return name;
             return userEmailMap.TryGetValue(c.UserId.Value, out var email) && !string.IsNullOrWhiteSpace(email)
                 ? email
                 : $"Пользователь {c.UserId.Value}";
-        }
-
-        if (!string.IsNullOrWhiteSpace(c.GuestEmail))
-        {
-            return $"Гостем ({c.GuestEmail})";
         }
 
         return "Гостем";
@@ -29,17 +27,14 @@
     {
         if (c.UserId.HasValue)
         {
+            if (userDisplayMap.TryGetValue(c.UserId.Value, out var name) && !string.IsNullOrWhiteSpace(name))
+                return name;
             return userEmailMap.TryGetValue(c.UserId.Value, out var email) && !string.IsNullOrWhiteSpace(email)
                 ? email
                 : $"User {c.UserId.Value}";
         }
 
-        if (!string.IsNullOrWhiteSpace(c.GuestEmail))
-        {
-            return $"Гость {c.GuestEmail}";
-        }
-
-        return !string.IsNullOrWhiteSpace(c.GuestId) ? $"Гость {c.GuestId}" : "Гость";
+        return "Гость";
     }
 }
 
@@ -72,7 +67,7 @@
             {
                 <a href="@Url.Action("AdminConversation", "Chat", new { id = c.Id })"
                    class="list-group-item list-group-item-action @(selected?.Id == c.Id ? "active" : "")">
-                    <div class="fw-semibold">#@c.Id - @c.Subject</div>
+                    <div class="fw-semibold">#@c.Id · @ChatSubject.TitleForAdminList(c.Subject, c.LastMessagePreview, c.Id)</div>
                     <small>@GetListLabel(c)</small>
                 </a>
             }
@@ -80,9 +75,9 @@
         <div class="chat-main">
             <div class="chat-main-header">
                 <h5 class="mb-0">Чат с @GetConversationPerson(selected)</h5>
-                @if (!string.IsNullOrWhiteSpace(selected?.Subject))
+                @if (selected != null)
                 {
-                    <small class="text-muted">@selected.Subject</small>
+                    <small class="text-muted">@ChatSubject.TitleForAdminList(selected.Subject, selected.LastMessagePreview, selected.Id)</small>
                 }
             </div>
             <div class="chat-messages" id="chatAdminMessages">

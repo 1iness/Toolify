@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Toolify.AuthService.Services;
 using System.Globalization;
 using System.Text;
+using Toolify.ProductService;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
 using static System.Net.Mime.MediaTypeNames;
@@ -299,8 +300,16 @@ namespace HouseholdStore.Controllers
                     return RedirectToAction("PromoCodes");
                 }
 
-                await _api.CreatePromoCodeAsync(code, discountPercent, startDate, endDate, maxUses, minGoodsAmount);
-                TempData["Success"] = "Промокод успешно добавлен";
+                var (ok, error) = await _api.CreatePromoCodeAsync(code, discountPercent, startDate, endDate, maxUses, minGoodsAmount);
+                if (!ok)
+                {
+                    TempData["Success"] = null;
+                    TempData["Error"] = error ?? "Ошибка API";
+                    return RedirectToAction("PromoCodes");
+                }
+
+                TempData["Success"] = "Промокод успешно добавлен"
+                    + await TryNotifyUsersAboutCreatedOfferAsync("промокод", code);
             }
             return RedirectToAction("PromoCodes");
         }
@@ -323,8 +332,11 @@ namespace HouseholdStore.Controllers
         [HttpPost]
         public async Task<IActionResult> AddPromotion(Promotion model)
         {
-            var (ok, err) = await _api.UpsertPromotionAsync(false, Sanitize(model));
-            TempData[ok ? "Success" : "Error"] = ok ? "Акция добавлена" : (err ?? "Ошибка API");
+            var promotion = Sanitize(model);
+            var (ok, err) = await _api.UpsertPromotionAsync(false, promotion);
+            TempData[ok ? "Success" : "Error"] = ok
+                ? "Акция добавлена" + await TryNotifyUsersAboutCreatedOfferAsync("акция", promotion.Name)
+                : (err ?? "Ошибка API");
             return RedirectToAction("Promotions");
         }
 
@@ -395,8 +407,11 @@ namespace HouseholdStore.Controllers
         [HttpPost]
         public async Task<IActionResult> AddDiscount(Discount model)
         {
-            var (ok, err) = await _api.UpsertDiscountAsync(false, SanitizeDiscount(model));
-            TempData[ok ? "Success" : "Error"] = ok ? "Скидка добавлена" : (err ?? "Ошибка API");
+            var discount = SanitizeDiscount(model);
+            var (ok, err) = await _api.UpsertDiscountAsync(false, discount);
+            TempData[ok ? "Success" : "Error"] = ok
+                ? "Скидка добавлена" + await TryNotifyUsersAboutCreatedOfferAsync("скидка", discount.Name)
+                : (err ?? "Ошибка API");
             return RedirectToAction("Discounts");
         }
 
@@ -432,6 +447,46 @@ namespace HouseholdStore.Controllers
             }
 
             return d;
+        }
+
+        private async Task<string> TryNotifyUsersAboutCreatedOfferAsync(string offerType, string? offerName)
+        {
+            try
+            {
+                var recipients = (await _authApi.GetAllUsersAsync())
+                    .Where(u =>
+                        !string.IsNullOrWhiteSpace(u.Email) &&
+                        string.Equals(u.Role, "User", StringComparison.OrdinalIgnoreCase))
+                    .Select(u => u.Email.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (recipients.Count == 0)
+                    return ". Пользователей для рассылки не найдено.";
+
+                var sent = 0;
+                var failed = 0;
+                foreach (var email in recipients)
+                {
+                    try
+                    {
+                        await _email.SendMarketingItemCreatedAsync(email, offerType, offerName ?? string.Empty);
+                        sent++;
+                    }
+                    catch
+                    {
+                        failed++;
+                    }
+                }
+
+                return failed == 0
+                    ? $". Рассылка отправлена: {sent}."
+                    : $". Рассылка отправлена: {sent}, ошибок: {failed}.";
+            }
+            catch
+            {
+                return ". Не удалось отправить рассылку пользователям.";
+            }
         }
 
 
@@ -531,25 +586,61 @@ namespace HouseholdStore.Controllers
         {
             var allOrders = await _api.GetAllOrdersAsync();
             var order = allOrders.FirstOrDefault(o => o.Id == orderId);
-            var previousStatus = order?.Status;
-
-            if (order != null && string.Equals(previousStatus, status, StringComparison.OrdinalIgnoreCase))
+            if (order == null)
             {
-                TempData["ToastType"] = "info";
-                TempData["ToastMessage"] = $"Статус заказа #{orderId} уже установлен: '{status}'";
-                return RedirectToAction("Orders");
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = $"Заказ №{orderId} не найден.";
+                return RedirectToAction(nameof(Orders));
             }
 
-            await _api.UpdateOrderStatusAsync(orderId, status);
+            if (!OrderStatusWorkflow.TryNormalize(order.Status, out var prevCanon))
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] =
+                    $"Текущий статус заказа №{orderId} («{order.Status}») не распознан системой.";
+                return RedirectToAction(nameof(Orders));
+            }
 
-            TempData["ToastType"] = "success";
-            TempData["ToastMessage"] = $"Статус заказа #{orderId} изменен на '{status}'";
+            if (!OrderStatusWorkflow.TryNormalize(status, out var nextCanon))
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = "Недопустимое значение нового статуса.";
+                return RedirectToAction(nameof(Orders));
+            }
+
+            if (prevCanon == nextCanon)
+            {
+                TempData["ToastType"] = "info";
+                TempData["ToastMessage"] = $"Статус заказа #{orderId} уже: «{nextCanon}»";
+                return RedirectToAction(nameof(Orders));
+            }
+
+            if (!OrderStatusWorkflow.CanTransition(prevCanon, nextCanon, out var fail))
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = fail;
+                return RedirectToAction(nameof(Orders));
+            }
 
             try
             {
-                string? toEmail = order?.GuestEmail;
+                await _api.UpdateOrderStatusAsync(orderId, nextCanon);
+            }
+            catch (Exception ex)
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = $"Не удалось сохранить статус: {ex.Message}";
+                return RedirectToAction(nameof(Orders));
+            }
 
-                if (string.IsNullOrWhiteSpace(toEmail) && order?.UserId != null)
+            TempData["ToastType"] = "success";
+            TempData["ToastMessage"] = $"Статус заказа #{orderId} изменён на «{nextCanon}»";
+
+            try
+            {
+                string? toEmail = order.GuestEmail;
+
+                if (string.IsNullOrWhiteSpace(toEmail) && order.UserId != null)
                 {
                     var users = await _authApi.GetAllUsersAsync();
                     toEmail = users.FirstOrDefault(u => u.Id == order.UserId.Value)?.Email;
@@ -557,22 +648,15 @@ namespace HouseholdStore.Controllers
 
                 if (!string.IsNullOrWhiteSpace(toEmail))
                 {
-                    var lines = (order?.Items ?? new List<OrderItem>())
-                        .Select(i => new OrderLine
-                        {
-                            Name = i.ProductName,
-                            Quantity = i.Quantity,
-                            Price = i.Price
-                        })
-                        .ToList();
+                    var lines = await BuildOrderLinesForStatusEmailAsync(orderId, order);
 
                     await _email.SendOrderStatusChangedAsync(
                         toEmail,
                         orderId,
-                        previousStatus,
-                        status,
-                        order?.Address,
-                        order?.TotalAmount ?? 0m,
+                        prevCanon,
+                        nextCanon,
+                        order.Address,
+                        order.TotalAmount,
                         lines);
                 }
             }
@@ -580,7 +664,7 @@ namespace HouseholdStore.Controllers
             {
             }
 
-            return RedirectToAction("Orders");
+            return RedirectToAction(nameof(Orders));
         }
 
 
@@ -705,6 +789,51 @@ namespace HouseholdStore.Controllers
             return View(model);
         }
 
+        /// <summary>
+        /// Строки для письма о смене статуса: сначала из БД (<see cref="ProductRepository.GetOrderEmailDetailsAsync"/>),
+        /// иначе из снимка заказа через API (позиции могут быть пустыми).
+        /// </summary>
+        private async Task<List<OrderLine>> BuildOrderLinesForStatusEmailAsync(int orderId, Order order)
+        {
+            try
+            {
+                var details = await _repo.GetOrderEmailDetailsAsync(orderId);
+                if (details?.Lines is { Count: > 0 } emailLines)
+                {
+                    return emailLines.Select(l =>
+                    {
+                        var name = string.IsNullOrWhiteSpace(l.ProductName) ? "Товар" : l.ProductName.Trim();
+                        if (!string.IsNullOrWhiteSpace(l.ArticleNumber))
+                            name = $"{name} (арт. {l.ArticleNumber.Trim()})";
+
+                        return new OrderLine
+                        {
+                            Name = name,
+                            Quantity = l.Quantity,
+                            Price = l.UnitPricePaid,
+                            LineTotal = l.LineTotalPaid
+                        };
+                    }).ToList();
+                }
+            }
+            catch
+            {
+                // ниже — fallback
+            }
+
+            return (order.Items ?? new List<OrderItem>())
+                .Select(i => new OrderLine
+                {
+                    Name = string.IsNullOrWhiteSpace(i.ProductName)
+                        ? (i.ProductId > 0 ? $"Товар №{i.ProductId}" : "Позиция заказа")
+                        : i.ProductName.Trim(),
+                    Quantity = i.Quantity,
+                    Price = i.Price,
+                    LineTotal = i.Quantity * i.Price
+                })
+                .ToList();
+        }
+
         private void ApplyStockQuantityFromForm(Product product)
         {
             if (!Request.HasFormContentType) return;
@@ -719,4 +848,3 @@ namespace HouseholdStore.Controllers
         }
     }
 }
-

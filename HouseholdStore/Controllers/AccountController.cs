@@ -17,11 +17,13 @@ namespace HouseholdStore.Controllers
 
         private readonly AuthApiService _auth;
         private readonly ProductRepository _productRepo;
+        private readonly ProductApiService _productApi;
 
-        public AccountController(AuthApiService auth, ProductRepository productRepo)
+        public AccountController(AuthApiService auth, ProductRepository productRepo, ProductApiService productApi)
         {
             _auth = auth;
             _productRepo = productRepo;
+            _productApi = productApi;
         }
 
         [HttpGet]
@@ -195,6 +197,23 @@ namespace HouseholdStore.Controllers
             int.TryParse(idStr, out int userId);
 
             var userOrders = await _productRepo.GetUserOrdersAsync(userId);
+            var now = DateTime.Now;
+            var promoCodes = (await _productApi.GetAllPromoCodesAsync())
+                .Where(p =>
+                    p.IsActive &&
+                    p.StartDate <= now &&
+                    p.EndDate >= now &&
+                    (!p.MaxUses.HasValue || p.UsedCount < p.MaxUses.Value))
+                .OrderBy(p => p.EndDate)
+                .ToList();
+            var promotions = (await _productApi.GetPromotionsAsync())
+                .Where(p => p.IsActive && p.StartDate <= now && p.EndDate >= now)
+                .OrderBy(p => p.EndDate)
+                .ToList();
+            var discounts = (await _productApi.GetDiscountsAsync())
+                .Where(d => d.IsActive)
+                .OrderByDescending(d => d.CreatedAt)
+                .ToList();
 
             var model = new UserProfileViewModel
             {
@@ -202,7 +221,10 @@ namespace HouseholdStore.Controllers
                 LastName = user.LastName,
                 Email = user.Email,
                 Phone = user.Phone,
-                Orders = userOrders
+                Orders = userOrders,
+                AvailablePromoCodes = promoCodes,
+                AvailablePromotions = promotions,
+                AvailableDiscounts = discounts
             };
 
             ViewBag.ProfileTab = string.IsNullOrWhiteSpace(tab) ? null : tab.Trim().ToLowerInvariant();

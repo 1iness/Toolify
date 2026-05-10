@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using HouseholdStore.Helpers;
 using Toolify.ProductService.Models;
@@ -25,6 +25,9 @@ namespace HouseholdStore.Models
         public string? Email { get; set; }
         public string Phone { get; set; }
         public List<OrderHistoryDto> Orders { get; set; } = new();
+        public List<PromoCode> AvailablePromoCodes { get; set; } = new();
+        public List<Promotion> AvailablePromotions { get; set; } = new();
+        public List<Discount> AvailableDiscounts { get; set; } = new();
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

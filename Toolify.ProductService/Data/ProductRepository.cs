@@ -619,6 +619,37 @@ namespace Toolify.ProductService.Data
 
         public async Task<List<OrderHistoryDto>> GetUserOrdersAsync(int userId)
         {
+            static int? TryGetOrdinal(IDataRecord r, string name)
+            {
+                try
+                {
+                    return r.GetOrdinal(name);
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    return null;
+                }
+            }
+
+            static string? ReadOptionalString(IDataRecord r, int? ord)
+            {
+                if (ord == null || r.IsDBNull(ord.Value)) return null;
+                return r.GetString(ord.Value);
+            }
+
+            void ApplyOrderAddress(OrderHistoryDto dto, IDataRecord row)
+            {
+                var addrOrd = TryGetOrdinal(row, "Address");
+                var delOrd = TryGetOrdinal(row, "DeliveryType");
+
+                var addr = ReadOptionalString(row, addrOrd);
+                var del = ReadOptionalString(row, delOrd);
+                if (!string.IsNullOrWhiteSpace(addr))
+                    dto.Address = addr.Trim();
+                if (!string.IsNullOrWhiteSpace(del))
+                    dto.DeliveryType = del.Trim();
+            }
+
             var orders = new List<OrderHistoryDto>();
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_GetUserOrders", connection) { CommandType = CommandType.StoredProcedure };
@@ -641,7 +672,13 @@ namespace Toolify.ProductService.Data
                         TotalAmount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
                         Status = reader.GetString(reader.GetOrdinal("Status"))
                     };
+                    ApplyOrderAddress(order, reader);
                     orders.Add(order);
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(order.Address) || string.IsNullOrWhiteSpace(order.DeliveryType))
+                        ApplyOrderAddress(order, reader);
                 }
 
                 order.Items.Add(new OrderItemDto
@@ -697,8 +734,8 @@ namespace Toolify.ProductService.Data
                     lines.Add(new OrderEmailLine
                     {
                         ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
-                        ProductName = reader.GetString(reader.GetOrdinal("ProductName")),
-                        ArticleNumber = reader.GetString(reader.GetOrdinal("ArticleNumber")),
+                        ProductName = reader.IsDBNull(reader.GetOrdinal("ProductName")) ? "" : reader.GetString(reader.GetOrdinal("ProductName")),
+                        ArticleNumber = reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? "" : reader.GetString(reader.GetOrdinal("ArticleNumber")),
                         Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
                         UnitPricePaid = reader.GetDecimal(reader.GetOrdinal("UnitPricePaid")),
                         UnitListPrice = reader.GetDecimal(reader.GetOrdinal("UnitListPrice")),
@@ -1011,84 +1048,178 @@ namespace Toolify.ProductService.Data
 
         public async Task<List<Order>> GetAllOrdersAsync()
         {
+            static int? TryGetOrdinal(IDataRecord r, string name)
+            {
+                try
+                {
+                    return r.GetOrdinal(name);
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    return null;
+                }
+            }
+
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_GetAllOrders", connection) { CommandType = CommandType.StoredProcedure };
 
             await connection.OpenAsync();
             var orders = new List<Order>();
 
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            using (var reader = await command.ExecuteReaderAsync())
             {
-                orders.Add(new Order
-                {
-                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                    UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
-                    OrderDate = reader.GetDateTime(reader.GetOrdinal("OrderDate")),
-                    TotalAmount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
-                    Status = reader.GetString(reader.GetOrdinal("Status")),
-                    Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
-                    GuestFirstName = reader.IsDBNull(reader.GetOrdinal("GuestFirstName")) ? null : reader.GetString(reader.GetOrdinal("GuestFirstName")),
-                    GuestLastName = reader.IsDBNull(reader.GetOrdinal("GuestLastName")) ? null : reader.GetString(reader.GetOrdinal("GuestLastName")),
-                    GuestEmail = reader.IsDBNull(reader.GetOrdinal("GuestEmail")) ? null : reader.GetString(reader.GetOrdinal("GuestEmail")),
-                    GuestPhone = reader.IsDBNull(reader.GetOrdinal("GuestPhone")) ? null : reader.GetString(reader.GetOrdinal("GuestPhone")),
-                    PromoCodeId = reader.IsDBNull(reader.GetOrdinal("PromoCodeId")) ? null : reader.GetInt32(reader.GetOrdinal("PromoCodeId")),
-                    PromoCode = reader.IsDBNull(reader.GetOrdinal("PromoCodeText")) ? null : reader.GetString(reader.GetOrdinal("PromoCodeText"))
-                });
-            }
-            if (await reader.NextResultAsync())
-            {
-                static int? TryGetOrdinal(IDataRecord r, string name)
-                {
-                    try
-                    {
-                        return r.GetOrdinal(name);
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        return null;
-                    }
-                }
-
                 while (await reader.ReadAsync())
                 {
-                    var orderIdOrd = TryGetOrdinal(reader, "OrderId");
-                    if (orderIdOrd == null || reader.IsDBNull(orderIdOrd.Value)) continue;
-                    int orderId = reader.GetInt32(orderIdOrd.Value);
+                    orders.Add(new Order
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
+                        OrderDate = reader.GetDateTime(reader.GetOrdinal("OrderDate")),
+                        TotalAmount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
+                        Status = reader.GetString(reader.GetOrdinal("Status")),
+                        Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
+                        GuestFirstName = reader.IsDBNull(reader.GetOrdinal("GuestFirstName")) ? null : reader.GetString(reader.GetOrdinal("GuestFirstName")),
+                        GuestLastName = reader.IsDBNull(reader.GetOrdinal("GuestLastName")) ? null : reader.GetString(reader.GetOrdinal("GuestLastName")),
+                        GuestEmail = reader.IsDBNull(reader.GetOrdinal("GuestEmail")) ? null : reader.GetString(reader.GetOrdinal("GuestEmail")),
+                        GuestPhone = reader.IsDBNull(reader.GetOrdinal("GuestPhone")) ? null : reader.GetString(reader.GetOrdinal("GuestPhone")),
+                        PromoCodeId = reader.IsDBNull(reader.GetOrdinal("PromoCodeId")) ? null : reader.GetInt32(reader.GetOrdinal("PromoCodeId")),
+                        PromoCode = reader.IsDBNull(reader.GetOrdinal("PromoCodeText")) ? null : reader.GetString(reader.GetOrdinal("PromoCodeText"))
+                    });
+                }
+
+                if (await reader.NextResultAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        AppendLineFromAdminReaderRow(reader, orders, TryGetOrdinal);
+                    }
+                }
+            }
+
+            if (orders.Count > 0 && orders.Any(o => o.Items.Count == 0))
+            {
+                await TryAppendOrderLinesFromReportSpAsync(connection, orders, TryGetOrdinal);
+            }
+
+            return orders;
+        }
+
+        private static void AppendLineFromAdminReaderRow(
+            SqlDataReader reader,
+            List<Order> orders,
+            Func<IDataRecord, string, int?> tryOrdinal)
+        {
+            var orderId = TryReadOrderId(reader, tryOrdinal);
+            if (orderId == null) return;
+
+            var order = orders.FirstOrDefault(o => o.Id == orderId.Value);
+            if (order == null) return;
+
+            decimal price = 0m;
+            var histPriceOrd = tryOrdinal(reader, "HistoricalPrice");
+            var priceOrd = tryOrdinal(reader, "Price");
+            var unitPaidOrd = tryOrdinal(reader, "UnitPricePaid");
+            if (histPriceOrd != null && !reader.IsDBNull(histPriceOrd.Value))
+                price = reader.GetDecimal(histPriceOrd.Value);
+            else if (priceOrd != null && !reader.IsDBNull(priceOrd.Value))
+                price = reader.GetDecimal(priceOrd.Value);
+            else if (unitPaidOrd != null && !reader.IsDBNull(unitPaidOrd.Value))
+                price = reader.GetDecimal(unitPaidOrd.Value);
+
+            string? productName = null;
+            var nameOrd = tryOrdinal(reader, "Name");
+            var productNameOrd = tryOrdinal(reader, "ProductName");
+            if (nameOrd != null && !reader.IsDBNull(nameOrd.Value))
+                productName = reader.GetString(nameOrd.Value);
+            else if (productNameOrd != null && !reader.IsDBNull(productNameOrd.Value))
+                productName = reader.GetString(productNameOrd.Value);
+
+            var productIdOrd = tryOrdinal(reader, "ProductId");
+            var qtyOrd = tryOrdinal(reader, "Quantity");
+
+            order.Items.Add(new OrderItem
+            {
+                OrderId = orderId.Value,
+                ProductId = productIdOrd == null || reader.IsDBNull(productIdOrd.Value) ? 0 : reader.GetInt32(productIdOrd.Value),
+                Quantity = qtyOrd == null || reader.IsDBNull(qtyOrd.Value) ? 0 : reader.GetInt32(qtyOrd.Value),
+                Price = price,
+                ProductName = productName
+            });
+        }
+
+        private static int? TryReadOrderId(SqlDataReader reader, Func<IDataRecord, string, int?> tryOrdinal)
+        {
+            foreach (var col in new[] { "OrderId", "Order_Id", "OrderID", "FkOrderId", "Orders_Id" })
+            {
+                var ord = tryOrdinal(reader, col);
+                if (ord != null && !reader.IsDBNull(ord.Value))
+                    return reader.GetInt32(ord.Value);
+            }
+
+            return null;
+        }
+
+        private static async Task TryAppendOrderLinesFromReportSpAsync(
+            SqlConnection connection,
+            List<Order> orders,
+            Func<IDataRecord, string, int?> tryOrdinal)
+        {
+            var emptyIds = orders.Where(o => o.Items.Count == 0).Select(o => o.Id).ToHashSet();
+            if (emptyIds.Count == 0) return;
+
+            try
+            {
+                using var cmd = new SqlCommand("sp_AdminReports_GetOrderLines", connection)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                cmd.Parameters.AddWithValue("@StartDate", new DateTime(2000, 1, 1));
+                cmd.Parameters.AddWithValue("@EndDate", DateTime.Today.AddDays(2));
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var oidOrd = tryOrdinal(reader, "OrderId");
+                    if (oidOrd == null || reader.IsDBNull(oidOrd.Value)) continue;
+                    var orderId = reader.GetInt32(oidOrd.Value);
+                    if (!emptyIds.Contains(orderId)) continue;
+
                     var order = orders.FirstOrDefault(o => o.Id == orderId);
                     if (order == null) continue;
 
-                    decimal price = 0m;
-                    var histPriceOrd = TryGetOrdinal(reader, "HistoricalPrice");
-                    var priceOrd = TryGetOrdinal(reader, "Price");
-                    if (histPriceOrd != null && !reader.IsDBNull(histPriceOrd.Value))
-                        price = reader.GetDecimal(histPriceOrd.Value);
-                    else if (priceOrd != null && !reader.IsDBNull(priceOrd.Value))
-                        price = reader.GetDecimal(priceOrd.Value);
-
-                    string? name = null;
-                    var nameOrd = TryGetOrdinal(reader, "Name");
-                    var productNameOrd = TryGetOrdinal(reader, "ProductName");
-                    if (nameOrd != null && !reader.IsDBNull(nameOrd.Value))
-                        name = reader.GetString(nameOrd.Value);
-                    else if (productNameOrd != null && !reader.IsDBNull(productNameOrd.Value))
-                        name = reader.GetString(productNameOrd.Value);
-
-                    var productIdOrd = TryGetOrdinal(reader, "ProductId");
-                    var qtyOrd = TryGetOrdinal(reader, "Quantity");
+                    var pidOrd = tryOrdinal(reader, "ProductId");
+                    var qtyOrd = tryOrdinal(reader, "Quantity");
+                    var priceOrd = tryOrdinal(reader, "Price");
+                    var nameOrd = tryOrdinal(reader, "ProductName");
 
                     order.Items.Add(new OrderItem
                     {
                         OrderId = orderId,
-                        ProductId = productIdOrd == null || reader.IsDBNull(productIdOrd.Value) ? 0 : reader.GetInt32(productIdOrd.Value),
+                        ProductId = pidOrd == null || reader.IsDBNull(pidOrd.Value) ? 0 : reader.GetInt32(pidOrd.Value),
                         Quantity = qtyOrd == null || reader.IsDBNull(qtyOrd.Value) ? 0 : reader.GetInt32(qtyOrd.Value),
-                        Price = price,
-                        ProductName = name
+                        Price = priceOrd == null || reader.IsDBNull(priceOrd.Value) ? 0m : reader.GetDecimal(priceOrd.Value),
+                        ProductName = nameOrd == null || reader.IsDBNull(nameOrd.Value)
+                            ? null
+                            : reader.GetString(nameOrd.Value)
                     });
                 }
             }
-            return orders;
+            catch (SqlException)
+            {
+            }
         }
+
+        public async Task<string?> GetOrderStatusByIdAsync(int orderId)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command =
+                new SqlCommand("SELECT TOP (1) [Status] FROM [dbo].[Orders] WHERE [Id] = @OrderId", connection);
+            command.Parameters.AddWithValue("@OrderId", orderId);
+            await connection.OpenAsync();
+            var result = await command.ExecuteScalarAsync();
+            return result as string ?? result?.ToString();
+        }
+
         public async Task UpdateOrderStatusAsync(int orderId, string newStatus)
         {
             using var connection = _factory.CreateConnection();

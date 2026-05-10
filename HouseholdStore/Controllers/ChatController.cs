@@ -3,8 +3,9 @@ using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Toolify.AuthService.Models;
 using Toolify.AuthService.Services;
+using Toolify.ProductService;
 
 namespace HouseholdStore.Controllers
 {
@@ -54,6 +55,40 @@ namespace HouseholdStore.Controllers
             var conversationId = await _chatApi.SendUserMessageAsync(guestId, vm);
             if (!conversationId.HasValue) return BadRequest("Не удалось отправить сообщение.");
 
+            try
+            {
+                var contactEmail = (vm.GuestEmail ?? string.Empty).Trim();
+                string senderLabel;
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    User? apiUser = null;
+                    if (!string.IsNullOrWhiteSpace(contactEmail))
+                        apiUser = await _authApi.GetUserByEmailAsync(contactEmail);
+
+                    var first = apiUser?.FirstName?.Trim() ?? "";
+                    var last = apiUser?.LastName?.Trim() ?? "";
+                    var fullName = $"{first} {last}".Trim();
+                    senderLabel = string.IsNullOrWhiteSpace(fullName)
+                        ? (!string.IsNullOrWhiteSpace(contactEmail) ? contactEmail : "Пользователь")
+                        : fullName;
+                }
+                else
+                {
+                    senderLabel = "Гость";
+                }
+
+                await _emailService.SendIncomingUserChatToAdminAsync(
+                    conversationId.Value,
+                    senderLabel,
+                    string.IsNullOrWhiteSpace(contactEmail) ? null : contactEmail,
+                    ChatSubject.Resolve(vm.Subject, vm.MessageText.Trim()),
+                    vm.MessageText.Trim());
+            }
+            catch
+            {
+                // уведомление на почту не должно ломать отправку в чат
+            }
+
             return Ok(new { conversationId = conversationId.Value });
         }
 
@@ -70,7 +105,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Admin()
         {
             var conversations = await _chatApi.GetAdminConversationsAsync();
-            ViewBag.UserEmailMap = await GetUserEmailMapAsync();
+            await FillAdminUserViewBagsAsync();
             ViewBag.AdminPanelKey = "chat";
             ViewBag.AdminSearchTarget = "none";
             var chatTitle = AdminPageTitleHelper.GetForPanel("chat");
@@ -98,7 +133,7 @@ namespace HouseholdStore.Controllers
 
             ViewBag.Conversations = conversations;
             ViewBag.SelectedConversation = selected;
-            ViewBag.UserEmailMap = await GetUserEmailMapAsync();
+            await FillAdminUserViewBagsAsync();
             var messages = await _chatApi.GetMessagesAsync(id);
             return View(messages);
         }
@@ -115,6 +150,11 @@ namespace HouseholdStore.Controllers
 
             try
             {
+                var messages = await _chatApi.GetMessagesAsync(conversationId);
+                var lastUserMessage = messages
+                    .OrderBy(m => m.CreatedAt)
+                    .LastOrDefault(m => string.Equals(m.SenderType, "user", StringComparison.OrdinalIgnoreCase));
+
                 var conversations = await _chatApi.GetAdminConversationsAsync();
                 var conversation = conversations.FirstOrDefault(x => x.Id == conversationId);
                 if (conversation != null)
@@ -128,11 +168,17 @@ namespace HouseholdStore.Controllers
 
                     if (!string.IsNullOrWhiteSpace(toEmail))
                     {
+                        var subjectDisplay = ChatSubject.TitleForAdminList(
+                            conversation.Subject,
+                            conversation.LastMessagePreview,
+                            conversation.Id);
+
                         await _emailService.SendChatReplyAsync(
                             toEmail,
-                            conversation.Subject,
+                            subjectDisplay,
                             messageText.Trim(),
-                            conversationId);
+                            conversationId,
+                            lastUserMessage?.MessageText);
                     }
                 }
             }
@@ -170,20 +216,32 @@ namespace HouseholdStore.Controllers
             });
             return guestId;
         }
-        private async Task<Dictionary<int, string>> GetUserEmailMapAsync()
+        private async Task FillAdminUserViewBagsAsync()
         {
+            Dictionary<int, string> emails = new();
+            Dictionary<int, string> display = new();
+
             try
             {
                 var users = await _authApi.GetAllUsersAsync();
-                return users
-                    .Where(u => u.Id > 0 && !string.IsNullOrWhiteSpace(u.Email))
-                    .GroupBy(u => u.Id)
-                    .ToDictionary(g => g.Key, g => g.First().Email);
+                foreach (var g in users.Where(u => u.Id > 0).GroupBy(u => u.Id))
+                {
+                    var u = g.First();
+                    if (!string.IsNullOrWhiteSpace(u.Email))
+                        emails[u.Id] = u.Email.Trim();
+                    var name = $"{u.FirstName?.Trim() ?? ""} {u.LastName?.Trim() ?? ""}".Trim();
+                    display[u.Id] = string.IsNullOrWhiteSpace(name)
+                        ? (!string.IsNullOrWhiteSpace(u.Email) ? u.Email.Trim() : $"Пользователь {u.Id}")
+                        : name;
+                }
             }
             catch
             {
-                return new Dictionary<int, string>();
+                /* оставить пустые словари */
             }
+
+            ViewBag.UserEmailMap = emails;
+            ViewBag.UserDisplayMap = display;
         }
     }
 }

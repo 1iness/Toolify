@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
+using Toolify.ProductService;
 using Toolify.ProductService.Models;
 
 namespace Toolify.ProductService.Data
@@ -26,7 +27,10 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
             command.Parameters.AddWithValue("@GuestId", (object?)guestId ?? DBNull.Value);
             command.Parameters.AddWithValue("@GuestEmail", (object?)guestEmail ?? DBNull.Value);
-            command.Parameters.AddWithValue("@Subject", (object?)subject ?? "Вопрос по сайту");
+            var resolved = string.IsNullOrWhiteSpace(subject)
+                ? ChatSubject.Resolve(null, "")
+                : subject.Trim();
+            command.Parameters.AddWithValue("@Subject", resolved);
 
             await connection.OpenAsync();
             return Convert.ToInt32(await command.ExecuteScalarAsync());
@@ -67,7 +71,7 @@ namespace Toolify.ProductService.Data
                 UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
                 GuestId = reader.IsDBNull(reader.GetOrdinal("GuestId")) ? null : reader.GetString(reader.GetOrdinal("GuestId")),
                 GuestEmail = reader.IsDBNull(reader.GetOrdinal("GuestEmail")) ? null : reader.GetString(reader.GetOrdinal("GuestEmail")),
-                Subject = reader.IsDBNull(reader.GetOrdinal("Subject")) ? "Вопрос по сайту" : reader.GetString(reader.GetOrdinal("Subject")),
+                Subject = reader.IsDBNull(reader.GetOrdinal("Subject")) ? string.Empty : reader.GetString(reader.GetOrdinal("Subject")),
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 LastMessageAt = reader.GetDateTime(reader.GetOrdinal("LastMessageAt")),
                 LastMessagePreview = reader.IsDBNull(reader.GetOrdinal("LastMessagePreview")) ? string.Empty : reader.GetString(reader.GetOrdinal("LastMessagePreview")),
@@ -124,7 +128,7 @@ namespace Toolify.ProductService.Data
                     UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
                     GuestId = reader.IsDBNull(reader.GetOrdinal("GuestId")) ? null : reader.GetString(reader.GetOrdinal("GuestId")),
                     GuestEmail = reader.IsDBNull(reader.GetOrdinal("GuestEmail")) ? null : reader.GetString(reader.GetOrdinal("GuestEmail")),
-                    Subject = reader.IsDBNull(reader.GetOrdinal("Subject")) ? "Вопрос по сайту" : reader.GetString(reader.GetOrdinal("Subject")),
+                    Subject = reader.IsDBNull(reader.GetOrdinal("Subject")) ? string.Empty : reader.GetString(reader.GetOrdinal("Subject")),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     LastMessageAt = reader.GetDateTime(reader.GetOrdinal("LastMessageAt")),
                     LastMessagePreview = reader.IsDBNull(reader.GetOrdinal("LastMessagePreview")) ? string.Empty : reader.GetString(reader.GetOrdinal("LastMessagePreview")),
