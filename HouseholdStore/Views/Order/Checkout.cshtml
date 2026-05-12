@@ -1,4 +1,4 @@
-﻿@model HouseholdStore.Models.CheckoutViewModel
+@model HouseholdStore.Models.CheckoutViewModel
 
 @{
     ViewData["Title"] = "Оформление заказа";
@@ -122,11 +122,11 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label" for="CityInput">Город / Нас. пункт</label>
-                                <input type="text" id="CityInput" class="form-control address-part" placeholder="Например Минск" maxlength="120" />
+                                <input type="text" id="CityInput" class="form-control address-part" placeholder="Например Минск" maxlength="120" autocomplete="off" data-geo-suggest="city" />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" for="StreetInput">Улица, проспект, переулок…</label>
-                                <input type="text" id="StreetInput" class="form-control address-part" placeholder="Например ул. Советская" maxlength="200" />
+                                <input type="text" id="StreetInput" class="form-control address-part" placeholder="Например ул. Советская" maxlength="200" autocomplete="off" data-geo-suggest="street" />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Дом / Корпус</label>
@@ -255,6 +255,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/js/checkout-address-suggest.js" asp-append-version="true"></script>
 
     <script>
 

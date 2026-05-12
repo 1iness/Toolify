@@ -1,4 +1,4 @@
-﻿/* Основной контейнер */
+/* Основной контейнер */
 .checkout-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -151,6 +151,49 @@
         border-color: #dc3545;
         background-color: #fff8f8;
     }
+
+.address-suggest-wrap {
+    position: relative;
+}
+
+.address-suggest-list {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #dfe4ea;
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    padding: 6px;
+}
+
+.address-suggest-list[hidden] {
+    display: none;
+}
+
+.address-suggest-item {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 9px 10px;
+    border-radius: 8px;
+    text-align: left;
+    font: inherit;
+    font-size: 14px;
+    color: #263238;
+    cursor: pointer;
+}
+
+.address-suggest-item:hover,
+.address-suggest-item:focus {
+    background: #eef6ff;
+    outline: none;
+}
 
 /* стили для карточки с товарами */
 .order-item-row {

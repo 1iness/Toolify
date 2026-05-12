@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +27,7 @@ namespace HouseholdStore
             });
             builder.Services.AddHttpClient<ProductApiService>();
             builder.Services.AddHttpClient<ChatApiService>();
+            builder.Services.AddHttpClient<BelarusGeoSuggestService>();
             builder.Services.AddScoped<EmailService>();
             builder.Services.AddScoped<AdminReportBuilder>();
             builder.Services.AddScoped<AdminReportExportService>();
@@ -45,6 +46,7 @@ namespace HouseholdStore
                 });
 
             builder.Services.AddAuthorization();
+            builder.Services.AddMemoryCache();
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
             {
