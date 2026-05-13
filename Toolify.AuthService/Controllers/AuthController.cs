@@ -183,7 +183,7 @@ public class AuthController : ControllerBase
         var code = new Random().Next(100000, 999999).ToString();
 
         _repo.SetPasswordResetCode(request.Email, code, DateTime.UtcNow.AddMinutes(10));
-        _email.SendResetPasswordCode(request.Email, code);
+        _email.SendResetPasswordCode(request.Email, code, request.ResetUrl);
 
         return Ok();
     }

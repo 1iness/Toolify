@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Toolify.AuthService.DTO
 {
@@ -8,5 +8,8 @@ namespace Toolify.AuthService.DTO
         [EmailAddress]
         [MaxLength(254)]
         public string Email { get; set; } = null!;
+
+        [MaxLength(2048)]
+        public string? ResetUrl { get; set; }
     }
 }

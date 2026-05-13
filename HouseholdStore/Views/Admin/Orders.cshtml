@@ -110,7 +110,7 @@
                                             }>
                                                 @foreach (var opt in statusChoices)
                                                 {
-                                                    if (string.Equals(order.Status, opt, StringComparison.OrdinalIgnoreCase))
+                                                    if (string.Equals(selSource, opt, StringComparison.OrdinalIgnoreCase))
                                                     {
                                                         <option value="@opt" selected>@opt</option>
                                                     }

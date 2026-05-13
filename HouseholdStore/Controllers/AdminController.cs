@@ -65,7 +65,10 @@ namespace HouseholdStore.Controllers
 
         public async Task<IActionResult> List()
         {
-            var products = await _api.GetAllAsync();
+            var products = (await _api.GetAllAsync())
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .ToList();
             return AdminShellView(products, "products-list", "products-list");
         }
 
@@ -353,11 +356,18 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> PromoCodes()
         {
             var promos = await _api.GetAllPromoCodesAsync();
-            return AdminShellView(promos, "promocodes", "none");
+            return AdminShellView(promos, "promocodes", "promocodes");
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePromoCode(string code, int discountPercent, DateTime startDate, DateTime endDate, int? maxUses = null, decimal? minGoodsAmount = null)
+        public async Task<IActionResult> CreatePromoCode(
+            string code,
+            int discountPercent,
+            DateTime startDate,
+            DateTime endDate,
+            int? maxUses = null,
+            decimal? minGoodsAmount = null,
+            bool sendNotification = true)
         {
             if (!string.IsNullOrEmpty(code) && discountPercent > 0)
             {
@@ -384,9 +394,35 @@ namespace HouseholdStore.Controllers
                 }
 
                 TempData["Success"] = "Промокод успешно добавлен"
-                    + await TryNotifyUsersAboutCreatedOfferAsync("промокод", code);
+                    + await TryNotifyUsersAboutCreatedOfferAsync(
+                        sendNotification,
+                        "промокод",
+                        code,
+                        BuildPromoCodeNotificationDetails(code, discountPercent, startDate, endDate, maxUses, minGoodsAmount));
             }
             return RedirectToAction("PromoCodes");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetPromoCodeActive(int id, bool isActive)
+        {
+            var (ok, error) = await _api.SetPromoCodeActiveAsync(id, isActive);
+            TempData[ok ? "Success" : "Error"] = ok
+                ? (isActive ? "Промокод включён." : "Промокод деактивирован.")
+                : (error ?? "Не удалось изменить статус промокода.");
+
+            return RedirectToAction(nameof(PromoCodes));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeletePromoCode(int id)
+        {
+            var (ok, error) = await _api.DeletePromoCodeAsync(id);
+            TempData[ok ? "Success" : "Error"] = ok
+                ? "Промокод удалён."
+                : (error ?? "Не удалось удалить промокод.");
+
+            return RedirectToAction(nameof(PromoCodes));
         }
 
         [HttpGet]
@@ -401,16 +437,20 @@ namespace HouseholdStore.Controllers
             ViewBag.CategoriesList = categories;
             ViewBag.ProductsList = products;
 
-            return AdminShellView(new AdminPromotionsViewModel { Promotions = promos }, "promotions", "none");
+            return AdminShellView(new AdminPromotionsViewModel { Promotions = promos }, "promotions", "promotions");
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddPromotion(Promotion model)
+        public async Task<IActionResult> AddPromotion(Promotion model, bool sendNotification = true)
         {
             var promotion = Sanitize(model);
             var (ok, err) = await _api.UpsertPromotionAsync(false, promotion);
             TempData[ok ? "Success" : "Error"] = ok
-                ? "Акция добавлена" + await TryNotifyUsersAboutCreatedOfferAsync("акция", promotion.Name)
+                ? "Акция добавлена" + await TryNotifyUsersAboutCreatedOfferAsync(
+                    sendNotification,
+                    "акция",
+                    promotion.Name,
+                    await BuildPromotionNotificationDetailsAsync(promotion))
                 : (err ?? "Ошибка API");
             return RedirectToAction("Promotions");
         }
@@ -476,16 +516,20 @@ namespace HouseholdStore.Controllers
             ViewBag.CategoriesList = categories;
             ViewBag.ProductsList = products;
 
-            return AdminShellView(new AdminDiscountsViewModel { Discounts = discounts }, "discounts", "none");
+            return AdminShellView(new AdminDiscountsViewModel { Discounts = discounts }, "discounts", "discounts");
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddDiscount(Discount model)
+        public async Task<IActionResult> AddDiscount(Discount model, bool sendNotification = true)
         {
             var discount = SanitizeDiscount(model);
             var (ok, err) = await _api.UpsertDiscountAsync(false, discount);
             TempData[ok ? "Success" : "Error"] = ok
-                ? "Скидка добавлена" + await TryNotifyUsersAboutCreatedOfferAsync("скидка", discount.Name)
+                ? "Скидка добавлена" + await TryNotifyUsersAboutCreatedOfferAsync(
+                    sendNotification,
+                    "скидка",
+                    discount.Name,
+                    await BuildDiscountNotificationDetailsAsync(discount))
                 : (err ?? "Ошибка API");
             return RedirectToAction("Discounts");
         }
@@ -524,8 +568,15 @@ namespace HouseholdStore.Controllers
             return d;
         }
 
-        private async Task<string> TryNotifyUsersAboutCreatedOfferAsync(string offerType, string? offerName)
+        private async Task<string> TryNotifyUsersAboutCreatedOfferAsync(
+            bool sendNotification,
+            string offerType,
+            string? offerName,
+            IEnumerable<KeyValuePair<string, string>>? details = null)
         {
+            if (!sendNotification)
+                return ". Рассылка отключена.";
+
             try
             {
                 var recipients = (await _authApi.GetAllUsersAsync())
@@ -545,7 +596,7 @@ namespace HouseholdStore.Controllers
                 {
                     try
                     {
-                        await _email.SendMarketingItemCreatedAsync(email, offerType, offerName ?? string.Empty);
+                        await _email.SendMarketingItemCreatedAsync(email, offerType, offerName ?? string.Empty, details);
                         sent++;
                     }
                     catch
@@ -563,6 +614,134 @@ namespace HouseholdStore.Controllers
                 return ". Не удалось отправить рассылку пользователям.";
             }
         }
+
+        private static List<KeyValuePair<string, string>> BuildPromoCodeNotificationDetails(
+            string code,
+            int discountPercent,
+            DateTime startDate,
+            DateTime endDate,
+            int? maxUses,
+            decimal? minGoodsAmount)
+        {
+            return new List<KeyValuePair<string, string>>
+            {
+                Pair("Промокод", code),
+                Pair("Скидка", $"{discountPercent}%"),
+                Pair("Период действия", FormatDateRange(startDate, endDate)),
+                Pair("Лимит использований", maxUses.HasValue ? maxUses.Value.ToString(CultureInfo.InvariantCulture) : "без лимита"),
+                Pair("Мин. сумма товаров", minGoodsAmount.HasValue ? $"{minGoodsAmount.Value:0.##} BYN" : "не требуется")
+            };
+        }
+
+        private async Task<List<KeyValuePair<string, string>>> BuildPromotionNotificationDetailsAsync(Promotion p)
+        {
+            var details = new List<KeyValuePair<string, string>>
+            {
+                Pair("Что это за акция", p.PromotionType),
+                Pair("Для чего действует", await FormatPromotionScopeAsync(p)),
+                Pair("Выгода", FormatPromotionParamsForEmail(p)),
+                Pair("Когда действует", FormatDateRange(p.StartDate, p.EndDate))
+            };
+
+            if (!string.IsNullOrWhiteSpace(p.Description))
+                details.Insert(1, Pair("Описание", p.Description!));
+
+            return details;
+        }
+
+        private async Task<List<KeyValuePair<string, string>>> BuildDiscountNotificationDetailsAsync(Discount d)
+        {
+            var details = new List<KeyValuePair<string, string>>
+            {
+                Pair("Размер скидки", FormatDiscountValueForEmail(d)),
+                Pair("Скидка действует на", await FormatDiscountScopeAsync(d))
+            };
+
+            if (d.DiscountType == DiscountTypes.Quantity && d.MinQuantity.HasValue)
+                details.Add(Pair("Когда применяется", $"при покупке от {d.MinQuantity.Value} шт."));
+
+            return details;
+        }
+
+        private async Task<string> FormatPromotionScopeAsync(Promotion p)
+        {
+            if (p.ScopeType == PromotionScopes.Category)
+                return $"товары из категории «{await ResolveCategoryNameAsync(p.CategoryId)}»";
+            if (p.ScopeType == PromotionScopes.Product)
+                return $"товар «{await ResolveProductNameAsync(p.ProductId)}»";
+            return "весь каталог";
+        }
+
+        private async Task<string> FormatDiscountScopeAsync(Discount d)
+        {
+            if (d.DiscountType == DiscountTypes.Product)
+                return $"товар «{await ResolveProductNameAsync(d.ProductId)}»";
+            if (d.DiscountType == DiscountTypes.Category)
+                return $"товары из категории «{await ResolveCategoryNameAsync(d.CategoryId)}»";
+            if (d.ProductId.HasValue)
+                return $"товар «{await ResolveProductNameAsync(d.ProductId)}»";
+            if (d.CategoryId.HasValue)
+                return $"товары из категории «{await ResolveCategoryNameAsync(d.CategoryId)}»";
+            return "подходящие товары";
+        }
+
+        private async Task<string> ResolveCategoryNameAsync(int? categoryId)
+        {
+            if (!categoryId.HasValue || categoryId.Value <= 0) return "не указана";
+            try
+            {
+                var categories = await _api.GetCategoriesAsync();
+                return categories.FirstOrDefault(c => c.Id == categoryId.Value)?.Name ?? $"#{categoryId.Value}";
+            }
+            catch
+            {
+                return $"#{categoryId.Value}";
+            }
+        }
+
+        private async Task<string> ResolveProductNameAsync(int? productId)
+        {
+            if (!productId.HasValue || productId.Value <= 0) return "не указан";
+            try
+            {
+                var product = await _api.GetByIdAsync(productId.Value);
+                return product?.Name ?? $"#{productId.Value}";
+            }
+            catch
+            {
+                return $"#{productId.Value}";
+            }
+        }
+
+        private static string FormatPromotionParamsForEmail(Promotion p)
+        {
+            return p.PromotionType switch
+            {
+                PromotionTypes.BuyGetY => $"купить {p.BuyQty ?? 0}, заплатить {p.PayQty ?? 0}",
+                PromotionTypes.OrderPercent => $"скидка {p.PercentOff:0.##}% на заказ"
+                    + (p.MinOrderAmount.HasValue ? $" от {p.MinOrderAmount.Value:0.##} BYN" : ""),
+                PromotionTypes.FreeShipping => p.MinOrderAmount.HasValue
+                    ? $"бесплатная доставка от {p.MinOrderAmount.Value:0.##} BYN"
+                    : "бесплатная доставка",
+                PromotionTypes.Gift => string.IsNullOrWhiteSpace(p.GiftDescription)
+                    ? "подарок к заказу"
+                    : $"подарок: {p.GiftDescription}",
+                _ => p.PromotionType
+            };
+        }
+
+        private static string FormatDiscountValueForEmail(Discount d)
+        {
+            return d.ValueKind == DiscountValueKinds.Percent
+                ? $"{d.Value:0.##}%"
+                : $"{d.Value:0.##} BYN";
+        }
+
+        private static string FormatDateRange(DateTime start, DateTime end)
+            => $"{start:dd.MM.yyyy HH:mm} — {end:dd.MM.yyyy HH:mm}";
+
+        private static KeyValuePair<string, string> Pair(string key, string value)
+            => new(key, value);
 
 
         [HttpGet]
@@ -631,7 +810,8 @@ namespace HouseholdStore.Controllers
         {
             try
             {
-                await _authApi.SendPasswordResetAsync(email);
+                var resetUrl = Url.Action("ResetCode", "Account", new { email }, Request.Scheme);
+                await _authApi.SendPasswordResetAsync(email, resetUrl);
                 TempData["Success"] = $"Письмо для сброса пароля отправлено на {email}";
             }
             catch (Exception ex)

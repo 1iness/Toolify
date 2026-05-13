@@ -104,8 +104,8 @@
                         </div>
                         <div class="info-group">
                             <label>Телефон</label>
-                            <input type="text" name="Phone" value="@Model.Phone" class="form-input"
-                                   placeholder="+375(__) ___-__-__">
+                            <input type="text" id="profile-phone" name="Phone" value="@Model.Phone" class="form-input"
+                                   placeholder="+375 (__) ___-__-__" inputmode="numeric" autocomplete="tel" maxlength="19">
                         </div>
                     </div>
                     <div style="display:flex; gap:15px; margin-top:10px;">
@@ -122,13 +122,48 @@
 
         <section id="tab-orders" class="profile-section" style="display: none;">
             <h2 class="section-title">Текущие заказы</h2>
+            @{
+                var activeOrders = Model.Orders?
+                    .Where(o => OrderStatusWorkflow.TryNormalize(o.Status, out var s)
+                        && (s == "Новый" || s == "Обработка"))
+                    .ToList() ?? new List<Toolify.ProductService.Models.OrderHistoryDto>();
+            }
 
-            @if (Model.Orders != null && Model.Orders.Any(o => o.Status == "Новый" || o.Status == "В обработке" || o.Status == "Доставляется"))
+            @if (activeOrders.Any())
             {
+                <div class="profile-orders-tools" data-current-orders-tools>
+                    <div class="profile-orders-search">
+                        <i class="bi bi-search"></i>
+                        <input type="search" id="current-orders-search" placeholder="Поиск по номеру, товару или доставке" autocomplete="off" />
+                    </div>
+                    <select id="current-orders-status-filter" class="profile-orders-filter" aria-label="Фильтр по статусу">
+                        <option value="">Все статусы</option>
+                        <option value="Новый">Оформлен</option>
+                        <option value="Обработка">Обработка</option>
+                    </select>
+                </div>
+
                 <div class="orders-scroll-container">
-                    @foreach (var order in Model.Orders.Where(o => o.Status == "Новый" || o.Status == "В обработке" || o.Status == "Доставляется"))
+                    @foreach (var order in activeOrders)
                     {
-                        <div class="order-card-item">
+                        var normalizedStatus = OrderStatusWorkflow.TryNormalize(order.Status, out var activeStatus)
+                            ? activeStatus
+                            : order.Status;
+                        var displayStatus = normalizedStatus == "Новый" ? "Оформлен" : normalizedStatus;
+                        var orderSearch = string.Join(" ", new[]
+                        {
+                            $"заказ {order.OrderId}",
+                            order.OrderId.ToString(),
+                            displayStatus,
+                            order.OrderDate.ToString("dd.MM.yyyy"),
+                            order.GetDeliveryDisplayLine(),
+                            string.Join(" ", order.Items.Select(i => i.ProductName))
+                        });
+
+                        <div class="order-card-item"
+                             data-current-order-card
+                             data-order-status="@normalizedStatus"
+                             data-order-search="@orderSearch">
 
                             <div class="order-card-header">
                                 <div class="order-card-meta">
@@ -136,16 +171,16 @@
                                     <span class="order-date">от @order.OrderDate.ToString("dd.MM.yyyy")</span>
                                 </div>
                                 @{
-                                    var statusColor = order.Status switch
+                                    var statusColor = normalizedStatus switch
                                     {
                                         "Новый" => "#17a2b8",
-                                        "В обработке" => "#ffc107",
-                                        "Доставляется" => "#28a745",
+                                        "Обработка" => "#ffc107",
+                                        "Передан на склад" => "#28a745",
                                         _ => "#6c757d"
                                     };
                                 }
                                 <span class="order-status-badge" style="background: @(statusColor)1a; color: @statusColor; border: 1px solid @statusColor;">
-                                    @order.Status
+                                    @displayStatus
                                 </span>
                             </div>
 
@@ -154,20 +189,15 @@
                                     <div class="step-dot"><i class="bi bi-check-lg"></i></div>
                                     <span>Оформлен</span>
                                 </div>
-                                <div class="progress-line @(order.Status == "В обработке" || order.Status == "Доставляется" ? "done" : "")"></div>
-                                <div class="progress-step @(order.Status == "В обработке" || order.Status == "Доставляется" ? "done" : "")">
+                                <div class="progress-line @(normalizedStatus == "Обработка" || normalizedStatus == "Передан на склад" ? "done" : "")"></div>
+                                <div class="progress-step @(normalizedStatus == "Обработка" || normalizedStatus == "Передан на склад" ? "done" : "")">
                                     <div class="step-dot"><i class="bi bi-gear"></i></div>
                                     <span>Обработка</span>
                                 </div>
-                                <div class="progress-line @(order.Status == "Доставляется" ? "done" : "")"></div>
-                                <div class="progress-step @(order.Status == "Доставляется" ? "done" : "")">
-                                    <div class="step-dot"><i class="bi bi-truck"></i></div>
-                                    <span>Доставка</span>
-                                </div>
-                                <div class="progress-line"></div>
-                                <div class="progress-step">
-                                    <div class="step-dot"><i class="bi bi-house-check"></i></div>
-                                    <span>Доставлен</span>
+                                <div class="progress-line @(normalizedStatus == "Передан на склад" ? "done" : "")"></div>
+                                <div class="progress-step @(normalizedStatus == "Передан на склад" ? "done" : "")">
+                                    <div class="step-dot"><i class="bi bi-box-seam"></i></div>
+                                    <span>Передан на склад</span>
                                 </div>
                             </div>
 
@@ -201,6 +231,10 @@
                         </div>
                     }
                 </div>
+                <div id="current-orders-no-results" class="orders-empty-state d-none">
+                    <i class="bi bi-search" style="font-size:48px; color:#ddd; display:block; margin-bottom:15px;"></i>
+                    <p>Подходящих заказов не найдено</p>
+                </div>
             }
             else
             {
@@ -215,16 +249,21 @@
     <section id="tab-history" class="profile-section" style="display: none;">
         <h2 class="section-title">История заказов</h2>
 
-        @if (Model.Orders != null && Model.Orders.Any(o => o.Status == "Доставлен" || o.Status == "Отменен" || o.Status == "Завершен"))
+        @if (Model.Orders != null && Model.Orders.Any(o => OrderStatusWorkflow.TryNormalize(o.Status, out var s)
+            && (s == "Передан на склад" || s == OrderStatusWorkflow.Cancelled)))
         {
             <div class="orders-scroll-container">
-                @foreach (var order in Model.Orders.Where(o => o.Status == "Доставлен" || o.Status == "Отменен" || o.Status == "Завершен"))
+                @foreach (var order in Model.Orders.Where(o => OrderStatusWorkflow.TryNormalize(o.Status, out var s)
+                    && (s == "Передан на склад" || s == OrderStatusWorkflow.Cancelled)))
                 {
+                            var historyStatus = OrderStatusWorkflow.TryNormalize(order.Status, out var normalizedHistoryStatus)
+                                ? normalizedHistoryStatus
+                                : order.Status;
 
-                            var histColor = order.Status switch
+                            var histColor = historyStatus switch
                             {
                                 "Отменен" => "#ff4d4f",
-                                "Завершен" => "#28a745",
+                                "Передан на склад" => "#28a745",
                                 _ => "#6c757d"
                             };
                 
@@ -237,7 +276,7 @@
                             </div>
                             <span class="order-status-badge"
                                   style="background:@(histColor)1a; color:@histColor; border:1px solid @histColor;">
-                                @order.Status
+                                @historyStatus
                             </span>
                         </div>
 
@@ -296,14 +335,38 @@
                 || (Model.AvailableDiscounts?.Any() ?? false))
             {
                 <div class="offers-groups">
-                    <div class="offer-group">
-                        <h3 class="offer-group-title">Промокоды</h3>
+                    <div class="offer-group offer-group--open" data-profile-offer-group>
+                        <button type="button" class="offer-group-toggle" data-offer-group-toggle aria-expanded="true">
+                            <span class="offer-group-toggle-text">
+                                <span class="offer-group-title">Промокоды</span>
+                                <span class="offer-group-count">@((Model.AvailablePromoCodes?.Count ?? 0))</span>
+                            </span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="offer-group-body" data-offer-group-body>
                         @if (Model.AvailablePromoCodes != null && Model.AvailablePromoCodes.Any())
                         {
-                            <div class="offers-grid">
+                            <div class="profile-offer-list" data-profile-offer-list data-offer-page-size="4">
+                                <div class="profile-offer-tools">
+                                    <div class="profile-offer-search">
+                                        <i class="bi bi-search"></i>
+                                        <input type="search" data-offer-search-input placeholder="Поиск по промокодам" autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="offers-grid">
                                 @foreach (var promo in Model.AvailablePromoCodes)
                                 {
-                                    <article class="offer-card offer-card--promo">
+                                    var promoSearch = string.Join(" ", new[]
+                                    {
+                                        "промокод",
+                                        promo.Code,
+                                        $"{promo.DiscountPercent}%",
+                                        promo.EndDate.ToString("dd.MM.yyyy"),
+                                        promo.MinGoodsAmount.HasValue ? $"от {promo.MinGoodsAmount.Value:N2}" : string.Empty,
+                                        promo.MaxUses.HasValue ? $"осталось {promo.MaxUses.Value - promo.UsedCount}" : string.Empty
+                                    });
+
+                                    <article class="offer-card offer-card--promo" data-offer-card data-offer-search="@promoSearch">
                                         <div class="offer-card-top">
                                             <span class="offer-badge">Промокод</span>
                                             <span class="offer-date">до @promo.EndDate.ToString("dd.MM.yyyy")</span>
@@ -320,22 +383,53 @@
                                         }
                                     </article>
                                 }
+                                </div>
+                                <div class="profile-offer-empty d-none" data-offer-empty>Ничего не найдено</div>
+                                <div class="profile-offer-pagination d-none" data-offer-pagination>
+                                    <button type="button" class="profile-offer-page-btn" data-offer-more>Показать ещё</button>
+                                    <button type="button" class="profile-offer-page-btn profile-offer-page-btn--secondary d-none" data-offer-less>Свернуть</button>
+                                </div>
                             </div>
                         }
                         else
                         {
                             <p class="offer-group-empty">Пока нет действующих промокодов</p>
                         }
+                        </div>
                     </div>
 
-                    <div class="offer-group">
-                        <h3 class="offer-group-title">Акции</h3>
+                    <div class="offer-group" data-profile-offer-group>
+                        <button type="button" class="offer-group-toggle" data-offer-group-toggle aria-expanded="false">
+                            <span class="offer-group-toggle-text">
+                                <span class="offer-group-title">Акции</span>
+                                <span class="offer-group-count">@((Model.AvailablePromotions?.Count ?? 0))</span>
+                            </span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="offer-group-body" data-offer-group-body>
                         @if (Model.AvailablePromotions != null && Model.AvailablePromotions.Any())
                         {
-                            <div class="offers-grid">
+                            <div class="profile-offer-list" data-profile-offer-list data-offer-page-size="4">
+                                <div class="profile-offer-tools">
+                                    <div class="profile-offer-search">
+                                        <i class="bi bi-search"></i>
+                                        <input type="search" data-offer-search-input placeholder="Поиск по акциям" autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="offers-grid">
                                 @foreach (var promo in Model.AvailablePromotions)
                                 {
-                                    <article class="offer-card offer-card--sale">
+                                    var promotionSearch = string.Join(" ", new[]
+                                    {
+                                        "акция",
+                                        promo.Name,
+                                        promo.PromotionType,
+                                        promo.Description,
+                                        promo.EndDate.ToString("dd.MM.yyyy"),
+                                        promo.MinOrderAmount.HasValue ? $"от {promo.MinOrderAmount.Value:N2}" : string.Empty
+                                    });
+
+                                    <article class="offer-card offer-card--sale" data-offer-card data-offer-search="@promotionSearch">
                                         <div class="offer-card-top">
                                             <span class="offer-badge offer-badge--sale">Акция</span>
                                             <span class="offer-date">до @promo.EndDate.ToString("dd.MM.yyyy")</span>
@@ -352,22 +446,55 @@
                                         }
                                     </article>
                                 }
+                                </div>
+                                <div class="profile-offer-empty d-none" data-offer-empty>Ничего не найдено</div>
+                                <div class="profile-offer-pagination d-none" data-offer-pagination>
+                                    <button type="button" class="profile-offer-page-btn" data-offer-more>Показать ещё</button>
+                                    <button type="button" class="profile-offer-page-btn profile-offer-page-btn--secondary d-none" data-offer-less>Свернуть</button>
+                                </div>
                             </div>
                         }
                         else
                         {
                             <p class="offer-group-empty">Пока нет действующих акций</p>
                         }
+                        </div>
                     </div>
 
-                    <div class="offer-group">
-                        <h3 class="offer-group-title">Скидки</h3>
+                    <div class="offer-group" data-profile-offer-group>
+                        <button type="button" class="offer-group-toggle" data-offer-group-toggle aria-expanded="false">
+                            <span class="offer-group-toggle-text">
+                                <span class="offer-group-title">Скидки</span>
+                                <span class="offer-group-count">@((Model.AvailableDiscounts?.Count ?? 0))</span>
+                            </span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="offer-group-body" data-offer-group-body>
                         @if (Model.AvailableDiscounts != null && Model.AvailableDiscounts.Any())
                         {
-                            <div class="offers-grid">
+                            <div class="profile-offer-list" data-profile-offer-list data-offer-page-size="4">
+                                <div class="profile-offer-tools">
+                                    <div class="profile-offer-search">
+                                        <i class="bi bi-search"></i>
+                                        <input type="search" data-offer-search-input placeholder="Поиск по скидкам" autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="offers-grid">
                                 @foreach (var discount in Model.AvailableDiscounts)
                                 {
-                                    <article class="offer-card offer-card--discount">
+                                    var discountSearch = string.Join(" ", new[]
+                                    {
+                                        "скидка",
+                                        discount.Name,
+                                        discount.DiscountType,
+                                        discount.ValueKind,
+                                        discount.Value.ToString("0.##"),
+                                        discount.ProductName,
+                                        discount.CategoryName,
+                                        discount.MinQuantity.HasValue ? $"от {discount.MinQuantity.Value} шт" : string.Empty
+                                    });
+
+                                    <article class="offer-card offer-card--discount" data-offer-card data-offer-search="@discountSearch">
                                         <div class="offer-card-top">
                                             <span class="offer-badge offer-badge--discount">Скидка</span>
                                             <span class="offer-date">@discount.DiscountType</span>
@@ -392,12 +519,19 @@
                                         }
                                     </article>
                                 }
+                                </div>
+                                <div class="profile-offer-empty d-none" data-offer-empty>Ничего не найдено</div>
+                                <div class="profile-offer-pagination d-none" data-offer-pagination>
+                                    <button type="button" class="profile-offer-page-btn" data-offer-more>Показать ещё</button>
+                                    <button type="button" class="profile-offer-page-btn profile-offer-page-btn--secondary d-none" data-offer-less>Свернуть</button>
+                                </div>
                             </div>
                         }
                         else
                         {
                             <p class="offer-group-empty">Пока нет действующих скидок</p>
                         }
+                        </div>
                     </div>
                 </div>
             }

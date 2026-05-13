@@ -350,6 +350,23 @@ namespace HouseholdStore.Services
                 ? (true, null)
                 : (false, await response.Content.ReadAsStringAsync());
         }
+
+        public async Task<(bool ok, string? error)> SetPromoCodeActiveAsync(int id, bool isActive)
+        {
+            var response = await _http.PatchAsJsonAsync($"/api/admin/promocodes/{id}/active", new { IsActive = isActive });
+            return response.IsSuccessStatusCode
+                ? (true, null)
+                : (false, await response.Content.ReadAsStringAsync());
+        }
+
+        public async Task<(bool ok, string? error)> DeletePromoCodeAsync(int id)
+        {
+            var response = await _http.DeleteAsync($"/api/admin/promocodes/{id}");
+            return response.IsSuccessStatusCode
+                ? (true, null)
+                : (false, await response.Content.ReadAsStringAsync());
+        }
+
         public async Task<int?> GetPromoDiscountAsync(string code, decimal? goodsTotal = null)
         {
             var url = $"/api/admin/promocodes/validate/{code}";

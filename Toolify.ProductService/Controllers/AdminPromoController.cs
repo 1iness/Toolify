@@ -44,6 +44,31 @@ namespace Toolify.ProductService.Controllers
             return Ok();
         }
 
+        [HttpPatch("{id:int}/active")]
+        public async Task<IActionResult> SetActive(int id, [FromBody] SetPromoCodeActiveDto model)
+        {
+            if (id <= 0) return BadRequest("Некорректный идентификатор промокода");
+
+            var ok = await _repo.SetPromoCodeActiveAsync(id, model.IsActive);
+            return ok ? Ok() : NotFound("Промокод не найден");
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            if (id <= 0) return BadRequest("Некорректный идентификатор промокода");
+
+            try
+            {
+                var ok = await _repo.DeletePromoCodeAsync(id);
+                return ok ? Ok() : NotFound("Промокод не найден");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("validate/{code}")]
         public async Task<IActionResult> Validate(string code, [FromQuery] decimal? goodsTotal = null)
         {
@@ -75,5 +100,10 @@ namespace Toolify.ProductService.Controllers
         public DateTime EndDate { get; set; }
         public int? MaxUses { get; set; }
         public decimal? MinGoodsAmount { get; set; }
+    }
+
+    public class SetPromoCodeActiveDto
+    {
+        public bool IsActive { get; set; }
     }
 }

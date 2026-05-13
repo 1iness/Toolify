@@ -36,15 +36,33 @@ namespace Toolify.AuthService.Services
         }
 
         // сообщения для восстановления пароля
-        public void SendResetPasswordCode(string toEmail, string code)
+        public void SendResetPasswordCode(string toEmail, string code, string? resetUrl = null)
         {
             var smtp = CreateClient();
+            var body = new StringBuilder()
+                .AppendLine("Вы запросили восстановление пароля.")
+                .AppendLine()
+                .AppendLine($"Ваш код: {code}")
+                .AppendLine()
+                .AppendLine("Введите этот код на странице восстановления пароля.");
+
+            if (!string.IsNullOrWhiteSpace(resetUrl))
+            {
+                body
+                    .AppendLine()
+                    .AppendLine($"Страница для ввода кода: {resetUrl}");
+            }
+
+            body
+                .AppendLine()
+                .AppendLine("Код действует 10 минут.")
+                .Append("Если это были не вы — просто проигнорируйте письмо.");
 
             var message = new MailMessage
             {
                 From = new MailAddress(_email, "Toolify Store"),
                 Subject = "Восстановление пароля",
-                Body = $"Вы запросили восстановление пароля.\n\nВаш код:\n{code}\n\nЕсли это были не вы — просто проигнорируйте письмо.",
+                Body = body.ToString(),
                 IsBodyHtml = false
             };
 
@@ -256,13 +274,19 @@ namespace Toolify.AuthService.Services
             await smtp.SendMailAsync(message);
         }
 
-        public async Task SendMarketingItemCreatedAsync(string toEmail, string itemTitle, string itemName)
+        public async Task SendMarketingItemCreatedAsync(
+            string toEmail,
+            string itemTitle,
+            string itemName,
+            IEnumerable<KeyValuePair<string, string>>? details = null)
         {
             if (string.IsNullOrWhiteSpace(toEmail)) return;
 
             var smtp = CreateClient();
             var safeTitle = string.IsNullOrWhiteSpace(itemTitle) ? "новое предложение" : itemTitle.Trim();
             var safeName = string.IsNullOrWhiteSpace(itemName) ? "Без названия" : itemName.Trim();
+            var displayTitle = MarketingDisplayTitle(safeTitle);
+            var detailsRows = BuildMarketingDetailsRows(details);
 
             var message = new MailMessage
             {
@@ -271,10 +295,12 @@ namespace Toolify.AuthService.Services
                 Body = $@"
                     <div style=""font-family:Montserrat,Arial,sans-serif;line-height:1.6;color:#222;"">
                       <h2 style=""margin:0 0 12px;"">В Toolify появилось новое предложение</h2>
-                      <p style=""margin:0 0 12px;"">Мы добавили: <b>{WebUtility.HtmlEncode(safeTitle)}</b></p>
+                      <p style=""margin:0 0 12px;"">Мы добавили <b>{WebUtility.HtmlEncode(displayTitle)}</b> для вас.</p>
                       <div style=""background:#f7f7f7;border:1px solid #eee;border-radius:12px;padding:14px;"">
                         Название: <b>{WebUtility.HtmlEncode(safeName)}</b>
+                        {detailsRows}
                       </div>
+                      <p style=""margin:14px 0 0;"">Подробности и доступные предложения можно посмотреть на сайте Toolify.</p>
                       <p style=""margin:16px 0 0;color:#666;"">С уважением,<br/>Toolify Store</p>
                     </div>",
                 IsBodyHtml = true
@@ -282,6 +308,41 @@ namespace Toolify.AuthService.Services
 
             message.To.Add(toEmail);
             await smtp.SendMailAsync(message);
+        }
+
+        private static string BuildMarketingDetailsRows(IEnumerable<KeyValuePair<string, string>>? details)
+        {
+            var rows = (details ?? Enumerable.Empty<KeyValuePair<string, string>>())
+                .Where(x => !string.IsNullOrWhiteSpace(x.Key) && !string.IsNullOrWhiteSpace(x.Value))
+                .ToList();
+            if (rows.Count == 0) return string.Empty;
+
+            var sb = new StringBuilder();
+            sb.Append(@"<table style=""width:100%;border-collapse:collapse;margin-top:12px;"">");
+            foreach (var row in rows)
+            {
+                sb.Append(@"
+                    <tr>
+                      <td style=""padding:6px 8px;border-top:1px solid #e5e5e5;color:#666;width:38%;"">")
+                    .Append(WebUtility.HtmlEncode(row.Key.Trim()))
+                    .Append(@"</td>
+                      <td style=""padding:6px 8px;border-top:1px solid #e5e5e5;font-weight:600;"">")
+                    .Append(WebUtility.HtmlEncode(row.Value.Trim()))
+                    .Append("</td></tr>");
+            }
+            sb.Append("</table>");
+            return sb.ToString();
+        }
+
+        private static string MarketingDisplayTitle(string itemTitle)
+        {
+            return itemTitle.Trim().ToLowerInvariant() switch
+            {
+                "акция" => "акцию",
+                "скидка" => "скидку",
+                "промокод" => "промокод",
+                _ => itemTitle
+            };
         }
     }
     public class OrderLine

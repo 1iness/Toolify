@@ -66,14 +66,14 @@ public class AuthApiService
         return response.IsSuccessStatusCode;
     }
 
-    public async Task ForgotPassword(string email)
+    public async Task ForgotPassword(string email, string? resetUrl = null)
     {
-        await _http.PostAsJsonAsync($"{BASE_URL}/forgot-password", new { Email = email });
+        await _http.PostAsJsonAsync($"{BASE_URL}/forgot-password", new { Email = email, ResetUrl = resetUrl });
     }
 
-    public async Task SendPasswordResetAsync(string email)
+    public async Task SendPasswordResetAsync(string email, string? resetUrl = null)
     {
-        await _http.PostAsJsonAsync($"{BASE_URL}/forgot-password", new { Email = email });
+        await _http.PostAsJsonAsync($"{BASE_URL}/forgot-password", new { Email = email, ResetUrl = resetUrl });
     }
 
     public async Task<bool> ConfirmResetCode(string email, string code)

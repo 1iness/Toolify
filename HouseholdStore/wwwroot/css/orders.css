@@ -80,19 +80,19 @@ body {
     border-color: #b2ebf2;
 }
 
-.status-В.обработке {
+.status-Обработка {
     background-color: #fff3e0;
     color: #e65100;
     border-color: #ffe0b2;
 }
 
-.status-Доставляется {
-    background-color: #e8eaf6;
-    color: #283593;
-    border-color: #c5cae9;
+.status-Отменен {
+    background-color: #ffebee;
+    color: #c62828;
+    border-color: #ffcdd2;
 }
 
-.status-Доставлен, .status-Завершен {
+.status-Передан.на.склад {
     background-color: #e8f5e9;
     color: #2e7d32;
     border-color: #c8e6c9;

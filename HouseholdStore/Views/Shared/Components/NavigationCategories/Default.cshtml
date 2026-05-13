@@ -1,8 +1,8 @@
 @model List<Toolify.ProductService.Models.Category>
 
-<a href="/Home/Index?sort=hits" class="menu-item hit-item">
-    <i class="bi bi-fire"></i>
-    <span>Хиты продаж</span>
+<a href="/Home/Catalog?specialCategory=new" class="menu-item hit-item">
+    <i class="bi bi-stars"></i>
+    <span>Новые</span>
 </a>
 
 @foreach (var c in Model)

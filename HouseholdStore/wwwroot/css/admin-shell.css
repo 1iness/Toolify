@@ -167,6 +167,11 @@ tr.product-admin-row--page-hide {
     display: none !important;
 }
 
+.admin-offer-row--filter-hide,
+.admin-offer-row--page-hide {
+    display: none !important;
+}
+
 .categories-load-more-wrap .categories-load-action-btn,
 .products-load-more-wrap .categories-load-action-btn {
     margin-bottom: 0;

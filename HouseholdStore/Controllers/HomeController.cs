@@ -26,7 +26,10 @@ namespace HouseholdStore.Controllers
         }
         public async Task<IActionResult> Index(string? category)
         {
-            var products = await _productApi.GetStoreCatalogAsync(GetCurrentUserId());
+            var products = (await _productApi.GetStoreCatalogAsync(GetCurrentUserId()))
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .ToList();
 
             if (!string.IsNullOrWhiteSpace(category) &&
                 category.Equals("tech", StringComparison.OrdinalIgnoreCase))
@@ -202,14 +205,17 @@ namespace HouseholdStore.Controllers
 
         public async Task<IActionResult> Catalog(CatalogFilterViewModel filter)
         {
-            var products = await _productApi.GetStoreCatalogAsync(GetCurrentUserId());
+            var products = (await _productApi.GetStoreCatalogAsync(GetCurrentUserId()))
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .ToList();
 
             if (!string.IsNullOrEmpty(filter.SpecialCategory))
             {
                 if (filter.SpecialCategory == "sale")
                     products = products.Where(p => CatalogProductPricing.ShowDiscountStyle(p)).ToList();
-                else if (filter.SpecialCategory == "hits")
-                    products = products.OrderByDescending(p => p.StockQuantity).ToList();
+                else if (filter.SpecialCategory == "new")
+                    products = products.Where(IsNewProduct).ToList();
             }
 
             if (filter.CategoryId.HasValue && filter.CategoryId.Value > 0)
@@ -333,6 +339,17 @@ namespace HouseholdStore.Controllers
             if (User.Identity?.IsAuthenticated != true) return null;
             var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("id");
             return int.TryParse(idStr, out var uid) ? uid : null;
+        }
+
+        private static bool IsNewProduct(Product product)
+        {
+            if (product.CreatedAt == default) return false;
+
+            var now = product.CreatedAt.Kind == DateTimeKind.Utc
+                ? DateTime.UtcNow
+                : DateTime.Now;
+
+            return product.CreatedAt >= now.AddDays(-3);
         }
 
         private static string? ValidateSmartSelectionBudget(decimal? minPrice, decimal? maxPrice)

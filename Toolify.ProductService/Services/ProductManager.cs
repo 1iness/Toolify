@@ -14,7 +14,11 @@ namespace Toolify.ProductService.Services
 
         public async Task<List<Product>> GetAllAsync()
         {
-            return await _repository.GetAllAsync();
+            var products = await _repository.GetAllAsync();
+            return products
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .ToList();
         }
 
         public async Task<Product?> GetByIdAsync(int id)

@@ -7,6 +7,41 @@
     var PRODUCTS_LOAD_MORE_CHUNK = 10;
     var productsRevealState = { visibleCount: PRODUCTS_LOAD_MORE_CHUNK };
 
+    var adminOfferLists = {
+        promocodes: {
+            chunk: 8,
+            visibleCount: 8,
+            rowSelector: '[data-promo-code-row]',
+            searchAttr: 'data-promo-code-search',
+            wrapId: 'promo-codes-pagination-wrap',
+            loadMoreId: 'promo-codes-load-more-btn',
+            loadLessId: 'promo-codes-load-less-btn',
+            infoId: 'promo-codes-pagination-info',
+            statusFilterId: 'promo-code-status-filter',
+            statusAttr: 'data-promo-code-status'
+        },
+        promotions: {
+            chunk: 5,
+            visibleCount: 5,
+            rowSelector: '[data-promotion-row]',
+            searchAttr: 'data-promotion-search',
+            wrapId: 'promotions-pagination-wrap',
+            loadMoreId: 'promotions-load-more-btn',
+            loadLessId: 'promotions-load-less-btn',
+            infoId: 'promotions-pagination-info'
+        },
+        discounts: {
+            chunk: 7,
+            visibleCount: 7,
+            rowSelector: '[data-discount-row]',
+            searchAttr: 'data-discount-search',
+            wrapId: 'discounts-pagination-wrap',
+            loadMoreId: 'discounts-load-more-btn',
+            loadLessId: 'discounts-load-less-btn',
+            infoId: 'discounts-pagination-info'
+        }
+    };
+
     /** Категории: показ по chunk, «Показать ещё» и «Свернуть» (на chunk). resetReveal — при поиске / первый заход. */
     function syncCategoriesAdminTable(resetReveal) {
         var tbody = document.getElementById('categories-filter-tbody');
@@ -180,6 +215,15 @@
         } else if (searchTarget === 'products-categories') {
             wrap.classList.remove('d-none');
             input.placeholder = 'Поиск по названию категории и характеристикам…';
+        } else if (searchTarget === 'promocodes') {
+            wrap.classList.remove('d-none');
+            input.placeholder = 'Поиск по коду промокода и проценту…';
+        } else if (searchTarget === 'promotions') {
+            wrap.classList.remove('d-none');
+            input.placeholder = 'Поиск по названию, типу акции и условиям…';
+        } else if (searchTarget === 'discounts') {
+            wrap.classList.remove('d-none');
+            input.placeholder = 'Поиск по названию, размеру и типу скидки…';
         } else {
             wrap.classList.add('d-none');
             input.value = '';
@@ -442,6 +486,97 @@
         syncProductsAdminTable(true);
     }
 
+    function syncAdminOfferList(key, resetReveal) {
+        var cfg = adminOfferLists[key];
+        if (!cfg) return;
+
+        var rows = Array.prototype.slice.call(document.querySelectorAll(cfg.rowSelector));
+        if (rows.length === 0) return;
+
+        if (resetReveal) cfg.visibleCount = cfg.chunk;
+
+        var headerInput = document.getElementById('admin-header-search');
+        var q = headerInput ? (headerInput.value || '').toLowerCase().trim() : '';
+        var statusFilter = cfg.statusFilterId ? document.getElementById(cfg.statusFilterId) : null;
+        var statusValue = statusFilter ? statusFilter.value : 'all';
+
+        var matched = [];
+        rows.forEach(function (row) {
+            var hay = (row.getAttribute(cfg.searchAttr) || '').toLowerCase();
+            var okText = !q || hay.indexOf(q) !== -1;
+            var okStatus = !cfg.statusAttr || statusValue === 'all' || row.getAttribute(cfg.statusAttr) === statusValue;
+            var match = okText && okStatus;
+            row.classList.toggle('admin-offer-row--filter-hide', !match);
+            row.classList.remove('admin-offer-row--page-hide');
+            if (match) matched.push(row);
+        });
+
+        var wrap = document.getElementById(cfg.wrapId);
+        var loadMoreBtn = document.getElementById(cfg.loadMoreId);
+        var loadLessBtn = document.getElementById(cfg.loadLessId);
+        var info = document.getElementById(cfg.infoId);
+        if (!wrap) return;
+
+        if (matched.length === 0) {
+            wrap.classList.add('d-none');
+            if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+            if (loadLessBtn) loadLessBtn.classList.add('d-none');
+            if (info) info.textContent = '';
+            return;
+        }
+
+        if (matched.length <= cfg.chunk) {
+            matched.forEach(function (row) {
+                row.classList.remove('admin-offer-row--page-hide');
+            });
+            wrap.classList.add('d-none');
+            if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+            if (loadLessBtn) loadLessBtn.classList.add('d-none');
+            if (info) info.textContent = '';
+            return;
+        }
+
+        if (cfg.visibleCount > matched.length) cfg.visibleCount = matched.length;
+        var showUpTo = Math.min(cfg.visibleCount, matched.length);
+
+        matched.forEach(function (row, idx) {
+            row.classList.toggle('admin-offer-row--page-hide', idx >= showUpTo);
+        });
+
+        wrap.classList.remove('d-none');
+        if (loadLessBtn) {
+            var nextShowUpLess = Math.max(cfg.chunk, showUpTo - cfg.chunk);
+            var hideCount = showUpTo - nextShowUpLess;
+            if (showUpTo > cfg.chunk && hideCount > 0) {
+                loadLessBtn.classList.remove('d-none');
+                loadLessBtn.textContent = hideCount < cfg.chunk ? 'Свернуть (' + hideCount + ')' : 'Свернуть ' + cfg.chunk;
+                loadLessBtn.disabled = false;
+            } else {
+                loadLessBtn.classList.add('d-none');
+            }
+        }
+        if (loadMoreBtn) {
+            var remaining = matched.length - showUpTo;
+            if (remaining > 0) {
+                loadMoreBtn.classList.remove('d-none');
+                loadMoreBtn.textContent = remaining <= cfg.chunk ? 'Показать ещё (' + remaining + ')' : 'Показать ещё ' + cfg.chunk;
+                loadMoreBtn.disabled = false;
+            } else {
+                loadMoreBtn.classList.add('d-none');
+            }
+        }
+        if (info) info.textContent = 'Показано ' + showUpTo + ' из ' + matched.length;
+    }
+
+    function applyAdminSearchTarget(searchTarget, resetReveal) {
+        if (searchTarget === 'orders') applyOrdersSearchFilter();
+        if (searchTarget === 'products-list') applyProductsSearchFilter();
+        if (searchTarget === 'products-categories') syncCategoriesAdminTable(resetReveal !== false);
+        if (searchTarget === 'promocodes') syncAdminOfferList('promocodes', resetReveal !== false);
+        if (searchTarget === 'promotions') syncAdminOfferList('promotions', resetReveal !== false);
+        if (searchTarget === 'discounts') syncAdminOfferList('discounts', resetReveal !== false);
+    }
+
     bindAdminProductListFilters();
 
     function updateHeadingFromPanel(root, titleFromHeader) {
@@ -541,9 +676,7 @@
             setAdminPanelWideClass(panel);
             applySearchVisibility(searchTarget);
             updateHeadingFromPanel(root, titleFromHeader);
-            if (searchTarget === 'orders') applyOrdersSearchFilter();
-            if (searchTarget === 'products-list') applyProductsSearchFilter();
-            if (searchTarget === 'products-categories') syncCategoriesAdminTable(true);
+            applyAdminSearchTarget(searchTarget, true);
             document.dispatchEvent(
                 new CustomEvent('admin-panel-loaded', {
                     bubbles: true,
@@ -586,6 +719,18 @@
                         syncCategoriesAdminTable(true);
                         return;
                     }
+                    if (document.querySelector('[data-promo-code-row]')) {
+                        syncAdminOfferList('promocodes', true);
+                        return;
+                    }
+                    if (document.querySelector('[data-promotion-row]')) {
+                        syncAdminOfferList('promotions', true);
+                        return;
+                    }
+                    if (document.querySelector('[data-discount-row]')) {
+                        syncAdminOfferList('discounts', true);
+                        return;
+                    }
                 }
                 if (e.target.id === 'userSearch') {
                     var hdr = document.getElementById('admin-header-search');
@@ -605,12 +750,34 @@
         setAdminPanelWideClass(initial);
         applySearchVisibility(searchTarget);
         bindClientsSearchBridge();
-        if (searchTarget === 'orders') applyOrdersSearchFilter();
-        if (searchTarget === 'products-list') applyProductsSearchFilter();
-        if (searchTarget === 'products-categories') syncCategoriesAdminTable(true);
+        applyAdminSearchTarget(searchTarget, true);
         refreshChatBadge();
 
+        document.addEventListener('change', function (e) {
+            if (e.target.id === 'promo-code-status-filter') {
+                syncAdminOfferList('promocodes', true);
+            }
+        });
+
         document.addEventListener('click', function (e) {
+            var offerKeys = Object.keys(adminOfferLists);
+            for (var oi = 0; oi < offerKeys.length; oi++) {
+                var offerKey = offerKeys[oi];
+                var cfg = adminOfferLists[offerKey];
+                var offerLess = e.target.closest('#' + cfg.loadLessId);
+                if (offerLess && !offerLess.disabled) {
+                    cfg.visibleCount = Math.max(cfg.chunk, cfg.visibleCount - cfg.chunk);
+                    syncAdminOfferList(offerKey, false);
+                    return;
+                }
+                var offerMore = e.target.closest('#' + cfg.loadMoreId);
+                if (offerMore && !offerMore.disabled) {
+                    cfg.visibleCount += cfg.chunk;
+                    syncAdminOfferList(offerKey, false);
+                    return;
+                }
+            }
+
             var productsLess = e.target.closest('#products-load-less-btn');
             if (productsLess && !productsLess.disabled) {
                 productsRevealState.visibleCount = Math.max(

@@ -1,4 +1,4 @@
-﻿@model HouseholdStore.Models.AdminDiscountsViewModel
+@model HouseholdStore.Models.AdminDiscountsViewModel
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using Toolify.ProductService.Models
 
@@ -39,6 +39,14 @@
                 return $"{val} от {d.MinQuantity} шт ({target})";
             default: return val;
         }
+    }
+
+    string ProductSelectLabel(Product p)
+    {
+        var parts = new List<string> { p.Name ?? $"Товар #{p.Id}" };
+        if (!string.IsNullOrWhiteSpace(p.ArticleNumber))
+            parts.Add($"арт. {p.ArticleNumber}");
+        return string.Join(" · ", parts);
     }
 }
 
@@ -107,7 +115,7 @@
                                     <option value="">—</option>
                                     @foreach (var pr in productsList)
                                     {
-                                        <option value="@pr.Id">@pr.Name</option>
+                                        <option value="@pr.Id">@ProductSelectLabel(pr)</option>
                                     }
                                 </select>
                             </div>
@@ -127,6 +135,13 @@
                             <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked id="newDiscActive" />
                             <input type="hidden" name="IsActive" value="false" />
                             <label class="form-check-label small" for="newDiscActive">Активна</label>
+                        </div>
+
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" name="sendNotification" value="true" checked id="newDiscSendNotification" />
+                            <input type="hidden" name="sendNotification" value="false" />
+                            <label class="form-check-label small" for="newDiscSendNotification">Отправить рассылку пользователям</label>
+                            <div class="form-text">Если снять галочку, скидка сохранится без email-уведомлений.</div>
                         </div>
 
                         <div class="disc-warning small text-muted mt-2"></div>
@@ -149,7 +164,21 @@
                         <ul class="list-group list-group-flush">
                             @foreach (var d in Model.Discounts)
                             {
-                                <li class="list-group-item">
+                                var discountSearchBlob = string.Join(" ", new[]
+                                {
+                                    d.Name,
+                                    d.DiscountType,
+                                    d.ValueKind,
+                                    d.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
+                                    d.ValueKind == DiscountValueKinds.Percent ? $"{d.Value:0.##}%" : $"{d.Value:0.##}",
+                                    d.CategoryName,
+                                    d.ProductName,
+                                    d.MinQuantity?.ToString(),
+                                    FormatDiscount(d),
+                                    d.IsActive ? "активна включена" : "выключена отключена"
+                                }.Where(x => !string.IsNullOrWhiteSpace(x))).ToLowerInvariant();
+
+                                <li class="list-group-item" data-discount-row data-discount-search="@discountSearchBlob">
                                     <div class="d-flex justify-content-between align-items-start gap-2">
                                         <div>
                                             <strong>@d.Name</strong>
@@ -217,9 +246,9 @@
                                                         @foreach (var pr in productsList)
                                                         {
                                                             if (d.ProductId == pr.Id)
-                                                            { <option value="@pr.Id" selected>@pr.Name</option> }
+                                                            { <option value="@pr.Id" selected>@ProductSelectLabel(pr)</option> }
                                                             else
-                                                            { <option value="@pr.Id">@pr.Name</option> }
+                                                            { <option value="@pr.Id">@ProductSelectLabel(pr)</option> }
                                                         }
                                                     </select>
                                                 </div>
@@ -249,6 +278,13 @@
                                 </li>
                             }
                         </ul>
+                        <div id="discounts-pagination-wrap" class="products-load-more-wrap p-3 d-none text-center">
+                            <div class="d-flex flex-wrap gap-2 justify-content-center mb-2">
+                                <button type="button" class="btn-create categories-load-action-btn d-none" id="discounts-load-more-btn">Показать ещё</button>
+                                <button type="button" class="btn-create btn-create--secondary categories-load-action-btn d-none" id="discounts-load-less-btn">Свернуть</button>
+                            </div>
+                            <p class="text-muted small mb-0" id="discounts-pagination-info"></p>
+                        </div>
                     }
                 </div>
             </div>

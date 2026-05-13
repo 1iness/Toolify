@@ -42,6 +42,14 @@
                 return "";
         }
     }
+
+    string ProductSelectLabel(Product p)
+    {
+        var parts = new List<string> { p.Name ?? $"Товар #{p.Id}" };
+        if (!string.IsNullOrWhiteSpace(p.ArticleNumber))
+            parts.Add($"арт. {p.ArticleNumber}");
+        return string.Join(" · ", parts);
+    }
 }
 
 <style>
@@ -102,7 +110,12 @@
                         <div class="row g-2 mt-1 promo-field" data-show-scope="prd">
                             <div class="col-12">
                                 <label class="form-label small mb-0">Товар</label>
-                                <select name="ProductId" class="form-select form-select-sm" asp-items="prodList"></select>
+                                <select name="ProductId" class="form-select form-select-sm">
+                                    @foreach (var pr in productsList)
+                                    {
+                                        <option value="@pr.Id">@ProductSelectLabel(pr)</option>
+                                    }
+                                </select>
                             </div>
                         </div>
 
@@ -164,6 +177,13 @@
                             </div>
                         </div>
 
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" name="sendNotification" value="true" checked id="newPromoSendNotification" />
+                            <input type="hidden" name="sendNotification" value="false" />
+                            <label class="form-check-label small" for="newPromoSendNotification">Отправить рассылку пользователям</label>
+                            <div class="form-text">Если снять галочку, акция сохранится без email-уведомлений.</div>
+                        </div>
+
                         <button type="submit" class="btn btn-success btn-sm mt-3">Добавить акцию</button>
                     </form>
                 </div>
@@ -189,8 +209,18 @@
                                     PromotionScopes.Product => p.ProductName ?? ("#" + p.ProductId),
                                     _ => "весь каталог"
                                 };
+                                var promotionSearchBlob = string.Join(" ", new[]
+                                {
+                                    p.Name,
+                                    p.Description,
+                                    p.PromotionType,
+                                    p.ScopeType,
+                                    target,
+                                    FormatParams(p),
+                                    p.IsActive ? "активна включена" : "выключена отключена"
+                                }.Where(x => !string.IsNullOrWhiteSpace(x))).ToLowerInvariant();
 
-                                <li class="list-group-item">
+                                <li class="list-group-item" data-promotion-row data-promotion-search="@promotionSearchBlob">
                                     <div class="d-flex justify-content-between align-items-start gap-2">
                                         <div>
                                             <strong>@p.Name</strong>
@@ -274,9 +304,9 @@
                                                         @foreach (var pr in productsList)
                                                         {
                                                             if (p.ProductId == pr.Id)
-                                                            { <option value="@pr.Id" selected>@pr.Name</option> }
+                                                            { <option value="@pr.Id" selected>@ProductSelectLabel(pr)</option> }
                                                             else
-                                                            { <option value="@pr.Id">@pr.Name</option> }
+                                                            { <option value="@pr.Id">@ProductSelectLabel(pr)</option> }
                                                         }
                                                     </select>
                                                 </div>
@@ -342,6 +372,13 @@
                                 </li>
                             }
                         </ul>
+                        <div id="promotions-pagination-wrap" class="products-load-more-wrap p-3 d-none text-center">
+                            <div class="d-flex flex-wrap gap-2 justify-content-center mb-2">
+                                <button type="button" class="btn-create categories-load-action-btn d-none" id="promotions-load-more-btn">Показать ещё</button>
+                                <button type="button" class="btn-create btn-create--secondary categories-load-action-btn d-none" id="promotions-load-less-btn">Свернуть</button>
+                            </div>
+                            <p class="text-muted small mb-0" id="promotions-pagination-info"></p>
+                        </div>
                     }
                 </div>
             </div>

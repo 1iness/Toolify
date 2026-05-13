@@ -72,7 +72,7 @@
 
 .clients-stat-label {
   margin-bottom: 0.45rem;
-  color: #7a879b;
+  color: #5c7168;
   font-size: 0.88rem;
   font-weight: 600;
 }
@@ -206,15 +206,18 @@
 
 .clients-table-card {
   overflow: hidden;
+  border-color: rgba(33, 136, 56, 0.12);
 }
 
 .clients-toolbar {
-  padding: 1.25rem 1.25rem 0;
+  padding: 1.25rem;
+  background: rgba(248, 250, 249, 0.65);
+  border-bottom: 1px solid rgba(33, 136, 56, 0.10);
 }
 
 .clients-label {
   margin-bottom: 0.45rem;
-  color: #64748b;
+  color: #5c7168;
   font-size: 0.84rem;
   font-weight: 600;
 }
@@ -222,12 +225,13 @@
 .clients-input {
   min-height: 44px;
   border-radius: 12px;
-  border-color: #d8e2ef;
+  border-color: #d5e8db;
   box-shadow: none !important;
 }
 
 .clients-input:focus {
-  border-color: rgba(78, 115, 223, 0.55);
+  border-color: #218838;
+  box-shadow: 0 0 0 3px rgba(33, 136, 56, 0.12) !important;
 }
 
 .clients-visible-count {
@@ -236,14 +240,14 @@
   justify-content: center;
   min-height: 44px;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e7ecf5;
-  color: #243b63;
+  background: #fff;
+  border: 1px solid #d5e8db;
+  color: #173824;
   font-weight: 700;
 }
 
 .clients-table {
-  margin-top: 1rem;
+  margin-top: 0;
   vertical-align: middle;
   width: 100%;
   max-width: 100%;
@@ -252,19 +256,19 @@
 
 .clients-table thead th {
   padding: 1rem 1.1rem;
-  background: #fbfcff;
-  color: #7a879b;
+  background: #f4faf7;
+  color: #5c7168;
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  border-bottom: 2px solid #edf2f9;
+  border-bottom: 2px solid #e0efe5;
   white-space: nowrap;
 }
 
 .clients-table tbody td {
   padding: 1rem 1.1rem;
-  color: #475569;
-  border-color: #eef2f7;
+  color: #3d5349;
+  border-color: #edf5f0;
   word-break: normal;
 }
 
@@ -278,7 +282,7 @@
 }
 
 .clients-table tbody tr:hover {
-  background: rgba(78, 115, 223, 0.04);
+  background: rgba(33, 136, 56, 0.04);
 }
 
 .clients-id {
@@ -287,42 +291,42 @@
 }
 
 .clients-user-name {
-  color: #243b63;
+  color: #173824;
   font-weight: 700;
 }
 
 .clients-user-subtext {
   margin-top: 0.2rem;
-  color: #94a3b8;
+  color: #7a9389;
   font-size: 0.82rem;
 }
 
 .clients-actions {
   display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 0.28rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.4rem;
   min-width: 0;
 }
 
 .clients-actions .btn {
-  border-radius: 8px;
-  font-size: 0.72rem;
+  border-radius: 10px;
+  font-size: 0.74rem;
   font-weight: 600;
-  padding: 0.28rem 0.5rem;
+  padding: 0.34rem 0.58rem;
   line-height: 1.25;
   white-space: nowrap;
 }
 
 .clients-actions form {
-  display: block !important;
+  display: inline-block !important;
   margin: 0;
-  width: 100%;
 }
 
 .clients-actions form .btn {
-  width: 100%;
+  width: auto;
 }
 
 .clients-table thead th:nth-child(3),
@@ -343,7 +347,7 @@
 .clients-table thead th:last-child,
 .clients-table tbody td:last-child {
   width: 1%;
-  min-width: 8.5rem;
+  min-width: 16rem;
   white-space: nowrap;
   vertical-align: middle;
   padding-left: 0.65rem;

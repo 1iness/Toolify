@@ -1062,6 +1062,38 @@ namespace Toolify.ProductService.Data
             await command.ExecuteNonQueryAsync();
         }
 
+        public async Task<bool> SetPromoCodeActiveAsync(int id, bool isActive)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand(
+                "UPDATE dbo.PromoCodes SET IsActive = @IsActive WHERE Id = @Id",
+                connection);
+            command.Parameters.AddWithValue("@Id", id);
+            command.Parameters.AddWithValue("@IsActive", isActive);
+
+            await connection.OpenAsync();
+            return await command.ExecuteNonQueryAsync() > 0;
+        }
+
+        public async Task<bool> DeletePromoCodeAsync(int id)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("DELETE FROM dbo.PromoCodes WHERE Id = @Id", connection);
+            command.Parameters.AddWithValue("@Id", id);
+
+            await connection.OpenAsync();
+            try
+            {
+                return await command.ExecuteNonQueryAsync() > 0;
+            }
+            catch (SqlException ex) when (ex.Number == 547)
+            {
+                throw new InvalidOperationException(
+                    "Нельзя удалить промокод: он уже применялся в заказах. Отключите промокод, чтобы он больше не применялся.",
+                    ex);
+            }
+        }
+
         public async Task<PromoCode?> GetPromoCodeByCodeAsync(string code)
         {
             using var connection = _factory.CreateConnection();
@@ -1186,6 +1218,48 @@ namespace Toolify.ProductService.Data
             catch (InvalidCastException)
             {
                 return defaultValue;
+            }
+        }
+
+        private static DateTime TryGetDateTime(SqlDataReader reader, string columnName, DateTime defaultValue)
+        {
+            try
+            {
+                var ord = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ord) ? defaultValue : reader.GetDateTime(ord);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return defaultValue;
+            }
+            catch (ArgumentException)
+            {
+                return defaultValue;
+            }
+            catch (InvalidCastException)
+            {
+                return defaultValue;
+            }
+        }
+
+        private static DateTime? TryGetNullableDateTime(SqlDataReader reader, string columnName)
+        {
+            try
+            {
+                var ord = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ord) ? null : reader.GetDateTime(ord);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+            catch (InvalidCastException)
+            {
+                return null;
             }
         }
 
@@ -1731,7 +1805,9 @@ namespace Toolify.ProductService.Data
                 ShortDescription = reader.IsDBNull(reader.GetOrdinal("ShortDescription")) ? null : reader.GetString(reader.GetOrdinal("ShortDescription")),
                 FullDescription = reader.IsDBNull(reader.GetOrdinal("FullDescription")) ? null : reader.GetString(reader.GetOrdinal("FullDescription")),
                 AverageRating = TryGetDouble(reader, "AverageRating", 0),
-                ReviewsCount = TryGetInt32(reader, "ReviewsCount", 0)
+                ReviewsCount = TryGetInt32(reader, "ReviewsCount", 0),
+                CreatedAt = TryGetDateTime(reader, "CreatedAt", DateTime.MinValue),
+                UpdatedAt = TryGetNullableDateTime(reader, "UpdatedAt")
             };
         }
     }

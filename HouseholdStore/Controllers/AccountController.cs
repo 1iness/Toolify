@@ -258,7 +258,8 @@ namespace HouseholdStore.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            await _auth.ForgotPassword(model.Email);
+            var resetUrl = Url.Action("ResetCode", "Account", new { email = model.Email }, Request.Scheme);
+            await _auth.ForgotPassword(model.Email, resetUrl);
 
             TempData["ToastMessage"] = "Код восстановления отправлен на почту";
             TempData["ToastType"] = "success";
@@ -313,7 +314,8 @@ namespace HouseholdStore.Controllers
             if (string.IsNullOrEmpty(email))
                 return BadRequest();
 
-            await _auth.ForgotPassword(email);
+            var resetUrl = Url.Action("ResetCode", "Account", new { email }, Request.Scheme);
+            await _auth.ForgotPassword(email, resetUrl);
 
             return Ok();
         }

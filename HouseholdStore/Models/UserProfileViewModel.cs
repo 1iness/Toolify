@@ -23,6 +23,12 @@ namespace HouseholdStore.Models
         )]
         public string LastName { get; set; }
         public string? Email { get; set; }
+
+        [Required(ErrorMessage = "Введите номер телефона")]
+        [RegularExpression(
+            @"^\+375\s?\((25|29|33|44)\)\s?\d{3}-\d{2}-\d{2}$",
+            ErrorMessage = "Введите белорусский номер: +375 (25/29/33/44) XXX-XX-XX"
+        )]
         public string Phone { get; set; }
         public List<OrderHistoryDto> Orders { get; set; } = new();
         public List<PromoCode> AvailablePromoCodes { get; set; } = new();

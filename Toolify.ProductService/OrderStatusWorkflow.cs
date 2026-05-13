@@ -5,10 +5,8 @@ public static class OrderStatusWorkflow
     public static readonly IReadOnlyList<string> MainChain = new[]
     {
         "Новый",
-        "В обработке",
-        "Доставляется",
-        "Доставлен",
-        "Завершен"
+        "Обработка",
+        "Передан на склад"
     };
 
     public const string Cancelled = "Отменен";
@@ -59,6 +57,12 @@ public static class OrderStatusWorkflow
             }
         }
 
+        if (TryNormalizeLegacyStatus(t, out var legacyCanonical))
+        {
+            canonical = legacyCanonical;
+            return true;
+        }
+
         if (string.Equals(t, Cancelled, StringComparison.OrdinalIgnoreCase))
         {
             canonical = Cancelled;
@@ -99,7 +103,7 @@ public static class OrderStatusWorkflow
             if (CanCancelFrom(from))
                 return true;
             failureMessage =
-                $"Статус «{from}» нельзя сменить на «{Cancelled}» (разрешено только до доставки).";
+                $"Статус «{from}» нельзя сменить на «{Cancelled}» (разрешено только до передачи на склад).";
             return false;
         }
 
@@ -130,7 +134,22 @@ public static class OrderStatusWorkflow
     {
         if (normalizedMainOrCancelled == Cancelled)
             return false;
-        return normalizedMainOrCancelled is "Новый" or "В обработке" or "Доставляется";
+        return normalizedMainOrCancelled is "Новый" or "Обработка";
+    }
+
+    private static bool TryNormalizeLegacyStatus(string status, out string canonical)
+    {
+        canonical = status switch
+        {
+            "В обработке" => "Обработка",
+            "Доставляется" => "Передан на склад",
+            "Доставлен" => "Передан на склад",
+            "Завершен" => "Передан на склад",
+            "Отменён" => Cancelled,
+            _ => ""
+        };
+
+        return canonical.Length > 0;
     }
 
     private static int IndexInMain(string canonicalMainStatus)

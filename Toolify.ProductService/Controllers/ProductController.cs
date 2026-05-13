@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
 
@@ -85,7 +85,10 @@ namespace Toolify.ProductService.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int? userId = null)
         {
-            var products = await _repo.GetAllAsync(includeHidden: false);
+            var products = (await _repo.GetAllAsync(includeHidden: false))
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .ToList();
             await _repo.ApplyCatalogDisplayPricesAsync(products, userId);
             return Ok(products);
         }

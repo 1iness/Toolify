@@ -10,7 +10,6 @@
     var blocked = users.Count(u => u.IsBlocked);
     var active = total - blocked;
     var hasUsers = users.Any();
-    var selectedUser = users.FirstOrDefault();
 }
 
 <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -71,53 +70,12 @@
         else
         {
             <div class="row g-4 align-items-start">
-                <div class="col-12 col-xl-3">
-                    <div class="clients-profile-card">
-                        <div class="clients-profile-label">Карточка пользователя</div>
-                        <div class="clients-profile-name" id="selectedUserName">
-                            @($"{selectedUser?.FirstName} {selectedUser?.LastName}".Trim())
-                        </div>
-                        <div class="clients-profile-email" id="selectedUserEmail">@selectedUser?.Email</div>
-
-                        <div class="clients-profile-badges">
-                            <span class="clients-pill @(selectedUser?.Role == "Admin" ? "clients-pill-primary" : "clients-pill-muted")" id="selectedUserRole">
-                                @(selectedUser?.Role ?? "—")
-                            </span>
-                            <span class="clients-pill @(selectedUser?.IsBlocked == true ? "clients-pill-danger" : "clients-pill-success")" id="selectedUserStatus">
-                                @(selectedUser?.IsBlocked == true ? "Заблокирован" : "Активен")
-                            </span>
-                        </div>
-
-                        <div class="clients-profile-grid">
-                            <div class="clients-profile-item">
-                                <div class="clients-profile-item-label">ID</div>
-                                <div class="clients-profile-item-value" id="selectedUserId">@(selectedUser?.Id.ToString() ?? "—")</div>
-                            </div>
-                            <div class="clients-profile-item">
-                                <div class="clients-profile-item-label">Телефон</div>
-                                <div class="clients-profile-item-value" id="selectedUserPhone">@(string.IsNullOrWhiteSpace(selectedUser?.Phone) ? "—" : selectedUser?.Phone)</div>
-                            </div>
-                            <div class="clients-profile-item">
-                                <div class="clients-profile-item-label">Подтверждение email</div>
-                                <div class="clients-profile-item-value" id="selectedUserConfirmed">@(selectedUser?.EmailConfirmed == true ? "Подтвержден" : "Не подтвержден")</div>
-                            </div>
-                            <div class="clients-profile-item">
-                                <div class="clients-profile-item-label">Дата регистрации</div>
-                                <div class="clients-profile-item-value" id="selectedUserCreatedAt">@(selectedUser?.CreatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-xl-9">
+                <div class="col-12">
                     <div class="clients-table-card">
                         <div class="clients-toolbar">
                             <div class="row g-2 align-items-end">
-                                <div class="col-12 col-md-5">
-                                    <label for="userSearch" class="form-label clients-label">Поиск по ФИО, email и телефону</label>
-                                    <input id="userSearch" type="text" class="form-control clients-input" placeholder="Например: admin@toolify.com">
-                                </div>
-                                <div class="col-6 col-md-3">
+                                <input id="userSearch" type="hidden" />
+                                <div class="col-12 col-md-4 col-xl-3">
                                     <label for="roleFilter" class="form-label clients-label">Роль</label>
                                     <select id="roleFilter" class="form-select clients-input">
                                         <option value="">Все</option>
@@ -125,7 +83,7 @@
                                         <option value="User">User</option>
                                     </select>
                                 </div>
-                                <div class="col-6 col-md-3">
+                                <div class="col-12 col-md-4 col-xl-3">
                                     <label for="statusFilter" class="form-label clients-label">Статус</label>
                                     <select id="statusFilter" class="form-select clients-input">
                                         <option value="">Все</option>
@@ -133,7 +91,8 @@
                                         <option value="Blocked">Заблокирован</option>
                                     </select>
                                 </div>
-                                <div class="col-12 col-md-1">
+                                <div class="col-12 col-md-4 col-xl-2 ms-xl-auto">
+                                    <label class="form-label clients-label">Найдено</label>
                                     <div class="clients-visible-count">
                                         <span id="visibleUsersCount">@total</span>
                                     </div>
@@ -145,10 +104,11 @@
                             <table class="table clients-table mb-0" id="usersTable">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
                                         <th>Пользователь</th>
                                         <th>Email</th>
                                         <th>Телефон</th>
+                                        <th>Email подтверждён</th>
+                                        <th>Дата регистрации</th>
                                         <th>Роль</th>
                                         <th>Статус</th>
                                         <th class="text-end">Действия</th>
@@ -166,13 +126,17 @@
                                             data-role="@u.Role"
                                             data-status="@statusKey"
                                             data-search="@($"{displayName} {u.Email} {u.Phone}")">
-                                            <td class="clients-id">@u.Id</td>
                                             <td>
                                                 <div class="clients-user-name">@displayName</div>
-                                                <div class="clients-user-subtext">@(u.EmailConfirmed ? "Email подтвержден" : "Email не подтвержден")</div>
                                             </td>
                                             <td class="clients-email-cell text-nowrap">@u.Email</td>
                                             <td>@(string.IsNullOrWhiteSpace(u.Phone) ? "—" : u.Phone)</td>
+                                            <td>
+                                                <span class="clients-pill @(u.EmailConfirmed ? "clients-pill-success" : "clients-pill-muted")">
+                                                    @(u.EmailConfirmed ? "Да" : "Нет")
+                                                </span>
+                                            </td>
+                                            <td class="text-nowrap">@createdAtText</td>
                                             <td>
                                                 <span class="clients-pill @(u.Role == "Admin" ? "clients-pill-primary" : "clients-pill-muted")">@u.Role</span>
                                             </td>
@@ -183,20 +147,6 @@
                                             </td>
                                             <td class="text-end">
                                                 <div class="clients-actions">
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary js-user-card"
-                                                            data-user-id="@u.Id"
-                                                            data-user-name="@displayName"
-                                                            data-user-email="@u.Email"
-                                                            data-user-phone="@u.Phone"
-                                                            data-user-role="@u.Role"
-                                                            data-user-status="@(u.IsBlocked ? "Заблокирован" : "Активен")"
-                                                            data-user-blocked="@(u.IsBlocked ? "true" : "false")"
-                                                            data-user-confirmed="@(u.EmailConfirmed ? "Подтвержден" : "Не подтвержден")"
-                                                            data-user-created-at="@createdAtText">
-                                                        Подробнее
-                                                    </button>
-
                                                     <form asp-action="ChangeUserRole" method="post" class="d-inline">
                                                         <input type="hidden" name="userId" value="@u.Id" />
                                                         <input type="hidden" name="role" value="@(u.Role == "Admin" ? "User" : "Admin")" />
@@ -231,6 +181,14 @@
                             <div class="clients-empty-title">Ничего не найдено</div>
                             <div class="clients-empty-text">Попробуй изменить строку поиска или фильтры роли и статуса.</div>
                         </div>
+
+                        <div id="clients-pagination-wrap" class="products-load-more-wrap p-3 d-none text-center">
+                            <div class="d-flex flex-wrap gap-2 justify-content-center mb-2">
+                                <button type="button" class="btn-create categories-load-action-btn d-none" id="clients-load-more-btn">Показать ещё</button>
+                                <button type="button" class="btn-create btn-create--secondary categories-load-action-btn d-none" id="clients-load-less-btn">Свернуть</button>
+                            </div>
+                            <p class="text-muted small mb-0" id="clients-pagination-info"></p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -240,53 +198,25 @@
 
 <script>
     (function () {
+        const PAGE_SIZE = 4;
         const searchInput = document.getElementById('userSearch');
         const roleFilter = document.getElementById('roleFilter');
         const statusFilter = document.getElementById('statusFilter');
         const rows = Array.from(document.querySelectorAll('.client-row'));
         const visibleUsersCount = document.getElementById('visibleUsersCount');
         const noResults = document.getElementById('clientsNoResults');
+        const paginationWrap = document.getElementById('clients-pagination-wrap');
+        const loadMoreBtn = document.getElementById('clients-load-more-btn');
+        const loadLessBtn = document.getElementById('clients-load-less-btn');
+        const paginationInfo = document.getElementById('clients-pagination-info');
+        let visibleLimit = PAGE_SIZE;
 
-        const selectedUser = {
-            id: document.getElementById('selectedUserId'),
-            name: document.getElementById('selectedUserName'),
-            email: document.getElementById('selectedUserEmail'),
-            phone: document.getElementById('selectedUserPhone'),
-            role: document.getElementById('selectedUserRole'),
-            status: document.getElementById('selectedUserStatus'),
-            confirmed: document.getElementById('selectedUserConfirmed'),
-            createdAt: document.getElementById('selectedUserCreatedAt')
-        };
-
-        function updateProfile(button) {
-            if (!button || !selectedUser.name) {
-                return;
-            }
-
-            const data = button.dataset;
-            selectedUser.id.textContent = data.userId || '—';
-            selectedUser.name.textContent = data.userName || 'Без имени';
-            selectedUser.email.textContent = data.userEmail || '—';
-            selectedUser.phone.textContent = data.userPhone || '—';
-            selectedUser.confirmed.textContent = data.userConfirmed || '—';
-            selectedUser.createdAt.textContent = data.userCreatedAt || '—';
-
-            selectedUser.role.textContent = data.userRole || '—';
-            selectedUser.role.className = data.userRole === 'Admin'
-                ? 'clients-pill clients-pill-primary'
-                : 'clients-pill clients-pill-muted';
-
-            selectedUser.status.textContent = data.userStatus || '—';
-            selectedUser.status.className = data.userBlocked === 'true'
-                ? 'clients-pill clients-pill-danger'
-                : 'clients-pill clients-pill-success';
-        }
-
-        function applyFilters() {
+        function applyFilters(resetPage = true) {
+            if (resetPage) visibleLimit = PAGE_SIZE;
             const search = (searchInput?.value || '').toLowerCase().trim();
             const role = roleFilter?.value || '';
             const status = statusFilter?.value || '';
-            let visibleCount = 0;
+            const matchedRows = [];
 
             rows.forEach(row => {
                 const rowRole = row.dataset.role || '';
@@ -299,26 +229,59 @@
                 const isVisible = matchesSearch && matchesRole && matchesStatus;
 
                 row.classList.toggle('d-none', !isVisible);
-
-                if (isVisible) {
-                    visibleCount++;
-                }
+                if (isVisible) matchedRows.push(row);
             });
 
             if (visibleUsersCount) {
-                visibleUsersCount.textContent = String(visibleCount);
+                visibleUsersCount.textContent = String(matchedRows.length);
             }
 
             if (noResults) {
-                noResults.classList.toggle('d-none', visibleCount !== 0);
+                noResults.classList.toggle('d-none', matchedRows.length !== 0);
+            }
+
+            if (matchedRows.length === 0 || matchedRows.length <= PAGE_SIZE) {
+                matchedRows.forEach(row => row.classList.remove('d-none'));
+                if (paginationWrap) paginationWrap.classList.add('d-none');
+                if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+                if (loadLessBtn) loadLessBtn.classList.add('d-none');
+                if (paginationInfo) paginationInfo.textContent = '';
+                return;
+            }
+
+            if (visibleLimit > matchedRows.length) visibleLimit = matchedRows.length;
+            const showUpTo = Math.min(visibleLimit, matchedRows.length);
+
+            matchedRows.forEach((row, idx) => {
+                row.classList.toggle('d-none', idx >= showUpTo);
+            });
+
+            if (paginationWrap) paginationWrap.classList.remove('d-none');
+
+            const remaining = matchedRows.length - showUpTo;
+            if (loadMoreBtn) {
+                if (remaining > 0) {
+                    loadMoreBtn.classList.remove('d-none');
+                    loadMoreBtn.textContent = remaining <= PAGE_SIZE ? `Показать ещё (${remaining})` : `Показать ещё ${PAGE_SIZE}`;
+                } else {
+                    loadMoreBtn.classList.add('d-none');
+                }
+            }
+
+            if (loadLessBtn) {
+                const hideCount = showUpTo - Math.max(PAGE_SIZE, showUpTo - PAGE_SIZE);
+                if (showUpTo > PAGE_SIZE && hideCount > 0) {
+                    loadLessBtn.classList.remove('d-none');
+                    loadLessBtn.textContent = hideCount < PAGE_SIZE ? `Свернуть (${hideCount})` : `Свернуть ${PAGE_SIZE}`;
+                } else {
+                    loadLessBtn.classList.add('d-none');
+                }
+            }
+
+            if (paginationInfo) {
+                paginationInfo.textContent = `Показано ${showUpTo} из ${matchedRows.length}`;
             }
         }
-
-        document.querySelectorAll('.js-user-card').forEach(button => {
-            button.addEventListener('click', function () {
-                updateProfile(this);
-            });
-        });
 
         document.querySelectorAll('.js-dismiss-alert').forEach(button => {
             button.addEventListener('click', function () {
@@ -339,9 +302,18 @@
             statusFilter.addEventListener('change', applyFilters);
         }
 
-        const firstUserButton = document.querySelector('.js-user-card');
-        if (firstUserButton) {
-            updateProfile(firstUserButton);
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', function () {
+                visibleLimit += PAGE_SIZE;
+                applyFilters(false);
+            });
+        }
+
+        if (loadLessBtn) {
+            loadLessBtn.addEventListener('click', function () {
+                visibleLimit = Math.max(PAGE_SIZE, visibleLimit - PAGE_SIZE);
+                applyFilters(false);
+            });
         }
 
         applyFilters();
