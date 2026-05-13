@@ -1,4 +1,4 @@
-﻿using HouseholdStore.Models;
+using HouseholdStore.Models;
 using Microsoft.AspNetCore.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -9,6 +9,8 @@ public class AuthApiService
 {
     private readonly HttpClient _http;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private const string AdminSessionExpiredMessage = "Сессия администратора в AuthService истекла. Выйдите из аккаунта и войдите снова.";
+
     public AuthApiService(HttpClient http, IHttpContextAccessor httpContextAccessor)
     {
         _http = http;
@@ -91,7 +93,7 @@ public class AuthApiService
     {
         var rawToken = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
         if (string.IsNullOrWhiteSpace(rawToken))
-            throw new Exception("Auth API error: missing jwt cookie (jwt). Please re-login as Admin.");
+            throw new UnauthorizedAccessException(AdminSessionExpiredMessage);
 
         var token = Uri.UnescapeDataString(rawToken);
 
@@ -103,6 +105,9 @@ public class AuthApiService
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                throw new UnauthorizedAccessException(AdminSessionExpiredMessage);
+
             throw new Exception($"Auth API error: {(int)response.StatusCode} {response.StatusCode}. {body}");
         }
 
@@ -113,7 +118,7 @@ public class AuthApiService
     {
         var rawToken = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
         if (string.IsNullOrWhiteSpace(rawToken))
-            throw new Exception("Auth API error: missing jwt cookie (jwt). Please re-login as Admin.");
+            throw new UnauthorizedAccessException(AdminSessionExpiredMessage);
 
         var token = Uri.UnescapeDataString(rawToken);
 
@@ -125,6 +130,9 @@ public class AuthApiService
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                throw new UnauthorizedAccessException(AdminSessionExpiredMessage);
+
             throw new Exception($"Auth API error: {(int)response.StatusCode} {response.StatusCode}. {body}");
         }
     }
@@ -133,7 +141,7 @@ public class AuthApiService
     {
         var rawToken = _httpContextAccessor.HttpContext?.Request.Cookies["jwt"];
         if (string.IsNullOrWhiteSpace(rawToken))
-            throw new Exception("Auth API error: missing jwt cookie (jwt). Please re-login as Admin.");
+            throw new UnauthorizedAccessException(AdminSessionExpiredMessage);
 
         var token = Uri.UnescapeDataString(rawToken);
 
@@ -145,6 +153,9 @@ public class AuthApiService
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                throw new UnauthorizedAccessException(AdminSessionExpiredMessage);
+
             throw new Exception($"Auth API error: {(int)response.StatusCode} {response.StatusCode}. {body}");
         }
     }

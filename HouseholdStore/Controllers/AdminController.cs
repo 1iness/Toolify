@@ -1,4 +1,4 @@
-﻿using HouseholdStore.Helpers;
+using HouseholdStore.Helpers;
 using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -71,8 +71,51 @@ namespace HouseholdStore.Controllers
 
         public async Task<IActionResult> Categories()
         {
-            var list = await _api.GetCategoriesForAdminAsync();
-            return AdminShellView(list, "products-categories", "none");
+            var list = (await _api.GetCategoriesForAdminAsync()).OrderByDescending(c => c.Id).ToList();
+            var featuresByCategory = new Dictionary<int, List<ProductFeature>>();
+            foreach (var category in list)
+            {
+                featuresByCategory[category.Id] = await _api.GetFeaturesByCategoryAsync(category.Id);
+            }
+
+            ViewBag.CategoryFeatures = featuresByCategory;
+            return AdminShellView(list, "products-categories", "products-categories");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateCategory(string name, List<string>? featureNames)
+        {
+            name = (name ?? string.Empty).Trim();
+            var normalizedFeatures = (featureNames ?? new List<string>())
+                .Select(x => (x ?? string.Empty).Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                TempData["CategoryError"] = "Укажите название категории.";
+                return RedirectToAction(nameof(Categories));
+            }
+
+            var createResult = await _api.CreateCategoryAsync(new Category { Name = name });
+            if (!createResult.IsSuccess || createResult.Category == null)
+            {
+                TempData["CategoryError"] = createResult.ErrorMessage
+                    ?? "Не удалось создать категорию.";
+                return RedirectToAction(nameof(Categories));
+            }
+
+            foreach (var feature in normalizedFeatures)
+            {
+                await _api.AddFeatureToCategoryAsync(createResult.Category.Id, feature);
+            }
+
+            TempData["CategoryMessage"] = normalizedFeatures.Count > 0
+                ? $"Категория «{createResult.Category.Name}» создана. Характеристик: {normalizedFeatures.Count}."
+                : $"Категория «{createResult.Category.Name}» создана.";
+            return RedirectToAction(nameof(Categories));
         }
 
         [HttpPost]
@@ -159,7 +202,7 @@ namespace HouseholdStore.Controllers
                 {
                     if (config.FeatureId == 0 && !string.IsNullOrWhiteSpace(config.FeatureName))
                     {
-                        var createdFeature = await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName);
+                        var createdFeature = await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName, isTemplate: false);
                         if (createdFeature != null)
                         {
                             config.FeatureId = createdFeature.Id;
@@ -217,26 +260,9 @@ namespace HouseholdStore.Controllers
             var rnd = new Random();
             product.ArticleNumber = rnd.Next(10000, 99999).ToString();
 
-            if (!string.IsNullOrWhiteSpace(NewCategoryName))
+            if (product.CategoryId <= 0)
             {
-                var newCat = new Category { Name = NewCategoryName };
-                var createResult = await _api.CreateCategoryAsync(newCat);
-                if (createResult.IsDuplicate || !createResult.IsSuccess)
-                {
-                    ModelState.AddModelError(
-                        "NewCategoryName",
-                        createResult.ErrorMessage
-                        ?? "Категория с таким названием уже существует. Выберите её из списка или введите другое название.");
-                }
-                else if (createResult.Category != null)
-                {
-                    product.CategoryId = createResult.Category.Id;
-                    ModelState.Remove("CategoryId");
-                }
-            }
-            else if (product.CategoryId <= 0)
-            {
-                ModelState.AddModelError("CategoryId", "Выберите категорию или создайте новую!");
+                ModelState.AddModelError("CategoryId", "Выберите категорию. Если её нет, сначала создайте её в разделе «Категории».");
             }
 
             ValidateProductForAdmin(product);
@@ -247,7 +273,7 @@ namespace HouseholdStore.Controllers
                 {
                     if (config.FeatureId == 0 && !string.IsNullOrWhiteSpace(config.FeatureName))
                     {
-                        var createdFeature = await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName);
+                        var createdFeature = await _api.AddFeatureToCategoryAsync(product.CategoryId, config.FeatureName, isTemplate: false);
                         if (createdFeature != null)
                         {
                             config.FeatureId = createdFeature.Id;
@@ -280,8 +306,40 @@ namespace HouseholdStore.Controllers
 
         public async Task<IActionResult> Delete(int id)
         {
-            await _api.DeleteAsync(id);
-            return RedirectToAction("Index");
+            try
+            {
+                await _api.DeleteAsync(id);
+                TempData["ToastType"] = "success";
+                TempData["ToastMessage"] = "Товар удалён.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(List));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetProductCatalogVisibility(int id, bool isHiddenFromCatalog)
+        {
+            try
+            {
+                await _api.SetCatalogVisibilityAsync(id, isHiddenFromCatalog);
+                TempData["ToastType"] = "success";
+                TempData["ToastMessage"] = isHiddenFromCatalog
+                    ? "Товар скрыт из каталога."
+                    : "Товар снова показывается в каталоге.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ToastType"] = "error";
+                TempData["ToastMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(List));
         }
 
         [HttpGet("Admin/GetFeatures")]
@@ -515,6 +573,12 @@ namespace HouseholdStore.Controllers
                 var users = await _authApi.GetAllUsersAsync();
                 return AdminShellView(users, "clients", "clients");
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                Response.Cookies.Delete("jwt");
+                TempData["Error"] = ex.Message;
+                return AdminShellView(new List<Toolify.AuthService.Models.User>(), "clients", "clients");
+            }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
@@ -530,6 +594,11 @@ namespace HouseholdStore.Controllers
                 await _authApi.ChangeUserRoleAsync(userId, role);
                 TempData["Success"] = "Роль пользователя обновлена";
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                Response.Cookies.Delete("jwt");
+                TempData["Error"] = ex.Message;
+            }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
@@ -544,6 +613,11 @@ namespace HouseholdStore.Controllers
             {
                 await _authApi.SetUserBlockedAsync(userId, isBlocked);
                 TempData["Success"] = isBlocked ? "Пользователь заблокирован" : "Пользователь разблокирован";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Response.Cookies.Delete("jwt");
+                TempData["Error"] = ex.Message;
             }
             catch (Exception ex)
             {

@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = "Категории";
     Layout = "_AdminLayout";
+    var featuresByCategory = ViewBag.CategoryFeatures as Dictionary<int, List<Toolify.ProductService.Models.ProductFeature>>
+                             ?? new Dictionary<int, List<Toolify.ProductService.Models.ProductFeature>>();
 }
 <link rel="stylesheet" href="~/css/site.css" />
 
@@ -22,25 +24,76 @@
         </div>
     </div>
 
+    <div class="category-create-card">
+        <h2 class="category-create-card__title">Создать категорию</h2>
+        <form asp-action="CreateCategory" method="post" class="category-create-form">
+            @Html.AntiForgeryToken()
+            <div class="category-create-grid">
+                <div>
+                    <label class="form-label fw-semibold">Название категории</label>
+                    <input type="text" name="name" class="form-control" placeholder="Например: Смартфоны" maxlength="120" required />
+                </div>
+                <div>
+                    <label class="form-label fw-semibold">Характеристики категории</label>
+                    <div id="categoryFeatureRows" class="category-feature-rows">
+                        <div class="category-feature-row">
+                            <input type="text" name="featureNames" class="form-control" placeholder="Например: Бренд" maxlength="100" />
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeCategoryFeatureRow(this)">Удалить</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addCategoryFeatureRow()">+ Добавить характеристику</button>
+                </div>
+            </div>
+            <button type="submit" class="btn-create mt-3">Создать категорию</button>
+        </form>
+    </div>
+
     <div class="admin-products-table-wrap">
     <table class="admin-table admin-table--products">
         <thead>
             <tr>
-                <th>Id</th>
                 <th>Название</th>
+                <th>Характеристики</th>
                 <th>Товаров</th>
                 <th>Иконка</th>
                 <th>Действия</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="categories-filter-tbody">
         @if (Model != null && Model.Count > 0)
         {
             foreach (var c in Model)
             {
-                <tr>
-                    <td>@c.Id</td>
+                featuresByCategory.TryGetValue(c.Id, out var features);
+                features ??= new List<Toolify.ProductService.Models.ProductFeature>();
+
+                var nameNorm = (c.Name ?? "").Trim().ToLowerInvariant();
+                var searchParts = new List<string> { nameNorm };
+                foreach (var f in features)
+                {
+                    var fn = (f.Name ?? "").Trim();
+                    if (!string.IsNullOrEmpty(fn))
+                        searchParts.Add(fn.ToLowerInvariant());
+                }
+                var categorySearchBlob = string.Join(' ', searchParts).Trim();
+
+                <tr data-category-search="@categorySearchBlob">
                     <td><strong>@c.Name</strong></td>
+                    <td>
+                        @if (features.Count > 0)
+                        {
+                            <div class="category-feature-badges">
+                                @foreach (var f in features)
+                                {
+                                    <span class="category-feature-badge">@f.Name</span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span style="color:#999;">—</span>
+                        }
+                    </td>
                     <td>@c.ProductCount</td>
                     <td style="min-width: 200px; vertical-align: top;">
                         @if (!string.IsNullOrEmpty(c.IconFileName))
@@ -77,9 +130,43 @@
         }
         else
         {
-            <tr><td colspan="5">Категорий нет.</td></tr>
+            <tr class="categories-empty-row"><td colspan="5">Категорий нет.</td></tr>
         }
         </tbody>
     </table>
     </div>
+
+    <div id="categories-pagination-wrap" class="categories-load-more-wrap mt-3 d-none text-center">
+        <div class="d-flex flex-wrap gap-2 justify-content-center mb-2">
+            <button type="button" class="btn-create categories-load-action-btn d-none" id="categories-load-more-btn">Показать ещё</button>
+            <button type="button" class="btn-create btn-create--secondary categories-load-action-btn d-none" id="categories-load-less-btn">Свернуть</button>
+        </div>
+        <p class="text-muted small mb-0" id="categories-pagination-info"></p>
+    </div>
 </div>
+
+<script>
+    function addCategoryFeatureRow() {
+        const container = document.getElementById('categoryFeatureRows');
+        if (!container) return;
+
+        const row = document.createElement('div');
+        row.className = 'category-feature-row';
+        row.innerHTML = `
+            <input type="text" name="featureNames" class="form-control" placeholder="Например: Материал" maxlength="100" />
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeCategoryFeatureRow(this)">Удалить</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function removeCategoryFeatureRow(button) {
+        const row = button.closest('.category-feature-row');
+        const container = document.getElementById('categoryFeatureRows');
+        if (!row || !container) return;
+        if (container.children.length <= 1) {
+            row.querySelector('input').value = '';
+            return;
+        }
+        row.remove();
+    }
+</script>

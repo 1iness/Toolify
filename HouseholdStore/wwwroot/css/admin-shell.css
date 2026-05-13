@@ -156,6 +156,25 @@
     color: var(--admin-green);
 }
 
+/* Админ: категории — поиск и пагинация по строкам */
+tr.category-admin-row--search-hide,
+tr.category-admin-row--page-hide {
+    display: none !important;
+}
+
+tr.product-admin-row--filter-hide,
+tr.product-admin-row--page-hide {
+    display: none !important;
+}
+
+.categories-load-more-wrap .categories-load-action-btn,
+.products-load-more-wrap .categories-load-action-btn {
+    margin-bottom: 0;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
 .admin-shell-main {
     flex: 1;
     min-width: 0;
@@ -280,7 +299,6 @@
     margin: 0 auto;
 }
 
-/* Контент на всю ширину колонки (как топбар); для чата класс не ставится — остаётся max-width */
 .admin-panel-root--wide {
     max-width: none;
 }
@@ -353,7 +371,7 @@
     width: 100%;
 }
 
-/* Плоская страница списка (товары, категории, …) */
+/* Плоская страница списка (товары, категории) */
 .admin-flush-page {
     width: 100%;
     min-width: 0;
@@ -377,6 +395,17 @@
 
 .admin-products-list-actions .btn-create {
     margin-bottom: 0;
+}
+
+.admin-products-filters {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(33, 136, 56, 0.12);
+    background: rgba(248, 250, 249, 0.65);
+}
+
+.admin-products-filters__hint {
+    max-width: 42rem;
 }
 
 .admin-products-table-wrap {

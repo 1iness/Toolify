@@ -21,7 +21,7 @@ namespace Toolify.ProductService.Controllers
             if (string.IsNullOrWhiteSpace(query))
                 return Ok(new List<Product>());
 
-            var products = await _repo.SearchAsync(query);
+            var products = await _repo.SearchAsync(query, includeHidden: false);
             await _repo.ApplyCatalogDisplayPricesAsync(products, userId);
             return Ok(products);
         }
@@ -85,7 +85,7 @@ namespace Toolify.ProductService.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int? userId = null)
         {
-            var products = await _repo.GetAllAsync();
+            var products = await _repo.GetAllAsync(includeHidden: false);
             await _repo.ApplyCatalogDisplayPricesAsync(products, userId);
             return Ok(products);
         }
@@ -93,7 +93,7 @@ namespace Toolify.ProductService.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id, [FromQuery] int? userId = null)
         {
-            var product = await _repo.GetByIdAsync(id);
+            var product = await _repo.GetByIdAsync(id, includeHidden: false);
             if (product == null) return NotFound();
             await _repo.ApplyCatalogDisplayPricesAsync(new List<Product> { product }, userId);
             return Ok(product);
@@ -180,6 +180,11 @@ namespace Toolify.ProductService.Controllers
         [HttpPost("favourites/add")]
         public async Task<IActionResult> AddFavourite([FromQuery] int userId, [FromQuery] int productId)
         {
+            if (userId < 1 || productId < 1) return BadRequest();
+            var allowed = await _repo.GetByIdAsync(productId, includeHidden: false);
+            if (allowed == null)
+                return BadRequest(new { message = "Товар недоступен или снят с витрины." });
+
             await _repo.AddFavouriteAsync(userId, productId);
             return Ok();
         }

@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Data.SqlClient;
 using Toolify.ProductService.Database;
 using Toolify.ProductService.Models;
@@ -13,7 +13,7 @@ namespace Toolify.ProductService.Data
         {
             _factory = factory;
         }
-        public async Task<List<Product>> GetAllAsync()
+        public async Task<List<Product>> GetAllAsync(bool includeHidden = true)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_GetAllProducts", connection) { CommandType = CommandType.StoredProcedure };
@@ -24,7 +24,9 @@ namespace Toolify.ProductService.Data
 
             while (await reader.ReadAsync())
             {
-                products.Add(MapProduct(reader));
+                var product = MapProduct(reader);
+                if (includeHidden || !product.IsHiddenFromCatalog)
+                    products.Add(product);
             }
             if (await reader.NextResultAsync())
             {
@@ -48,7 +50,7 @@ namespace Toolify.ProductService.Data
             return products;
         }
 
-        public async Task<List<Product>> SearchAsync(string term)
+        public async Task<List<Product>> SearchAsync(string term, bool includeHidden = true)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_SearchProducts", connection) { CommandType = CommandType.StoredProcedure };
@@ -57,11 +59,16 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
             var products = new List<Product>();
             using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync()) products.Add(MapProduct(reader));
+            while (await reader.ReadAsync())
+            {
+                var product = MapProduct(reader);
+                if (includeHidden || !product.IsHiddenFromCatalog)
+                    products.Add(product);
+            }
             return products;
         }
 
-        public async Task<Product?> GetByIdAsync(int id)
+        public async Task<Product?> GetByIdAsync(int id, bool includeHidden = true)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_GetProductById", connection) { CommandType = CommandType.StoredProcedure };
@@ -72,6 +79,8 @@ namespace Toolify.ProductService.Data
 
             if (!await reader.ReadAsync()) return null;
             var product = MapProduct(reader);
+            if (!includeHidden && product.IsHiddenFromCatalog)
+                return null;
 
             if (await reader.NextResultAsync())
             {
@@ -94,6 +103,21 @@ namespace Toolify.ProductService.Data
                 });
             }
             return product;
+        }
+
+        public async Task<bool> SetCatalogVisibilityAsync(int id, bool isHiddenFromCatalog)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_SetProductCatalogVisibility", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            command.Parameters.AddWithValue("@Id", id);
+            command.Parameters.AddWithValue("@IsHiddenFromCatalog", isHiddenFromCatalog);
+
+            await connection.OpenAsync();
+            var scalar = await command.ExecuteScalarAsync();
+            return Convert.ToInt32(scalar) > 0;
         }
 
         public async Task<int> AddAsync(Product product)
@@ -161,12 +185,55 @@ namespace Toolify.ProductService.Data
         public async Task<bool> DeleteAsync(int id)
         {
             using var connection = _factory.CreateConnection();
-            using var command = new SqlCommand("sp_DeleteProduct", connection) { CommandType = CommandType.StoredProcedure };
-            command.Parameters.AddWithValue("@Id", id);
-
             await connection.OpenAsync();
-            int rows = await command.ExecuteNonQueryAsync();
-            return rows > 0;
+            using var tx = connection.BeginTransaction();
+            try
+            {
+                using (var clearDiscounts = new SqlCommand(
+                           "DELETE FROM dbo.Discounts WHERE ProductId = @ProductId", connection, tx))
+                {
+                    clearDiscounts.Parameters.AddWithValue("@ProductId", id);
+                    await clearDiscounts.ExecuteNonQueryAsync();
+                }
+
+                using (var clearPromos = new SqlCommand(
+                           "DELETE FROM dbo.Promotions WHERE ProductId = @ProductId", connection, tx))
+                {
+                    clearPromos.Parameters.AddWithValue("@ProductId", id);
+                    await clearPromos.ExecuteNonQueryAsync();
+                }
+
+                using (var delProduct = new SqlCommand("DELETE FROM dbo.Products WHERE Id = @Id", connection, tx))
+                {
+                    delProduct.Parameters.AddWithValue("@Id", id);
+                    int deleted = await delProduct.ExecuteNonQueryAsync();
+                    if (deleted <= 0)
+                    {
+                        await tx.RollbackAsync();
+                        return false;
+                    }
+                }
+
+                await tx.CommitAsync();
+                return true;
+            }
+            catch (SqlException ex)
+            {
+                await tx.RollbackAsync();
+                if (ex.Number == 547)
+                {
+                    throw new InvalidOperationException(
+                        "Нельзя удалить товар: он уже есть в истории заказов или связан с данными, которые нельзя удалить автоматически. Уменьшите остаток до нуля или скройте товар из каталога.",
+                        ex);
+                }
+
+                throw;
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<List<Category>> GetAllCategoriesAsync()
@@ -310,8 +377,12 @@ namespace Toolify.ProductService.Data
             };
         }
 
-        public async Task AddToCartAsync(int productId, int? userId, string? guestId, int quantity = 1)
+        public async Task<bool> AddToCartAsync(int productId, int? userId, string? guestId, int quantity = 1)
         {
+            var product = await GetByIdAsync(productId, includeHidden: false);
+            if (product == null)
+                return false;
+
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_AddToCart", connection) { CommandType = CommandType.StoredProcedure };
             command.Parameters.AddWithValue("@ProductId", productId);
@@ -321,6 +392,7 @@ namespace Toolify.ProductService.Data
 
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
+            return true;
         }
 
         public async Task<List<CartItem>> GetCartItemsAsync(int? userId, string? guestId)
@@ -840,12 +912,14 @@ namespace Toolify.ProductService.Data
                 {
                     Id = (int)reader["Id"],
                     CategoryId = (int)reader["CategoryId"],
-                    Name = reader["Name"].ToString() ?? string.Empty
+                    Name = reader["Name"].ToString() ?? string.Empty,
+                    IsTemplate = TryGetBool(reader, "IsTemplate", true)
                 });
             }
             return features;
         }
-        public async Task<ProductFeature> AddFeatureAsync(int categoryId, string name)
+
+        public async Task<ProductFeature> AddFeatureAsync(int categoryId, string name, bool isTemplate = true)
         {
             using var connection = _factory.CreateConnection();
             using var command = new SqlCommand("sp_AddProductFeature", connection)
@@ -855,17 +929,33 @@ namespace Toolify.ProductService.Data
 
             command.Parameters.AddWithValue("@CategoryId", categoryId);
             command.Parameters.AddWithValue("@Name", name);
+            command.Parameters.AddWithValue("@IsTemplate", isTemplate);
 
             await connection.OpenAsync();
-            using var reader = await command.ExecuteReaderAsync();
+            SqlDataReader reader;
+            try
+            {
+                reader = await command.ExecuteReaderAsync();
+            }
+            catch (SqlException ex) when (ex.Number == 8144)
+            {
+                // Backward compatibility until the SQL patch with @IsTemplate is applied.
+                command.Parameters.Remove(command.Parameters["@IsTemplate"]);
+                reader = await command.ExecuteReaderAsync();
+            }
+
+            await using (reader)
+            {
             if (await reader.ReadAsync())
             {
                 return new ProductFeature
                 {
                     Id = Convert.ToInt32(reader["Id"]),
                     CategoryId = reader.GetInt32(reader.GetOrdinal("CategoryId")),
-                    Name = reader.GetString(reader.GetOrdinal("Name"))
+                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    IsTemplate = TryGetBool(reader, "IsTemplate", isTemplate)
                 };
+            }
             }
             throw new Exception("Не удалось получить ID характеристики");
         }
@@ -1041,6 +1131,59 @@ namespace Toolify.ProductService.Data
                 return defaultValue;
             }
             catch (ArgumentException)
+            {
+                return defaultValue;
+            }
+        }
+
+        private static bool TryGetBool(SqlDataReader reader, string columnName, bool defaultValue)
+        {
+            try
+            {
+                var ord = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ord) ? defaultValue : reader.GetBoolean(ord);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return defaultValue;
+            }
+            catch (ArgumentException)
+            {
+                return defaultValue;
+            }
+        }
+
+        private static double TryGetDouble(SqlDataReader reader, string columnName, double defaultValue)
+        {
+            try
+            {
+                var ord = reader.GetOrdinal(columnName);
+                if (reader.IsDBNull(ord)) return defaultValue;
+
+                var value = reader.GetValue(ord);
+                if (value is double d) return d;
+                if (value is float f) return f;
+                if (value is decimal dec) return Convert.ToDouble(dec);
+                if (value is int i) return i;
+                if (value is long l) return l;
+
+                return double.TryParse(Convert.ToString(value), out var parsed)
+                    ? parsed
+                    : defaultValue;
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return defaultValue;
+            }
+            catch (ArgumentException)
+            {
+                return defaultValue;
+            }
+            catch (FormatException)
+            {
+                return defaultValue;
+            }
+            catch (InvalidCastException)
             {
                 return defaultValue;
             }
@@ -1319,7 +1462,12 @@ namespace Toolify.ProductService.Data
             await connection.OpenAsync();
             var products = new List<Product>();
             using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync()) products.Add(MapProduct(reader));
+            while (await reader.ReadAsync())
+            {
+                var product = MapProduct(reader);
+                if (!product.IsHiddenFromCatalog)
+                    products.Add(product);
+            }
             return products;
         }
 
@@ -1576,13 +1724,14 @@ namespace Toolify.ProductService.Data
                 CategoryId = reader.GetInt32(reader.GetOrdinal("CategoryId")),
                 Name = reader.GetString(reader.GetOrdinal("Name")),
                 Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                IsHiddenFromCatalog = TryGetBool(reader, "IsHiddenFromCatalog", false),
                 Discount = TryGetInt32(reader, "Discount", 0),
                 StockQuantity = reader.GetInt32(reader.GetOrdinal("StockQuantity")),
                 ArticleNumber = reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber")),
                 ShortDescription = reader.IsDBNull(reader.GetOrdinal("ShortDescription")) ? null : reader.GetString(reader.GetOrdinal("ShortDescription")),
                 FullDescription = reader.IsDBNull(reader.GetOrdinal("FullDescription")) ? null : reader.GetString(reader.GetOrdinal("FullDescription")),
-                AverageRating = reader.IsDBNull(reader.GetOrdinal("AverageRating")) ? 0 : Convert.ToDouble(reader["AverageRating"]),
-                ReviewsCount = reader.IsDBNull(reader.GetOrdinal("ReviewsCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReviewsCount"))
+                AverageRating = TryGetDouble(reader, "AverageRating", 0),
+                ReviewsCount = TryGetInt32(reader, "ReviewsCount", 0)
             };
         }
     }

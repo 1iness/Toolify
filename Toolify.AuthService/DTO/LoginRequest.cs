@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Toolify.AuthService.DTO
 {
@@ -11,6 +11,6 @@ namespace Toolify.AuthService.DTO
 
         [Required]
         public string Password { get; set; } = null;
-        public bool Remember { get; set; } = true;
+        public bool Remember { get; set; }
     }
 }

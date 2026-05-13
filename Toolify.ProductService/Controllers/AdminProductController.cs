@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Toolify.ProductService.Models;
 using Toolify.ProductService.Services;
@@ -77,12 +77,37 @@ namespace Toolify.ProductService.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            bool result = await _service.DeleteAsync(id);
+            try
+            {
+                bool result = await _service.DeleteAsync(id);
 
+                if (!result)
+                    return NotFound(new { message = "Товар не найден" });
+
+                return Ok(new { message = "Товар удалён" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/catalog-visibility")]
+        public async Task<IActionResult> SetCatalogVisibility(int id, [FromBody] ProductCatalogVisibilityRequest request)
+        {
+            if (request == null)
+                return BadRequest(new { message = "Некорректный запрос" });
+
+            bool result = await _service.SetCatalogVisibilityAsync(id, request.IsHiddenFromCatalog);
             if (!result)
                 return NotFound(new { message = "Товар не найден" });
 
-            return Ok(new { message = "Товар удалён" });
+            return Ok(new
+            {
+                message = request.IsHiddenFromCatalog
+                    ? "Товар скрыт из каталога"
+                    : "Товар снова показывается в каталоге"
+            });
         }
 
         // POST: upload image
@@ -127,9 +152,14 @@ namespace Toolify.ProductService.Controllers
         public async Task<IActionResult> AddFeature([FromBody] ProductFeature feature)
         {
             if (feature == null) return BadRequest();
-            var createdFeature = await _service.AddFeatureAsync(feature.CategoryId, feature.Name);
+            var createdFeature = await _service.AddFeatureAsync(feature.CategoryId, feature.Name, feature.IsTemplate);
             return Ok(createdFeature);
         }
 
+    }
+
+    public class ProductCatalogVisibilityRequest
+    {
+        public bool IsHiddenFromCatalog { get; set; }
     }
 }

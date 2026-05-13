@@ -43,6 +43,8 @@ namespace HouseholdStore
                 {
                     options.LoginPath = "/Account/Login";
                     options.AccessDeniedPath = "/Account/Login";
+                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                    options.SlidingExpiration = true;
                 });
 
             builder.Services.AddAuthorization();

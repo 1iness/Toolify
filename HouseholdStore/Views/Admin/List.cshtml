@@ -20,13 +20,65 @@
         </div>
     </div>
 
+    <div id="admin-products-filters" class="admin-products-filters mb-3">
+        <div class="admin-products-filters__row row g-2 align-items-end">
+            <div class="col-auto">
+                <span class="form-label small text-muted mb-0 d-block">Цена от</span>
+                <input type="number"
+                       inputmode="decimal"
+                       step="any"
+                       min="0"
+                       class="form-control form-control-sm"
+                       id="admin-product-filter-price-min"
+                       autocomplete="off"
+                       placeholder="—" />
+            </div>
+            <div class="col-auto">
+                <span class="form-label small text-muted mb-0 d-block">до</span>
+                <input type="number"
+                       inputmode="decimal"
+                       step="any"
+                       min="0"
+                       class="form-control form-control-sm"
+                       id="admin-product-filter-price-max"
+                       autocomplete="off"
+                       placeholder="—" />
+            </div>
+            <div class="col-auto border-start ms-2 ps-4">
+                <span class="form-label small text-muted mb-0 d-block">Кол-во от</span>
+                <input type="number"
+                       inputmode="numeric"
+                       step="1"
+                       min="0"
+                       class="form-control form-control-sm"
+                       id="admin-product-filter-stock-min"
+                       autocomplete="off"
+                       placeholder="—" />
+            </div>
+            <div class="col-auto">
+                <span class="form-label small text-muted mb-0 d-block">до</span>
+                <input type="number"
+                       inputmode="numeric"
+                       step="1"
+                       min="0"
+                       class="form-control form-control-sm"
+                       id="admin-product-filter-stock-max"
+                       autocomplete="off"
+                       placeholder="—" />
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="admin-product-filter-reset">Сбросить фильтры</button>
+            </div>
+        </div>
+    </div>
+
     <div class="admin-products-table-wrap">
     <table class="admin-table admin-table--products">
         <thead>
             <tr>
-                <th>Id</th>
                 <th>Фото</th>
                 <th>Название</th>
+                <th>Статус</th>
                 <th>Цена</th>
                 <th style="text-align: center;">Акция</th>
                 <th>Кол-во</th>
@@ -36,15 +88,29 @@
         <tbody id="products-filter-tbody">
             @foreach (var item in Model)
             {
-                var productSearchBlob = (item.Name ?? "").Trim().ToLowerInvariant();
-                <tr data-product-search="@productSearchBlob">
-                    <td>@item.Id</td>
+                var productSearchBlob = string.Join(
+                    ' ',
+                    new[] { item.Name?.Trim(), item.ArticleNumber?.Trim(), item.ShortDescription?.Trim() }
+                        .Where(x => !string.IsNullOrEmpty(x))).ToLowerInvariant();
+                <tr data-product-search="@productSearchBlob"
+                    data-product-price="@item.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                    data-product-stock="@item.StockQuantity">
                     <td>
                         <img src="https://localhost:7188/api/Product/@(item.Id)/image"
                              class="product-img-preview"
                              onerror="this.onerror=null; this.src='/image/no-image.png';" />
                     </td>
                     <td><strong>@item.Name</strong></td>
+                    <td>
+                        @if (item.IsHiddenFromCatalog)
+                        {
+                            <span class="badge bg-secondary">Скрыт</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">На витрине</span>
+                        }
+                    </td>
                     <td>@item.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span></td>
                     <td style="text-align:center;">
                         <span class="no-discount">См. правила</span>
@@ -52,6 +118,17 @@
                     <td>@item.StockQuantity шт.</td>
                     <td class="action-links">
                         <a href="/Admin/Edit/@item.Id">Редактировать</a> |
+                        <form asp-action="SetProductCatalogVisibility"
+                              method="post"
+                              style="display:inline;"
+                              onsubmit="return confirm('@(item.IsHiddenFromCatalog ? "Показать товар в каталоге?" : "Скрыть товар из каталога?")');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <input type="hidden" name="isHiddenFromCatalog" value="@(item.IsHiddenFromCatalog ? "false" : "true")" />
+                            <button type="submit" class="btn btn-link p-0 align-baseline">
+                                @(item.IsHiddenFromCatalog ? "Показать" : "Скрыть")
+                            </button>
+                        </form> |
                         <a href="/Admin/Delete/@item.Id"
                            class="delete-link"
                            onclick="return confirm('Удалить товар?');">Удалить</a>
@@ -60,5 +137,13 @@
             }
         </tbody>
     </table>
+    </div>
+
+    <div id="products-pagination-wrap" class="products-load-more-wrap mt-3 d-none text-center">
+        <div class="d-flex flex-wrap gap-2 justify-content-center mb-2">
+            <button type="button" class="btn-create categories-load-action-btn d-none" id="products-load-more-btn">Показать ещё</button>
+            <button type="button" class="btn-create btn-create--secondary categories-load-action-btn d-none" id="products-load-less-btn">Свернуть</button>
+        </div>
+        <p class="text-muted small mb-0" id="products-pagination-info"></p>
     </div>
 </div>

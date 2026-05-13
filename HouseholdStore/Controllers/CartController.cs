@@ -27,11 +27,16 @@ namespace HouseholdStore.Controllers
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
             var before = (await _productRepo.GetCartItemsAsync(userId, guestId))
                 .FirstOrDefault(x => x.ProductId == id)?.Quantity ?? 0;
-            await _productRepo.AddToCartAsync(id, userId, guestId);
+            var ok = await _productRepo.AddToCartAsync(id, userId, guestId);
             var after = (await _productRepo.GetCartItemsAsync(userId, guestId))
                 .FirstOrDefault(x => x.ProductId == id)?.Quantity ?? 0;
 
-            if (after <= before)
+            if (!ok)
+            {
+                TempData["ToastMessage"] = "Товар скрыт с витрины и недоступен для добавления.";
+                TempData["ToastType"] = "error";
+            }
+            else if (after <= before)
             {
                 TempData["ToastMessage"] = "Недостаточно товара на складе";
                 TempData["ToastType"] = "error";
@@ -91,10 +96,21 @@ namespace HouseholdStore.Controllers
 
             var before = (await _productRepo.GetCartItemsAsync(userId, guestId))
                 .FirstOrDefault(x => x.ProductId == id)?.Quantity ?? 0;
-            await _productRepo.AddToCartAsync(id, userId, guestId);
+            var added = await _productRepo.AddToCartAsync(id, userId, guestId);
             var cartItems = await _productRepo.GetCartItemsAsync(userId, guestId);
             var totalCount = cartItems.Sum(x => x.Quantity);
             var productQuantity = cartItems.FirstOrDefault(x => x.ProductId == id)?.Quantity ?? 0;
+            if (!added)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    message = "Товар скрыт с витрины и недоступен для заказа.",
+                    totalCount,
+                    productQuantity,
+                    unchanged = true,
+                });
+            }
             if (productQuantity <= before)
             {
                 return Json(new

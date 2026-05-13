@@ -1,4 +1,4 @@
-﻿using Toolify.ProductService.Data;
+using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
 
 namespace Toolify.ProductService.Services
@@ -56,6 +56,14 @@ namespace Toolify.ProductService.Services
             return await _repository.DeleteAsync(id);
         }
 
+        public async Task<bool> SetCatalogVisibilityAsync(int id, bool isHiddenFromCatalog)
+        {
+            if (id <= 0)
+                throw new ArgumentException("Invalid ID");
+
+            return await _repository.SetCatalogVisibilityAsync(id, isHiddenFromCatalog);
+        }
+
         private void ValidateProduct(Product product, bool isNew)
         {
             if (product == null)
@@ -83,9 +91,9 @@ namespace Toolify.ProductService.Services
         {
             return await _repository.GetFeaturesByCategoryAsync(categoryId);
         }
-        public async Task<ProductFeature> AddFeatureAsync(int categoryId, string name)
+        public async Task<ProductFeature> AddFeatureAsync(int categoryId, string name, bool isTemplate = true)
         {
-            return await _repository.AddFeatureAsync(categoryId, name);
+            return await _repository.AddFeatureAsync(categoryId, name, isTemplate);
         }
         public async Task UpdateConfigurationsAsync(int productId, List<ProductConfiguration> configs)
         {

@@ -1,4 +1,4 @@
-﻿using HouseholdStore.Models;
+using HouseholdStore.Models;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -112,10 +112,60 @@ namespace HouseholdStore.Services
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task DeleteAsync(int id)
         {
             var response = await _http.DeleteAsync($"/api/admin/products/{id}");
-            return response.IsSuccessStatusCode;
+            if (response.IsSuccessStatusCode)
+                return;
+
+            var body = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    var msg = msgEl.GetString();
+                    if (!string.IsNullOrWhiteSpace(msg))
+                        throw new Exception(msg);
+                }
+            }
+            catch (JsonException)
+            {
+            }
+
+            throw new Exception(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase ?? "Ошибка удаления товара" : body);
+        }
+
+        public async Task SetCatalogVisibilityAsync(int id, bool isHiddenFromCatalog)
+        {
+            var body = JsonSerializer.Serialize(new { isHiddenFromCatalog }, JsonWriteOptions);
+            var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/admin/products/{id}/catalog-visibility")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+
+            var response = await _http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+                return;
+
+            var errorBody = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(errorBody);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    var msg = msgEl.GetString();
+                    if (!string.IsNullOrWhiteSpace(msg))
+                        throw new Exception(msg);
+                }
+            }
+            catch (JsonException)
+            {
+            }
+
+            throw new Exception(string.IsNullOrWhiteSpace(errorBody)
+                ? response.ReasonPhrase ?? "Ошибка изменения видимости товара"
+                : errorBody);
         }
 
         public async Task<bool> UploadImageAsync(int id, IFormFile file)
@@ -250,9 +300,12 @@ namespace HouseholdStore.Services
 
             return await response.Content.ReadFromJsonAsync<List<ProductFeature>>(jsonOptions) ?? new List<ProductFeature>();
         }
-        public async Task<ProductFeature?> AddFeatureToCategoryAsync(int categoryId, string featureName)
+        public async Task<ProductFeature?> AddFeatureToCategoryAsync(int categoryId, string featureName, bool isTemplate = true)
         {
-            var content = new StringContent(JsonSerializer.Serialize(new { CategoryId = categoryId, Name = featureName }), Encoding.UTF8, "application/json");
+            var content = new StringContent(
+                JsonSerializer.Serialize(new { CategoryId = categoryId, Name = featureName, IsTemplate = isTemplate }),
+                Encoding.UTF8,
+                "application/json");
             var response = await _http.PostAsync("/api/admin/products/features", content);
 
             if (response.IsSuccessStatusCode)

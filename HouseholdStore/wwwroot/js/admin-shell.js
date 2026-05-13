@@ -1,6 +1,118 @@
 (function () {
     var partialHeaders = { 'X-Admin-Partial': '1', 'Accept': 'text/html' };
 
+    var CATEGORIES_LOAD_MORE_CHUNK = 6;
+    var categoriesRevealState = { visibleCount: CATEGORIES_LOAD_MORE_CHUNK };
+
+    var PRODUCTS_LOAD_MORE_CHUNK = 10;
+    var productsRevealState = { visibleCount: PRODUCTS_LOAD_MORE_CHUNK };
+
+    /** Категории: показ по chunk, «Показать ещё» и «Свернуть» (на chunk). resetReveal — при поиске / первый заход. */
+    function syncCategoriesAdminTable(resetReveal) {
+        var tbody = document.getElementById('categories-filter-tbody');
+        var wrap = document.getElementById('categories-pagination-wrap');
+        var loadLessBtn = document.getElementById('categories-load-less-btn');
+        var loadMoreBtn = document.getElementById('categories-load-more-btn');
+        var info = document.getElementById('categories-pagination-info');
+        if (!tbody) return;
+
+        var emptyRow = tbody.querySelector('tr.categories-empty-row');
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr[data-category-search]'));
+
+        if (emptyRow && rows.length === 0) {
+            emptyRow.style.display = '';
+            emptyRow.classList.remove('category-admin-row--search-hide', 'category-admin-row--page-hide');
+            if (wrap) wrap.classList.add('d-none');
+            if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+            if (loadLessBtn) loadLessBtn.classList.add('d-none');
+            if (info) info.textContent = '';
+            return;
+        }
+
+        if (emptyRow) {
+            emptyRow.style.display = 'none';
+            emptyRow.classList.add('category-admin-row--search-hide');
+        }
+
+        if (resetReveal) categoriesRevealState.visibleCount = CATEGORIES_LOAD_MORE_CHUNK;
+
+        var headerInput = document.getElementById('admin-header-search');
+        var q = (headerInput && headerInput.value ? headerInput.value : '').toLowerCase().trim();
+
+        var matched = [];
+        rows.forEach(function (row) {
+            var hay = (row.getAttribute('data-category-search') || '').toLowerCase();
+            var match = !q || hay.indexOf(q) !== -1;
+            row.classList.toggle('category-admin-row--search-hide', !match);
+            row.classList.remove('category-admin-row--page-hide');
+            if (match) matched.push(row);
+        });
+
+        if (!wrap) return;
+
+        if (matched.length === 0) {
+            wrap.classList.add('d-none');
+            if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+            if (loadLessBtn) loadLessBtn.classList.add('d-none');
+            if (info) info.textContent = '';
+            return;
+        }
+
+        if (matched.length <= CATEGORIES_LOAD_MORE_CHUNK) {
+            matched.forEach(function (row) {
+                row.classList.remove('category-admin-row--page-hide');
+            });
+            wrap.classList.add('d-none');
+            if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+            if (loadLessBtn) loadLessBtn.classList.add('d-none');
+            if (info) info.textContent = '';
+            return;
+        }
+
+        if (categoriesRevealState.visibleCount > matched.length) {
+            categoriesRevealState.visibleCount = matched.length;
+        }
+
+        var showUpTo = Math.min(categoriesRevealState.visibleCount, matched.length);
+
+        matched.forEach(function (row, idx) {
+            row.classList.toggle('category-admin-row--page-hide', idx >= showUpTo);
+        });
+
+        wrap.classList.remove('d-none');
+        if (loadLessBtn) {
+            var nextShowUpLess = Math.max(
+                CATEGORIES_LOAD_MORE_CHUNK,
+                showUpTo - CATEGORIES_LOAD_MORE_CHUNK
+            );
+            var hideCount = showUpTo - nextShowUpLess;
+            if (showUpTo > CATEGORIES_LOAD_MORE_CHUNK && hideCount > 0) {
+                loadLessBtn.classList.remove('d-none');
+                loadLessBtn.textContent =
+                    hideCount < CATEGORIES_LOAD_MORE_CHUNK
+                        ? 'Свернуть (' + hideCount + ')'
+                        : 'Свернуть ' + CATEGORIES_LOAD_MORE_CHUNK;
+                loadLessBtn.disabled = false;
+            } else {
+                loadLessBtn.classList.add('d-none');
+            }
+        }
+        if (loadMoreBtn) {
+            var remaining = matched.length - showUpTo;
+            if (remaining > 0) {
+                loadMoreBtn.classList.remove('d-none');
+                loadMoreBtn.textContent =
+                    remaining <= CATEGORIES_LOAD_MORE_CHUNK
+                        ? 'Показать ещё (' + remaining + ')'
+                        : 'Показать ещё ' + CATEGORIES_LOAD_MORE_CHUNK;
+                loadMoreBtn.disabled = false;
+            } else {
+                loadMoreBtn.classList.add('d-none');
+            }
+        }
+        if (info) info.textContent = 'Показано ' + showUpTo + ' из ' + matched.length;
+    }
+
     function shouldInterceptAnchor(a) {
         if (!a || a.closest('[data-admin-no-spa]')) return false;
         if (a.target === '_blank' || a.hasAttribute('download')) return false;
@@ -64,7 +176,10 @@
             input.placeholder = 'Поиск по имени и email…';
         } else if (searchTarget === 'products-list') {
             wrap.classList.remove('d-none');
-            input.placeholder = 'Поиск по названию товара…';
+            input.placeholder = 'Поиск по названию, артикулу, описанию…';
+        } else if (searchTarget === 'products-categories') {
+            wrap.classList.remove('d-none');
+            input.placeholder = 'Поиск по названию категории и характеристикам…';
         } else {
             wrap.classList.add('d-none');
             input.value = '';
@@ -87,16 +202,247 @@
         });
     }
 
-    function applyProductsSearchFilter() {
-        var headerInput = document.getElementById('admin-header-search');
-        var tbody = document.getElementById('products-filter-tbody');
-        if (!headerInput || !tbody) return;
-        var q = (headerInput.value || '').toLowerCase().trim();
-        tbody.querySelectorAll('tr[data-product-search]').forEach(function (row) {
-            var hay = (row.getAttribute('data-product-search') || '').toLowerCase();
-            row.style.display = !q || hay.indexOf(q) !== -1 ? '' : 'none';
+    function parsePositiveDecimalOrClear(raw) {
+        if (raw == null) return null;
+        var v = ('' + raw).trim().replace(',', '.');
+        if (v === '') return null;
+        var n = parseFloat(v);
+        if (!isFinite(n) || n < 0) return null;
+        return n;
+    }
+
+    function parseNonNegativeIntOrClear(raw) {
+        if (raw == null) return null;
+        var v = ('' + raw).trim();
+        if (v === '') return null;
+        var n = parseInt(v, 10);
+        if (!isFinite(n) || n < 0 || /[.,]/.test(v)) return null;
+        return n;
+    }
+
+    function normalizeProductStockInputValue(el) {
+        var v = (el.value || '').trim().replace(',', '.');
+        if (v === '') return;
+        if (!/^\d+$/.test(v)) {
+            var n = parseFloat(v);
+            el.value =
+                !isFinite(n) || n < 0 ? '' : String(Math.max(0, Math.floor(Math.abs(n))));
+        }
+    }
+
+    /** Во время ввода убрать минус остальное режем только для количества (только целые цифры). */
+    function onProductNumericFilterInput(el, kind) {
+        if (!el || el.disabled) return;
+        el.value = el.value.replace(/-/g, '');
+        if (kind === 'stock') el.value = ('' + el.value).replace(/[^\d]/g, '');
+    }
+
+    function bindAdminProductListFilters() {
+        document.addEventListener('input', function (e) {
+            var tid = e.target.id;
+            if (tid === 'admin-product-filter-price-min' || tid === 'admin-product-filter-price-max') {
+                onProductNumericFilterInput(e.target, 'price');
+                applyProductsSearchFilter();
+            } else if (tid === 'admin-product-filter-stock-min' || tid === 'admin-product-filter-stock-max') {
+                onProductNumericFilterInput(e.target, 'stock');
+                applyProductsSearchFilter();
+            }
+        });
+        document.addEventListener(
+            'blur',
+            function (e) {
+                var tid = e.target.id;
+                if (tid === 'admin-product-filter-price-min' || tid === 'admin-product-filter-price-max') {
+                    enforceProductPriceRangeOnBlur();
+                    applyProductsSearchFilter();
+                }
+                if (tid === 'admin-product-filter-stock-min' || tid === 'admin-product-filter-stock-max') {
+                    enforceProductStockRangeOnBlur();
+                    applyProductsSearchFilter();
+                }
+            },
+            true
+        );
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#admin-product-filter-reset')) return;
+            resetAdminProductFilters();
         });
     }
+
+    /** При потере фокуса при обоих числах оставить «от» меньше «до» (повышаем максимум). */
+    function enforceProductPriceRangeOnBlur() {
+        var minEl = document.getElementById('admin-product-filter-price-min');
+        var maxEl = document.getElementById('admin-product-filter-price-max');
+        if (!minEl || !maxEl) return;
+        var lowRaw = parsePositiveDecimalOrClear(minEl.value.replace(',', '.'));
+        var hiRaw = parsePositiveDecimalOrClear(maxEl.value.replace(',', '.'));
+        minEl.value = lowRaw != null ? String(lowRaw).replace('.', ',') : '';
+        maxEl.value = hiRaw != null ? String(hiRaw).replace('.', ',') : '';
+        lowRaw = parsePositiveDecimalOrClear(minEl.value.replace(',', '.'));
+        hiRaw = parsePositiveDecimalOrClear(maxEl.value.replace(',', '.'));
+        if (lowRaw != null && hiRaw != null && lowRaw > hiRaw) {
+            maxEl.value = String(lowRaw).replace('.', ',');
+        }
+    }
+
+    function enforceProductStockRangeOnBlur() {
+        var minEl = document.getElementById('admin-product-filter-stock-min');
+        var maxEl = document.getElementById('admin-product-filter-stock-max');
+        if (!minEl || !maxEl) return;
+        normalizeProductStockInputValue(minEl);
+        normalizeProductStockInputValue(maxEl);
+        var low = parseNonNegativeIntOrClear(minEl.value);
+        var hi = parseNonNegativeIntOrClear(maxEl.value);
+        minEl.value = low != null ? String(low) : '';
+        maxEl.value = hi != null ? String(hi) : '';
+        if (low != null && hi != null && low > hi) maxEl.value = String(low);
+    }
+
+    function resetAdminProductFilters() {
+        ['admin-product-filter-price-min', 'admin-product-filter-price-max', 'admin-product-filter-stock-min', 'admin-product-filter-stock-max'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        syncProductsAdminTable(true);
+    }
+
+    /** Товары фильтры + показ порциями (как категории), chunk = 10. resetReveal при смене фильтров. */
+    function syncProductsAdminTable(resetReveal) {
+        var tbody = document.getElementById('products-filter-tbody');
+        var wrap = document.getElementById('products-pagination-wrap');
+        var loadLessBtn = document.getElementById('products-load-less-btn');
+        var loadMoreBtn = document.getElementById('products-load-more-btn');
+        var info = document.getElementById('products-pagination-info');
+        if (!tbody) return;
+
+        if (resetReveal) productsRevealState.visibleCount = PRODUCTS_LOAD_MORE_CHUNK;
+
+        var headerInput = document.getElementById('admin-header-search');
+        var q = headerInput ? (headerInput.value || '').toLowerCase().trim() : '';
+
+        var rawMinPrice = '';
+        var rawMaxPrice = '';
+        var rawMinStock = '';
+        var rawMaxStock = '';
+        var minPriceEl = document.getElementById('admin-product-filter-price-min');
+        var maxPriceEl = document.getElementById('admin-product-filter-price-max');
+        var minStockEl = document.getElementById('admin-product-filter-stock-min');
+        var maxStockEl = document.getElementById('admin-product-filter-stock-max');
+        if (minPriceEl) rawMinPrice = minPriceEl.value;
+        if (maxPriceEl) rawMaxPrice = maxPriceEl.value;
+        if (minStockEl) rawMinStock = minStockEl.value;
+        if (maxStockEl) rawMaxStock = maxStockEl.value;
+
+        var pLow = parsePositiveDecimalOrClear(rawMinPrice.replace(',', '.'));
+        var pHi = parsePositiveDecimalOrClear(rawMaxPrice.replace(',', '.'));
+        var sLow = parseNonNegativeIntOrClear(rawMinStock);
+        var sHi = parseNonNegativeIntOrClear(rawMaxStock);
+
+        if (pLow != null && pHi != null && pLow > pHi) {
+            var pt = pLow;
+            pLow = pHi;
+            pHi = pt;
+        }
+        if (sLow != null && sHi != null && sLow > sHi) {
+            var st = sLow;
+            sLow = sHi;
+            sHi = st;
+        }
+
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr[data-product-search]'));
+        var matched = [];
+        rows.forEach(function (row) {
+            var hay = (row.getAttribute('data-product-search') || '').toLowerCase();
+            var okText = !q || hay.indexOf(q) !== -1;
+
+            var rowPrice = parseFloat(row.getAttribute('data-product-price'));
+            if (!isFinite(rowPrice)) rowPrice = 0;
+            var okPrice = true;
+            if (pLow != null && rowPrice < pLow - 1e-9) okPrice = false;
+            if (pHi != null && rowPrice > pHi + 1e-9) okPrice = false;
+
+            var stock = parseInt(row.getAttribute('data-product-stock'), 10);
+            if (!isFinite(stock) || stock < 0) stock = 0;
+            var okStock = true;
+            if (sLow != null && stock < sLow) okStock = false;
+            if (sHi != null && stock > sHi) okStock = false;
+
+            var match = okText && okPrice && okStock;
+            row.classList.toggle('product-admin-row--filter-hide', !match);
+            row.classList.remove('product-admin-row--page-hide');
+            if (match) matched.push(row);
+        });
+
+        if (!wrap) return;
+
+        if (matched.length === 0) {
+            wrap.classList.add('d-none');
+            if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+            if (loadLessBtn) loadLessBtn.classList.add('d-none');
+            if (info) info.textContent = '';
+            return;
+        }
+
+        if (matched.length <= PRODUCTS_LOAD_MORE_CHUNK) {
+            matched.forEach(function (row) {
+                row.classList.remove('product-admin-row--page-hide');
+            });
+            wrap.classList.add('d-none');
+            if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+            if (loadLessBtn) loadLessBtn.classList.add('d-none');
+            if (info) info.textContent = '';
+            return;
+        }
+
+        if (productsRevealState.visibleCount > matched.length) {
+            productsRevealState.visibleCount = matched.length;
+        }
+
+        var showUpTo = Math.min(productsRevealState.visibleCount, matched.length);
+
+        matched.forEach(function (row, idx) {
+            row.classList.toggle('product-admin-row--page-hide', idx >= showUpTo);
+        });
+
+        wrap.classList.remove('d-none');
+        if (loadLessBtn) {
+            var nextShowUpLess = Math.max(
+                PRODUCTS_LOAD_MORE_CHUNK,
+                showUpTo - PRODUCTS_LOAD_MORE_CHUNK
+            );
+            var hideCount = showUpTo - nextShowUpLess;
+            if (showUpTo > PRODUCTS_LOAD_MORE_CHUNK && hideCount > 0) {
+                loadLessBtn.classList.remove('d-none');
+                loadLessBtn.textContent =
+                    hideCount < PRODUCTS_LOAD_MORE_CHUNK
+                        ? 'Свернуть (' + hideCount + ')'
+                        : 'Свернуть ' + PRODUCTS_LOAD_MORE_CHUNK;
+                loadLessBtn.disabled = false;
+            } else {
+                loadLessBtn.classList.add('d-none');
+            }
+        }
+        if (loadMoreBtn) {
+            var remaining = matched.length - showUpTo;
+            if (remaining > 0) {
+                loadMoreBtn.classList.remove('d-none');
+                loadMoreBtn.textContent =
+                    remaining <= PRODUCTS_LOAD_MORE_CHUNK
+                        ? 'Показать ещё (' + remaining + ')'
+                        : 'Показать ещё ' + PRODUCTS_LOAD_MORE_CHUNK;
+                loadMoreBtn.disabled = false;
+            } else {
+                loadMoreBtn.classList.add('d-none');
+            }
+        }
+        if (info) info.textContent = 'Показано ' + showUpTo + ' из ' + matched.length;
+    }
+
+    function applyProductsSearchFilter() {
+        syncProductsAdminTable(true);
+    }
+
+    bindAdminProductListFilters();
 
     function updateHeadingFromPanel(root, titleFromHeader) {
         var headingEl = document.querySelector('.admin-page-heading');
@@ -197,6 +543,7 @@
             updateHeadingFromPanel(root, titleFromHeader);
             if (searchTarget === 'orders') applyOrdersSearchFilter();
             if (searchTarget === 'products-list') applyProductsSearchFilter();
+            if (searchTarget === 'products-categories') syncCategoriesAdminTable(true);
             document.dispatchEvent(
                 new CustomEvent('admin-panel-loaded', {
                     bubbles: true,
@@ -234,6 +581,11 @@
                         applyProductsSearchFilter();
                         return;
                     }
+                    var categoriesTbody = document.getElementById('categories-filter-tbody');
+                    if (categoriesTbody) {
+                        syncCategoriesAdminTable(true);
+                        return;
+                    }
                 }
                 if (e.target.id === 'userSearch') {
                     var hdr = document.getElementById('admin-header-search');
@@ -255,7 +607,40 @@
         bindClientsSearchBridge();
         if (searchTarget === 'orders') applyOrdersSearchFilter();
         if (searchTarget === 'products-list') applyProductsSearchFilter();
+        if (searchTarget === 'products-categories') syncCategoriesAdminTable(true);
         refreshChatBadge();
+
+        document.addEventListener('click', function (e) {
+            var productsLess = e.target.closest('#products-load-less-btn');
+            if (productsLess && !productsLess.disabled) {
+                productsRevealState.visibleCount = Math.max(
+                    PRODUCTS_LOAD_MORE_CHUNK,
+                    productsRevealState.visibleCount - PRODUCTS_LOAD_MORE_CHUNK
+                );
+                syncProductsAdminTable(false);
+                return;
+            }
+            var productsMore = e.target.closest('#products-load-more-btn');
+            if (productsMore && !productsMore.disabled) {
+                productsRevealState.visibleCount += PRODUCTS_LOAD_MORE_CHUNK;
+                syncProductsAdminTable(false);
+                return;
+            }
+
+            var loadLessBtnEl = e.target.closest('#categories-load-less-btn');
+            if (loadLessBtnEl && !loadLessBtnEl.disabled) {
+                categoriesRevealState.visibleCount = Math.max(
+                    CATEGORIES_LOAD_MORE_CHUNK,
+                    categoriesRevealState.visibleCount - CATEGORIES_LOAD_MORE_CHUNK
+                );
+                syncCategoriesAdminTable(false);
+                return;
+            }
+            var loadMoreBtnEl = e.target.closest('#categories-load-more-btn');
+            if (!loadMoreBtnEl || loadMoreBtnEl.disabled) return;
+            categoriesRevealState.visibleCount += CATEGORIES_LOAD_MORE_CHUNK;
+            syncCategoriesAdminTable(false);
+        });
 
         document.addEventListener(
             'click',

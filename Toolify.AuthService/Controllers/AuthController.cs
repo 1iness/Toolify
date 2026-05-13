@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -90,7 +90,7 @@ public class AuthController : ControllerBase
         if (user.IsBlocked)
             return Unauthorized("Account is blocked");
 
-        var token = GenerateJwt(user);
+        var token = GenerateJwt(user, request.Remember);
 
         return Ok(new
         {
@@ -99,9 +99,11 @@ public class AuthController : ControllerBase
     }
 
 
-    private string GenerateJwt(User user)
+    private string GenerateJwt(User user, bool remember)
     {
         var jwtSettings = _config.GetSection("Jwt");
+        var expireMinutesKey = remember ? "RememberExpireMinutes" : "ExpireMinutes";
+        var expireMinutes = int.Parse(jwtSettings[expireMinutesKey] ?? jwtSettings["ExpireMinutes"] ?? "480");
 
         var claims = new[]
         {
@@ -121,9 +123,7 @@ public class AuthController : ControllerBase
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.Now.AddMinutes(
-                int.Parse(jwtSettings["ExpireMinutes"]!)
-            ),
+            expires: DateTime.UtcNow.AddMinutes(expireMinutes),
             signingCredentials: creds
         );
 

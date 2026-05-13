@@ -1,4 +1,4 @@
-﻿@model Toolify.ProductService.Models.Product
+@model Toolify.ProductService.Models.Product
 
 @{
     ViewData["Title"] = "Добавить товар";
@@ -23,10 +23,9 @@
                         <select name="CategoryId" asp-items="ViewBag.Categories" class="form-select form-select-admin">
                             <option value="0">— Выберите из списка —</option>
                         </select>
-                    </div>
-                    <div class="form-group mb-0">
-                        <p class="form-label-inline"><b>Новая категория</b> <span class="text-muted fw-normal small">(если не из списка)</span></p>
-                        <input type="text" name="NewCategoryName" placeholder="Название" class="form-input" />
+                        <a href="@Url.Action("Categories", "Admin")" class="btn btn-outline-primary btn-sm mt-2">
+                            + Создать категорию
+                        </a>
                     </div>
                 </div>
             </div>
