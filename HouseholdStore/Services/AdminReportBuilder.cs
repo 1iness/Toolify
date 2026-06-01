@@ -26,13 +26,15 @@ public class AdminReportBuilder
         var users = await TryGetUsersAsync();
         var salesCategoryIds = filter.SalesCategoryIds.Where(id => id > 0).ToHashSet();
         var popularityCategoryIds = filter.PopularityCategoryIds.Where(id => id > 0).ToHashSet();
+        var effectiveSalesCategoryIds = ResolveEffectiveCategoryIds(categories, salesCategoryIds);
+        var effectivePopularityCategoryIds = ResolveEffectiveCategoryIds(categories, popularityCategoryIds);
 
         var salesLines = (await GetOrderLinesAsync(filter.SalesStartDate, filter.SalesEndDate))
-            .Where(line => salesCategoryIds.Count == 0 || salesCategoryIds.Contains(line.CategoryId))
+            .Where(line => effectiveSalesCategoryIds.Contains(line.CategoryId))
             .ToList();
         var averageOrders = await GetPurchaseOrdersAsync(filter.AverageCheckStartDate, filter.AverageCheckEndDate);
         var popularityLines = (await GetOrderLinesAsync(filter.PopularityStartDate, filter.PopularityEndDate))
-            .Where(line => popularityCategoryIds.Count == 0 || popularityCategoryIds.Contains(line.CategoryId))
+            .Where(line => effectivePopularityCategoryIds.Contains(line.CategoryId))
             .ToList();
         var customerOrders = await GetPurchaseOrdersAsync(filter.CustomerStartDate, filter.CustomerEndDate);
         var totalAmount = averageOrders.Sum(o => o.TotalAmount);
@@ -41,7 +43,7 @@ public class AdminReportBuilder
         {
             Filter = filter,
             Categories = categories.OrderBy(c => c.Name).ToList(),
-            SalesByCategory = BuildSalesRows(salesLines, categories, salesCategoryIds),
+            SalesByCategory = BuildSalesRows(salesLines, categories, effectiveSalesCategoryIds),
             AverageCheck = new AverageCheckReport
             {
                 OrderCount = averageOrders.Count,
@@ -51,19 +53,24 @@ public class AdminReportBuilder
             ProductPopularity = BuildPopularityRows(popularityLines),
             CustomerPurchaseHistory = BuildCustomerRows(customerOrders, users),
             SalesPeriodTitle = BuildPeriodTitle(filter.SalesStartDate, filter.SalesEndDate),
+            SalesCategoriesSummary = BuildCategoriesSummary(categories, salesCategoryIds),
             AverageCheckPeriodTitle = BuildPeriodTitle(filter.AverageCheckStartDate, filter.AverageCheckEndDate),
             PopularityPeriodTitle = BuildPeriodTitle(filter.PopularityStartDate, filter.PopularityEndDate),
+            PopularityCategoriesSummary = BuildCategoriesSummary(categories, popularityCategoryIds),
             CustomerPeriodTitle = BuildPeriodTitle(filter.CustomerStartDate, filter.CustomerEndDate)
         };
     }
 
     public IReadOnlyList<AdminReportTable> BuildTables(AdminReportsViewModel model, string? reportType = null)
     {
+        var salesSuffix = BuildCategoryTitleSuffix(model.SalesCategoriesSummary);
+        var popularitySuffix = BuildCategoryTitleSuffix(model.PopularityCategoriesSummary);
+
         var tables = new List<AdminReportTable>
         {
             new()
             {
-                Title = $"Отчет по продажам за {model.SalesPeriodTitle}",
+                Title = $"Отчет по продажам за {model.SalesPeriodTitle}{salesSuffix}",
                 Headers = new[] { "Категория", "Заказов", "Продано товаров", "Сумма продаж, BYN" },
                 Rows = model.SalesByCategory
                     .Select(r => Row(r.CategoryName, r.OrderCount, r.ItemsSold, Money(r.SalesAmount)))
@@ -80,7 +87,7 @@ public class AdminReportBuilder
             },
             new()
             {
-                Title = $"Отчет по популярности товаров за {model.PopularityPeriodTitle}",
+                Title = $"Отчет по популярности товаров за {model.PopularityPeriodTitle}{popularitySuffix}",
                 Headers = new[] { "Категория", "Товар", "Продано, шт.", "Заказов", "Сумма продаж, BYN" },
                 Rows = model.ProductPopularity
                     .Select(r => Row(r.CategoryName, r.ProductName, r.QuantitySold, r.OrderCount, Money(r.SalesAmount)))
@@ -157,7 +164,8 @@ public class AdminReportBuilder
             categories.Add(new Category
             {
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                Name = reader.GetString(reader.GetOrdinal("Name"))
+                Name = reader.GetString(reader.GetOrdinal("Name")),
+                IsHiddenFromCatalog = TryGetBool(reader, "IsHiddenFromCatalog", false)
             });
         }
 
@@ -237,7 +245,7 @@ public class AdminReportBuilder
     private static List<SalesByCategoryReportRow> BuildSalesRows(
         IReadOnlyList<ReportOrderLine> lines,
         IReadOnlyList<Category> categories,
-        IReadOnlySet<int> selectedCategoryIds)
+        IReadOnlySet<int> effectiveCategoryIds)
     {
         var rowsByCategory = lines
             .GroupBy(line => new { line.CategoryId, line.CategoryName })
@@ -252,11 +260,12 @@ public class AdminReportBuilder
                     SalesAmount = group.Sum(line => line.LineAmount)
                 });
 
-        var visibleCategories = categories
-            .Where(category => selectedCategoryIds.Count == 0 || selectedCategoryIds.Contains(category.Id))
-            .OrderBy(category => category.Name);
+        var reportCategories = categories
+            .Where(category => effectiveCategoryIds.Contains(category.Id))
+            .OrderBy(category => category.IsHiddenFromCatalog)
+            .ThenBy(category => category.Name);
 
-        var result = visibleCategories
+        var result = reportCategories
             .Select(category => rowsByCategory.TryGetValue(category.Id, out var row)
                 ? row
                 : new SalesByCategoryReportRow { CategoryId = category.Id, CategoryName = category.Name })
@@ -361,6 +370,91 @@ public class AdminReportBuilder
         if (endDate.HasValue)
             return $"по {endDate.Value:dd.MM.yyyy}";
         return "весь период";
+    }
+
+    private static string BuildCategoriesSummary(
+        IReadOnlyList<Category> categories,
+        IReadOnlySet<int> selectedCategoryIds)
+    {
+        var visibleIds = categories
+            .Where(category => !category.IsHiddenFromCatalog)
+            .Select(category => category.Id)
+            .ToHashSet();
+        var selectedVisible = selectedCategoryIds.Where(visibleIds.Contains).ToHashSet();
+        var selectedHidden = categories
+            .Where(category => category.IsHiddenFromCatalog && selectedCategoryIds.Contains(category.Id))
+            .Select(category => category.Name)
+            .OrderBy(name => name)
+            .ToList();
+
+        if (selectedVisible.Count == 0 && selectedHidden.Count == 0)
+            return "все видимые категории";
+
+        if (selectedVisible.Count == 0)
+        {
+            return selectedHidden.Count == 1
+                ? $"все видимые + {selectedHidden[0]}"
+                : $"все видимые + {selectedHidden.Count} скрытых";
+        }
+
+        var names = categories
+            .Where(category => selectedCategoryIds.Contains(category.Id))
+            .Select(category => category.Name)
+            .OrderBy(name => name)
+            .ToList();
+
+        return names.Count == 0 ? "выбранные категории" : string.Join(", ", names);
+    }
+
+    private static HashSet<int> ResolveEffectiveCategoryIds(
+        IReadOnlyList<Category> categories,
+        IReadOnlySet<int> selectedCategoryIds)
+    {
+        var visibleIds = categories
+            .Where(category => !category.IsHiddenFromCatalog)
+            .Select(category => category.Id)
+            .ToHashSet();
+        var hiddenIds = categories
+            .Where(category => category.IsHiddenFromCatalog)
+            .Select(category => category.Id)
+            .ToHashSet();
+
+        var selectedVisible = selectedCategoryIds.Where(visibleIds.Contains).ToHashSet();
+        var selectedHidden = selectedCategoryIds.Where(hiddenIds.Contains).ToHashSet();
+
+        if (selectedVisible.Count == 0 && selectedHidden.Count == 0)
+            return visibleIds;
+
+        if (selectedVisible.Count == 0)
+        {
+            var withHidden = new HashSet<int>(visibleIds);
+            withHidden.UnionWith(selectedHidden);
+            return withHidden;
+        }
+
+        var explicitSelection = new HashSet<int>(selectedVisible);
+        explicitSelection.UnionWith(selectedHidden);
+        return explicitSelection;
+    }
+
+    private static bool TryGetBool(SqlDataReader reader, string columnName, bool defaultValue)
+    {
+        try
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            return reader.IsDBNull(ordinal) ? defaultValue : reader.GetBoolean(ordinal);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return defaultValue;
+        }
+    }
+
+    private static string BuildCategoryTitleSuffix(string categoriesSummary)
+    {
+        return categoriesSummary.StartsWith("все видимые", StringComparison.Ordinal)
+            ? string.Empty
+            : $" ({categoriesSummary})";
     }
 
     private static string Money(decimal value)

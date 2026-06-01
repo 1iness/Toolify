@@ -69,6 +69,9 @@ namespace HouseholdStore.Controllers
                 .OrderByDescending(p => p.CreatedAt)
                 .ThenByDescending(p => p.Id)
                 .ToList();
+            var categories = await _api.GetCategoriesForAdminAsync();
+            ViewBag.CategoryNames = categories.ToDictionary(c => c.Id, c => c.Name);
+            ViewBag.CategoryHidden = categories.ToDictionary(c => c.Id, c => c.IsHiddenFromCatalog);
             return AdminShellView(products, "products-list", "products-list");
         }
 
@@ -144,6 +147,25 @@ namespace HouseholdStore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetCategoryCatalogVisibility(int id, bool isHiddenFromCatalog)
+        {
+            try
+            {
+                await _api.SetCategoryCatalogVisibilityAsync(id, isHiddenFromCatalog);
+                TempData["CategoryMessage"] = isHiddenFromCatalog
+                    ? "Категория скрыта из каталога вместе со всеми её товарами."
+                    : "Категория снова показывается в каталоге. Товары, скрытые отдельно, остаются скрытыми.";
+            }
+            catch (Exception ex)
+            {
+                TempData["CategoryError"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Categories));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         [RequestSizeLimit(2_000_000)]
         public async Task<IActionResult> UploadCategoryIcon(int id, IFormFile? iconFile)
         {
@@ -186,7 +208,7 @@ namespace HouseholdStore.Controllers
             var product = await _api.GetByIdAsync(id);
             if (product == null) return NotFound();
 
-            var categories = await _api.GetCategoriesAsync();
+            var categories = await _api.GetAdminCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name", product.CategoryId);
 
             return AdminShellView(product, "products-edit", "none");
@@ -239,7 +261,7 @@ namespace HouseholdStore.Controllers
                 }
             }
 
-            var categories = await _api.GetCategoriesAsync();
+            var categories = await _api.GetAdminCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name", product.CategoryId);
             return AdminShellView(product, "products-edit", "none");
         }
@@ -247,7 +269,7 @@ namespace HouseholdStore.Controllers
 
         public async Task<IActionResult> Create()
         {
-            var categories = await _api.GetCategoriesAsync();
+            var categories = await _api.GetAdminCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
             return AdminShellView(new Product(), "products-create", "none");
 
@@ -302,7 +324,7 @@ namespace HouseholdStore.Controllers
                 }
             }
 
-            var categories = await _api.GetCategoriesAsync();
+            var categories = await _api.GetAdminCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name", product.CategoryId);
             return AdminShellView(product, "products-create", "none");
         }
@@ -429,7 +451,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Promotions()
         {
             var promos = await _api.GetPromotionsAsync();
-            var categories = await _api.GetCategoriesAsync();
+            var categories = await _api.GetAdminCategoriesAsync();
             var products = await _api.GetAllAsync();
 
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
@@ -508,7 +530,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Discounts()
         {
             var discounts = await _api.GetDiscountsAsync();
-            var categories = await _api.GetCategoriesAsync();
+            var categories = await _api.GetAdminCategoriesAsync();
             var products = await _api.GetAllAsync();
 
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
@@ -690,7 +712,7 @@ namespace HouseholdStore.Controllers
             if (!categoryId.HasValue || categoryId.Value <= 0) return "не указана";
             try
             {
-                var categories = await _api.GetCategoriesAsync();
+                var categories = await _api.GetAdminCategoriesAsync();
                 return categories.FirstOrDefault(c => c.Id == categoryId.Value)?.Name ?? $"#{categoryId.Value}";
             }
             catch

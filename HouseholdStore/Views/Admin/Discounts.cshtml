@@ -141,7 +141,6 @@
                             <input class="form-check-input" type="checkbox" name="sendNotification" value="true" checked id="newDiscSendNotification" />
                             <input type="hidden" name="sendNotification" value="false" />
                             <label class="form-check-label small" for="newDiscSendNotification">Отправить рассылку пользователям</label>
-                            <div class="form-text">Если снять галочку, скидка сохранится без email-уведомлений.</div>
                         </div>
 
                         <div class="disc-warning small text-muted mt-2"></div>
@@ -345,8 +344,8 @@
 
                 if (valueHint) {
                     valueHint.textContent = kKey === 'pct'
-                        ? 'Например, 10 = скидка 10%. Значение должно быть от 0.01 до 100.'
-                        : 'Фиксированная сумма скидки в BYN. Например, 5 = минус 5 BYN.';
+                        ? ' 10 = скидка 10%.'
+                        : 'Фиксированная сумма скидки в byn. 5 = минус 5 byn.';
                 }
 
                 if (warn) {

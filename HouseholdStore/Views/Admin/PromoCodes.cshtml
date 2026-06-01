@@ -46,18 +46,15 @@
                         <div class="mb-4">
                             <label class="form-label fw-semibold">Лимит использований</label>
                             <input type="number" name="maxUses" class="form-control" min="1" max="999999999" step="1" placeholder="Необязательно" />
-                            <div class="form-text">Пусто — без лимита по числу заказов (действует только срок). Число — максимум успешных заказов с этим кодом за указанный период.</div>
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-semibold">Мин. сумма товаров</label>
                             <input type="number" name="minGoodsAmount" class="form-control" min="0" step="0.01" placeholder="Необязательно" />
-                            <div class="form-text">Если указать, промокод применится только когда сумма товаров (после скидок по товарам/категориям/клиенту, но до промокода) не меньше этого значения.</div>
                         </div>
                         <div class="form-check mb-4">
                             <input class="form-check-input" type="checkbox" name="sendNotification" value="true" checked id="promoSendNotification" />
                             <input type="hidden" name="sendNotification" value="false" />
                             <label class="form-check-label" for="promoSendNotification">Отправить рассылку пользователям</label>
-                            <div class="form-text">Если снять галочку, промокод сохранится без email-уведомлений.</div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100 fw-bold">Добавить промокод</button>
                     </form>

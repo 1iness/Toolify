@@ -6,5 +6,6 @@ namespace Toolify.ProductService.Models
         public string Name { get; set; } = string.Empty;
         public int ProductCount { get; set; }
         public string? IconFileName { get; set; }
+        public bool IsHiddenFromCatalog { get; set; }
     }
 }

@@ -80,7 +80,132 @@
         }
         .table td { vertical-align: middle; }
         .table tbody tr:hover { background: #f7fcf8; }
-        .category-select { min-height: 110px; }
+        .report-filter-fields {
+            align-items: flex-end;
+        }
+        .report-category-dropdown {
+            position: relative;
+            width: 100%;
+        }
+        .report-category-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+            min-height: calc(1.5em + .75rem + 2px);
+            padding: .375rem .75rem;
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-radius: .375rem;
+            color: #223;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .report-category-toggle:hover {
+            border-color: #b9d4c1;
+        }
+        .report-category-toggle.is-open {
+            border-color: #28a745;
+            box-shadow: 0 0 0 .15rem rgba(40, 167, 69, .15);
+        }
+        .report-category-toggle-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .report-category-toggle-chevron {
+            flex-shrink: 0;
+            font-size: .7rem;
+            color: #5f7567;
+            transition: transform .15s ease;
+        }
+        .report-category-toggle.is-open .report-category-toggle-chevron {
+            transform: rotate(180deg);
+        }
+        .report-category-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            z-index: 30;
+            background: #fff;
+            border: 1px solid #d8e8dd;
+            border-radius: .375rem;
+            box-shadow: 0 8px 24px rgba(16, 60, 30, 0.12);
+        }
+        .report-category-dropdown.is-open .report-category-menu {
+            display: block;
+        }
+        .report-category-menu-scroll {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+        .report-category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 0;
+            padding: 6px 10px 6px 12px;
+            font-size: .92rem;
+            color: #2f4a38;
+        }
+        .report-category-item:hover {
+            background: #f7fcf8;
+        }
+        .report-category-item-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            min-width: 0;
+            cursor: pointer;
+        }
+        .report-category-item--hidden {
+            color: #6c757d;
+        }
+        .report-category-item--hidden .report-category-hidden-badge {
+            font-size: .72rem;
+            color: #868e96;
+            margin-left: 4px;
+        }
+        .report-category-add-btn {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border: 1px solid #b9d4c1;
+            border-radius: 6px;
+            background: #fff;
+            color: #28a745;
+            font-size: 1.1rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+        .report-category-add-btn:hover {
+            background: #e8f8ee;
+            border-color: #28a745;
+        }
+        .report-category-item--hidden .report-category-item-label input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .report-category-add-btn.is-added {
+            color: #6c757d;
+            border-color: #d8e8dd;
+            background: #f3f4f5;
+        }
+        .report-category-add-spacer {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+        }
         .metric-value { font-size: 1.6rem; font-weight: 700; }
         .metric-value, .fw-bold { color: #1f3e2c; }
         .btn-toolify-primary {
@@ -113,7 +238,10 @@
         }
         .btn-back:hover { background: #f2f9f4; color: #244f35; }
         .report-actions {
-            min-height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
         }
         .btn-toolify-reset {
             border: 1px solid #d8e8dd;
@@ -136,39 +264,35 @@
         <div class="card report-section mb-4">
             <div class="card-header">
                 <h5 class="report-title">Отчет по продажам</h5>
-                <div class="report-subtitle">Показывает продажи по категориям за период: <strong>@Model.SalesPeriodTitle</strong>. Отмененные заказы исключены.</div>
+                <div class="report-subtitle">
+                    Показывает продажи по категориям за период: <strong>@Model.SalesPeriodTitle</strong>.
+                    Категории: <strong>@Model.SalesCategoriesSummary</strong>
+                </div>
             </div>
             <div class="card-body report-filter">
-                <form method="get" asp-action="Reports" class="row g-3 align-items-stretch">
+                <form method="get" asp-action="Reports" class="row g-3 report-filter-fields">
                     <div class="col-12"><div class="filter-caption">Фильтр отчета</div></div>
                     <div class="d-none">
                         @RenderHiddenAverageFilter()
                         @RenderHiddenPopularityFilter()
                         @RenderHiddenCustomerFilter()
                     </div>
-                    <div class="col-lg-2 col-md-4 d-flex flex-column">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Дата начала</label>
-                        <input type="date" name="SalesStartDate" class="form-control mt-auto" value="@Model.Filter.SalesStartDate?.ToString("yyyy-MM-dd")" />
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Дата начала</label>
+                        <input type="date" name="SalesStartDate" class="form-control" value="@Model.Filter.SalesStartDate?.ToString("yyyy-MM-dd")" />
                     </div>
-                    <div class="col-lg-2 col-md-4 d-flex flex-column">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Дата окончания</label>
-                        <input type="date" name="SalesEndDate" class="form-control mt-auto" value="@Model.Filter.SalesEndDate?.ToString("yyyy-MM-dd")" />
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Дата окончания</label>
+                        <input type="date" name="SalesEndDate" class="form-control" value="@Model.Filter.SalesEndDate?.ToString("yyyy-MM-dd")" />
                     </div>
-                    <div class="col-lg-4 col-md-8 d-flex flex-column">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Категории</label>
-                        <select name="SalesCategoryIds" class="form-select category-select mt-auto" multiple>
-                            @foreach (var category in Model.Categories)
-                            {
-                                <option value="@category.Id" selected="@selectedSalesCategories.Contains(category.Id)">@category.Name</option>
-                            }
-                        </select>
+                    <div class="col-lg-3 col-md-4">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Категории</label>
+                        @RenderCategoryDropdown("SalesCategoryIds", selectedSalesCategories)
                     </div>
-                    <div class="col-lg-4 col-md-12 report-actions d-flex flex-column justify-content-end">
-                        <div class="d-flex flex-wrap align-items-center gap-2">
-                            <button type="submit" class="btn btn-toolify-primary">Сформировать</button>
-                            @RenderExportButtons("sales")
-                            <button type="button" class="btn btn-toolify-reset report-reset-filter" data-report-block="sales">Сбросить фильтр</button>
-                        </div>
+                    <div class="col-lg-5 col-md-12 report-actions">
+                        <button type="submit" class="btn btn-toolify-primary">Сформировать</button>
+                        @RenderExportButtons("sales")
+                        <button type="button" class="btn btn-toolify-reset report-reset-filter" data-report-block="sales">Сбросить фильтр</button>
                     </div>
                 </form>
             </div>
@@ -197,7 +321,7 @@
                         }
                         else
                         {
-                            <tr><td colspan="4" class="text-center text-muted py-4">Данные за выбранный период отсутствуют.</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted py-4">@(Model.SalesCategoriesSummary.StartsWith("все видимые", StringComparison.Ordinal) ? "Данные за выбранный период отсутствуют." : "Нет продаж по выбранным категориям за указанный период.")</td></tr>
                         }
                     </tbody>
                 </table>
@@ -255,39 +379,35 @@
         <div class="card report-section mb-4">
             <div class="card-header">
                 <h5 class="report-title">Популярность товаров по категориям</h5>
-                <div class="report-subtitle">Показывает лидирующие товары и их продажи за период: <strong>@Model.PopularityPeriodTitle</strong>.</div>
+                <div class="report-subtitle">
+                    Показывает лидирующие товары и их продажи за период: <strong>@Model.PopularityPeriodTitle</strong>.
+                    Категории: <strong>@Model.PopularityCategoriesSummary</strong>.
+                </div>
             </div>
             <div class="card-body report-filter">
-                <form method="get" asp-action="Reports" class="row g-3 align-items-stretch">
+                <form method="get" asp-action="Reports" class="row g-3 report-filter-fields">
                     <div class="col-12"><div class="filter-caption">Фильтр отчета</div></div>
                     <div class="d-none">
                         @RenderHiddenSalesFilter()
-                        @RenderHiddenAverageFilter()
+                        @RenderHiddenPopularityFilter()
                         @RenderHiddenCustomerFilter()
                     </div>
-                    <div class="col-lg-2 col-md-4 d-flex flex-column">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Дата начала</label>
-                        <input type="date" name="PopularityStartDate" class="form-control mt-auto" value="@Model.Filter.PopularityStartDate?.ToString("yyyy-MM-dd")" />
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Дата начала</label>
+                        <input type="date" name="PopularityStartDate" class="form-control" value="@Model.Filter.PopularityStartDate?.ToString("yyyy-MM-dd")" />
                     </div>
-                    <div class="col-lg-2 col-md-4 d-flex flex-column">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Дата окончания</label>
-                        <input type="date" name="PopularityEndDate" class="form-control mt-auto" value="@Model.Filter.PopularityEndDate?.ToString("yyyy-MM-dd")" />
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Дата окончания</label>
+                        <input type="date" name="PopularityEndDate" class="form-control" value="@Model.Filter.PopularityEndDate?.ToString("yyyy-MM-dd")" />
                     </div>
-                    <div class="col-lg-4 col-md-8 d-flex flex-column">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Категории</label>
-                        <select name="PopularityCategoryIds" class="form-select category-select mt-auto" multiple>
-                            @foreach (var category in Model.Categories)
-                            {
-                                <option value="@category.Id" selected="@selectedPopularityCategories.Contains(category.Id)">@category.Name</option>
-                            }
-                        </select>
+                    <div class="col-lg-3 col-md-4">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Категории</label>
+                        @RenderCategoryDropdown("PopularityCategoryIds", selectedPopularityCategories)
                     </div>
-                    <div class="col-lg-4 col-md-12 report-actions d-flex flex-column justify-content-end">
-                        <div class="d-flex flex-wrap align-items-center gap-2">
-                            <button type="submit" class="btn btn-toolify-primary">Сформировать</button>
-                            @RenderExportButtons("popularity")
-                            <button type="button" class="btn btn-toolify-reset report-reset-filter" data-report-block="popularity">Сбросить фильтр</button>
-                        </div>
+                    <div class="col-lg-5 col-md-12 report-actions">
+                        <button type="submit" class="btn btn-toolify-primary">Сформировать</button>
+                        @RenderExportButtons("popularity")
+                        <button type="button" class="btn btn-toolify-reset report-reset-filter" data-report-block="popularity">Сбросить фильтр</button>
                     </div>
                 </form>
             </div>
@@ -318,7 +438,7 @@
                         }
                         else
                         {
-                            <tr><td colspan="5" class="text-center text-muted py-4">Данные за выбранный период отсутствуют.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted py-4">@(Model.PopularityCategoriesSummary.StartsWith("все видимые", StringComparison.Ordinal) ? "Данные за выбранный период отсутствуют." : "Нет продаж по выбранным категориям за указанный период.")</td></tr>
                         }
                     </tbody>
                 </table>
@@ -397,6 +517,118 @@
 
     <script>
         (function () {
+            function getCategoryLabel(dropdown) {
+                var fieldName = dropdown.getAttribute('data-field-name');
+                var checked = dropdown.querySelectorAll('input[type="checkbox"][name="' + fieldName + '"]:checked');
+                var visibleChecked = 0;
+                var hiddenChecked = 0;
+                checked.forEach(function (cb) {
+                    var item = cb.closest('.report-category-item');
+                    if (item && item.getAttribute('data-category-hidden') === '1') hiddenChecked++;
+                    else visibleChecked++;
+                });
+
+                if (visibleChecked === 0 && hiddenChecked === 0) {
+                    return 'Все видимые категории';
+                }
+                if (visibleChecked === 0 && hiddenChecked > 0) {
+                    if (hiddenChecked === 1) {
+                        var hiddenItem = dropdown.querySelector('.report-category-item--hidden input:checked');
+                        var nameEl = hiddenItem && hiddenItem.closest('.report-category-item')
+                            ? hiddenItem.closest('.report-category-item').querySelector('.report-category-item-name')
+                            : null;
+                        return nameEl
+                            ? 'Все видимые + ' + nameEl.textContent.trim()
+                            : 'Все видимые + 1 скрытая';
+                    }
+                    return 'Все видимые + ' + hiddenChecked + ' скрытых';
+                }
+                if (checked.length === 1) {
+                    var item = checked[0].closest('.report-category-item');
+                    return item ? item.querySelector('.report-category-item-name').textContent.trim() : '1 категория';
+                }
+                return 'Выбрано: ' + checked.length;
+            }
+
+            function updateCategoryToggleLabel(dropdown) {
+                var label = dropdown.querySelector('.report-category-toggle-label');
+                if (label) label.textContent = getCategoryLabel(dropdown);
+            }
+
+            function closeCategoryDropdown(dropdown) {
+                dropdown.classList.remove('is-open');
+                var toggle = dropdown.querySelector('.report-category-toggle');
+                if (toggle) toggle.classList.remove('is-open');
+            }
+
+            function updateCategoryAddButtons(dropdown) {
+                dropdown.querySelectorAll('.report-category-item--hidden .report-category-add-btn').forEach(function (btn) {
+                    var item = btn.closest('.report-category-item');
+                    var cb = item ? item.querySelector('input[type="checkbox"]') : null;
+                    if (!cb) return;
+                    var added = cb.checked;
+                    btn.classList.toggle('is-added', added);
+                    btn.textContent = added ? '−' : '+';
+                    btn.title = added ? 'Убрать из отчёта' : 'Добавить в отчёт';
+                });
+            }
+
+            function toggleHiddenCategory(dropdown, item) {
+                var cb = item.querySelector('input[type="checkbox"]');
+                if (!cb) return;
+                cb.checked = !cb.checked;
+                updateCategoryToggleLabel(dropdown);
+                updateCategoryAddButtons(dropdown);
+            }
+
+            document.querySelectorAll('.report-category-dropdown').forEach(function (dropdown) {
+                var toggle = dropdown.querySelector('.report-category-toggle');
+                if (!toggle) return;
+
+                updateCategoryToggleLabel(dropdown);
+                updateCategoryAddButtons(dropdown);
+
+                toggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var willOpen = !dropdown.classList.contains('is-open');
+                    document.querySelectorAll('.report-category-dropdown.is-open').forEach(closeCategoryDropdown);
+                    if (willOpen) {
+                        dropdown.classList.add('is-open');
+                        toggle.classList.add('is-open');
+                    }
+                });
+
+                dropdown.querySelectorAll('input[type="checkbox"][name="' + dropdown.getAttribute('data-field-name') + '"]').forEach(function (cb) {
+                    cb.addEventListener('change', function () {
+                        updateCategoryToggleLabel(dropdown);
+                        updateCategoryAddButtons(dropdown);
+                    });
+                });
+
+                dropdown.querySelectorAll('.report-category-add-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var item = btn.closest('.report-category-item');
+                        if (item) toggleHiddenCategory(dropdown, item);
+                    });
+                });
+
+                var menu = dropdown.querySelector('.report-category-menu');
+                if (menu) {
+                    menu.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                    });
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.report-category-dropdown')) {
+                    document.querySelectorAll('.report-category-dropdown.is-open').forEach(closeCategoryDropdown);
+                }
+            });
+
             var resetMap = {
                 sales: { dates: ['SalesStartDate', 'SalesEndDate'], selects: ['SalesCategoryIds'] },
                 average: { dates: ['AverageCheckStartDate', 'AverageCheckEndDate'], selects: [] },
@@ -414,9 +646,14 @@
                         if (el) el.value = '';
                     });
                     cfg.selects.forEach(function (name) {
-                        form.querySelectorAll('select[name="' + name + '"] option').forEach(function (opt) {
-                            opt.selected = false;
+                        form.querySelectorAll('input[type="checkbox"][name="' + name + '"]').forEach(function (cb) {
+                            cb.checked = false;
                         });
+                        var dropdown = form.querySelector('.report-category-dropdown[data-field-name="' + name + '"]');
+                        if (dropdown) {
+                            updateCategoryToggleLabel(dropdown);
+                            updateCategoryAddButtons(dropdown);
+                        }
                     });
                     form.submit();
                 });
@@ -479,5 +716,75 @@
     private static string BuildHiddenArray(string name, IEnumerable<int>? values)
     {
         return string.Concat((values ?? Array.Empty<int>()).Select(value => $"<input type=\"hidden\" name=\"{name}\" value=\"{value}\" />"));
+    }
+
+    private IHtmlContent RenderCategoryDropdown(string fieldName, HashSet<int> selectedIds)
+    {
+        var toggleLabel = BuildCategoryToggleLabel(selectedIds);
+        var html = new System.Text.StringBuilder();
+        html.Append($"<div class=\"report-category-dropdown\" data-field-name=\"{fieldName}\">");
+        html.Append("<button type=\"button\" class=\"report-category-toggle\" aria-expanded=\"false\">");
+        html.Append($"<span class=\"report-category-toggle-label\">{System.Net.WebUtility.HtmlEncode(toggleLabel)}</span>");
+        html.Append("<span class=\"report-category-toggle-chevron\" aria-hidden=\"true\">&#9662;</span>");
+        html.Append("</button>");
+        html.Append("<div class=\"report-category-menu\">");
+        html.Append("<div class=\"report-category-menu-scroll\">");
+        foreach (var category in Model.Categories.OrderBy(c => c.IsHiddenFromCatalog).ThenBy(c => c.Name))
+        {
+            var isChecked = selectedIds.Contains(category.Id);
+            var checkedAttr = isChecked ? " checked" : string.Empty;
+            var hiddenClass = category.IsHiddenFromCatalog ? " report-category-item--hidden" : string.Empty;
+            var hiddenBadge = category.IsHiddenFromCatalog
+                ? "<span class=\"report-category-hidden-badge\">(скрыта)</span>"
+                : string.Empty;
+            var addButtonHtml = category.IsHiddenFromCatalog
+                ? $"<button type=\"button\" class=\"report-category-add-btn{(isChecked ? " is-added" : "")}\" title=\"{(isChecked ? "Убрать из отчёта" : "Добавить в отчёт")}\" aria-label=\"{(isChecked ? "Убрать категорию" : "Добавить категорию")}\">{(isChecked ? "−" : "+")}</button>"
+                : "<span class=\"report-category-add-spacer\" aria-hidden=\"true\"></span>";
+            html.Append(
+                $"<div class=\"report-category-item{hiddenClass}\" data-category-hidden=\"{(category.IsHiddenFromCatalog ? "1" : "0")}\">" +
+                $"<label class=\"report-category-item-label\">" +
+                $"<input type=\"checkbox\" name=\"{fieldName}\" value=\"{category.Id}\"{checkedAttr} />" +
+                $"<span class=\"report-category-item-name\">{System.Net.WebUtility.HtmlEncode(category.Name)}</span>{hiddenBadge}" +
+                "</label>" +
+                addButtonHtml +
+                "</div>");
+        }
+        html.Append("</div></div></div>");
+        return new HtmlString(html.ToString());
+    }
+
+    private string BuildCategoryToggleLabel(HashSet<int> selectedIds)
+    {
+        var visibleIds = Model.Categories
+            .Where(category => !category.IsHiddenFromCatalog)
+            .Select(category => category.Id)
+            .ToHashSet();
+        var selectedVisible = selectedIds.Where(visibleIds.Contains).ToHashSet();
+        var selectedHidden = Model.Categories
+            .Where(category => category.IsHiddenFromCatalog && selectedIds.Contains(category.Id))
+            .Select(category => category.Name)
+            .ToList();
+
+        if (selectedVisible.Count == 0 && selectedHidden.Count == 0)
+            return "Все видимые категории";
+
+        if (selectedVisible.Count == 0)
+        {
+            return selectedHidden.Count == 1
+                ? $"Все видимые + {selectedHidden[0]}"
+                : $"Все видимые + {selectedHidden.Count} скрытых";
+        }
+
+        var names = Model.Categories
+            .Where(category => selectedIds.Contains(category.Id))
+            .Select(category => category.Name)
+            .ToList();
+
+        if (names.Count == 1)
+            return names[0];
+        if (names.Count == 2)
+            return string.Join(", ", names);
+
+        return $"Выбрано: {names.Count}";
     }
 }

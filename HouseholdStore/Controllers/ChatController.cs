@@ -134,6 +134,12 @@ namespace HouseholdStore.Controllers
             ViewBag.Conversations = conversations;
             ViewBag.SelectedConversation = selected;
             await FillAdminUserViewBagsAsync();
+            ViewBag.AdminPanelKey = "chat";
+            ViewBag.AdminSearchTarget = "none";
+            var chatTitle = AdminPageTitleHelper.GetForPanel("chat");
+            ViewBag.AdminSectionTitle = chatTitle;
+            ViewData["Title"] = chatTitle ?? "Чаты с клиентами";
+
             var messages = await _chatApi.GetMessagesAsync(id);
             return View(messages);
         }

@@ -11,8 +11,14 @@ namespace Toolify.ProductService.Models
         public string? FullDescription { get; set; }
         public decimal Price { get; set; }
         public bool IsHiddenFromCatalog { get; set; }
+
+        [JsonIgnore]
+        public bool CategoryIsHiddenFromCatalog { get; set; }
+
+        [JsonIgnore]
+        public bool IsEffectivelyHiddenFromCatalog => IsHiddenFromCatalog || CategoryIsHiddenFromCatalog;
+
         public string? ImagePath { get; set; }
-        public int Discount { get; set; }
         public int StockQuantity { get; set; }
         public string? ArticleNumber { get; set; }
         public double AverageRating { get; set; }

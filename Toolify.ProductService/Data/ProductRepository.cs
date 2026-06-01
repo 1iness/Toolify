@@ -13,6 +13,9 @@ namespace Toolify.ProductService.Data
         {
             _factory = factory;
         }
+        private static bool IsCatalogVisible(Product product, bool includeHidden) =>
+            includeHidden || (!product.IsHiddenFromCatalog && !product.CategoryIsHiddenFromCatalog);
+
         public async Task<List<Product>> GetAllAsync(bool includeHidden = true)
         {
             using var connection = _factory.CreateConnection();
@@ -25,7 +28,7 @@ namespace Toolify.ProductService.Data
             while (await reader.ReadAsync())
             {
                 var product = MapProduct(reader);
-                if (includeHidden || !product.IsHiddenFromCatalog)
+                if (IsCatalogVisible(product, includeHidden))
                     products.Add(product);
             }
             if (await reader.NextResultAsync())
@@ -62,7 +65,7 @@ namespace Toolify.ProductService.Data
             while (await reader.ReadAsync())
             {
                 var product = MapProduct(reader);
-                if (includeHidden || !product.IsHiddenFromCatalog)
+                if (IsCatalogVisible(product, includeHidden))
                     products.Add(product);
             }
             return products;
@@ -79,7 +82,7 @@ namespace Toolify.ProductService.Data
 
             if (!await reader.ReadAsync()) return null;
             var product = MapProduct(reader);
-            if (!includeHidden && product.IsHiddenFromCatalog)
+            if (!IsCatalogVisible(product, includeHidden))
                 return null;
 
             if (await reader.NextResultAsync())
@@ -154,7 +157,6 @@ namespace Toolify.ProductService.Data
             command.Parameters.AddWithValue("@FullDescription", (object?)product.FullDescription ?? DBNull.Value);
             command.Parameters.AddWithValue("@Price", product.Price);
             command.Parameters.AddWithValue("@StockQuantity", product.StockQuantity);
-            command.Parameters.AddWithValue("@Discount", product.Discount);
             command.Parameters.AddWithValue("@ArticleNumber", (object?)product.ArticleNumber ?? DBNull.Value);
 
             var featuresTable = BuildFeatureTableType(product.Configurations);
@@ -338,7 +340,8 @@ namespace Toolify.ProductService.Data
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     Name = reader.GetString(reader.GetOrdinal("Name")),
-                    ProductCount = reader.GetInt32(reader.GetOrdinal("ProductCount"))
+                    ProductCount = reader.GetInt32(reader.GetOrdinal("ProductCount")),
+                    IsHiddenFromCatalog = TryGetBool(reader, "IsHiddenFromCatalog", false)
                 };
                 for (int i = 0; i < reader.FieldCount; i++)
                 {
@@ -375,6 +378,25 @@ namespace Toolify.ProductService.Data
                 Success = false,
                 ErrorMessage = "Не удалось удалить категорию"
             };
+        }
+
+        public async Task<bool> SetCategoryCatalogVisibilityAsync(int categoryId, bool isHiddenFromCatalog)
+        {
+            using var connection = _factory.CreateConnection();
+            using var command = new SqlCommand("sp_SetCategoryCatalogVisibility", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            command.Parameters.AddWithValue("@CategoryId", categoryId);
+            command.Parameters.AddWithValue("@IsHiddenFromCatalog", isHiddenFromCatalog);
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                var ord = reader.GetOrdinal("RowsAffected");
+                return !reader.IsDBNull(ord) && reader.GetInt32(ord) > 0;
+            }
+            return false;
         }
 
         public async Task<bool> AddToCartAsync(int productId, int? userId, string? guestId, int quantity = 1)
@@ -1539,7 +1561,7 @@ namespace Toolify.ProductService.Data
             while (await reader.ReadAsync())
             {
                 var product = MapProduct(reader);
-                if (!product.IsHiddenFromCatalog)
+                if (IsCatalogVisible(product, includeHidden: false))
                     products.Add(product);
             }
             return products;
@@ -1799,7 +1821,7 @@ namespace Toolify.ProductService.Data
                 Name = reader.GetString(reader.GetOrdinal("Name")),
                 Price = reader.GetDecimal(reader.GetOrdinal("Price")),
                 IsHiddenFromCatalog = TryGetBool(reader, "IsHiddenFromCatalog", false),
-                Discount = TryGetInt32(reader, "Discount", 0),
+                CategoryIsHiddenFromCatalog = TryGetBool(reader, "CategoryIsHiddenFromCatalog", false),
                 StockQuantity = reader.GetInt32(reader.GetOrdinal("StockQuantity")),
                 ArticleNumber = reader.IsDBNull(reader.GetOrdinal("ArticleNumber")) ? null : reader.GetString(reader.GetOrdinal("ArticleNumber")),
                 ShortDescription = reader.IsDBNull(reader.GetOrdinal("ShortDescription")) ? null : reader.GetString(reader.GetOrdinal("ShortDescription")),

@@ -12,203 +12,178 @@
     var hasUsers = users.Any();
 }
 
-<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-<link rel="stylesheet" href="~/css/admin-clients.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/site.css" />
 
-<div class="admin-clients-page">
-    <div class="container-fluid admin-clients px-3 px-lg-4 py-4">
+<div class="admin-flush-page" data-admin-heading="Клиенты">
+    <h1 class="visually-hidden">Клиенты</h1>
 
-        <div class="row g-3 mb-4">
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="clients-stat-card">
-                    <div class="clients-stat-label">Всего пользователей</div>
-                    <div class="clients-stat-value">@total</div>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close js-dismiss-alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close js-dismiss-alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!hasUsers)
+    {
+        <p class="text-muted text-center py-5 mb-0">Список пользователей пока пуст.</p>
+    }
+    else
+    {
+        <input id="userSearch" type="hidden" />
+
+        <div id="admin-clients-filters" class="admin-products-filters mb-3">
+            <div class="admin-products-filters__row row g-2 align-items-end">
+                <div class="col-auto">
+                    <span class="form-label small text-muted mb-0 d-block">Роль</span>
+                    <select id="roleFilter" class="form-select form-select-sm">
+                        <option value="">Все</option>
+                        <option value="Admin">Admin</option>
+                        <option value="User">User</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <span class="form-label small text-muted mb-0 d-block">Статус</span>
+                    <select id="statusFilter" class="form-select form-select-sm">
+                        <option value="">Все</option>
+                        <option value="Active">Активен</option>
+                        <option value="Blocked">Заблокирован</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="admin-clients-filter-reset">Сбросить фильтры</button>
                 </div>
             </div>
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="clients-stat-card">
-                    <div class="clients-stat-label">Активные</div>
-                    <div class="clients-stat-value text-success">@active</div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="clients-stat-card">
-                    <div class="clients-stat-label">Заблокированные</div>
-                    <div class="clients-stat-value text-danger">@blocked</div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="clients-stat-card">
-                    <div class="clients-stat-label">Администраторы</div>
-                    <div class="clients-stat-value text-primary">@admins</div>
-                </div>
-            </div>
+            <p class="admin-clients-stats small text-muted mb-0 mt-2">
+                Всего <strong>@total</strong> ·
+                активные <strong class="text-success">@active</strong> ·
+                заблокированные <strong class="text-danger">@blocked</strong> ·
+                администраторы <strong>@admins</strong>
+            </p>
         </div>
 
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success clients-alert" role="alert">
-                <div>@TempData["Success"]</div>
-                <button type="button" class="btn-close js-dismiss-alert" aria-label="Close"></button>
+        <div class="admin-products-table-wrap">
+            <table class="admin-table admin-table--products" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>Пользователь</th>
+                        <th>Email</th>
+                        <th>Телефон</th>
+                        <th>Email подтверждён</th>
+                        <th>Дата регистрации</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="clients-filter-tbody">
+                    @foreach (var u in users)
+                    {
+                        var fullName = string.Concat(u.FirstName, " ", u.LastName).Trim();
+                        var displayName = !string.IsNullOrWhiteSpace(fullName) ? fullName : "Без имени";
+                        var statusKey = u.IsBlocked ? "Blocked" : "Active";
+                        var createdAtText = u.CreatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—";
+
+                        <tr class="client-row"
+                            data-role="@u.Role"
+                            data-status="@statusKey"
+                            data-search="@($"{displayName} {u.Email} {u.Phone}")">
+                            <td><strong>@displayName</strong></td>
+                            <td class="text-nowrap">@u.Email</td>
+                            <td class="clients-phone-cell">@(string.IsNullOrWhiteSpace(u.Phone) ? "—" : u.Phone)</td>
+                            <td>
+                                @if (u.EmailConfirmed)
+                                {
+                                    <span class="badge bg-success">Да</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Нет</span>
+                                }
+                            </td>
+                            <td class="text-nowrap">@createdAtText</td>
+                            <td>
+                                @if (u.Role == "Admin")
+                                {
+                                    <span class="badge bg-primary">Admin</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">User</span>
+                                }
+                            </td>
+                            <td>
+                                @if (u.IsBlocked)
+                                {
+                                    <span class="badge bg-danger">Заблокирован</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Активен</span>
+                                }
+                            </td>
+                            <td class="action-links">
+                                <form asp-action="ChangeUserRole" method="post" style="display:inline;">
+                                    <input type="hidden" name="userId" value="@u.Id" />
+                                    <input type="hidden" name="role" value="@(u.Role == "Admin" ? "User" : "Admin")" />
+                                    <button type="submit" class="btn btn-link p-0 align-baseline">
+                                        @(u.Role == "Admin" ? "Снять Admin" : "Сделать Admin")
+                                    </button>
+                                </form>
+                                |
+                                <form asp-action="ToggleUserBlocked" method="post" style="display:inline;">
+                                    <input type="hidden" name="userId" value="@u.Id" />
+                                    <input type="hidden" name="isBlocked" value="@(u.IsBlocked ? "false" : "true")" />
+                                    <button type="submit" class="btn btn-link p-0 align-baseline @(u.IsBlocked ? "" : "delete-link")">
+                                        @(u.IsBlocked ? "Разблокировать" : "Заблокировать")
+                                    </button>
+                                </form>
+                                |
+                                <form asp-action="SendPasswordReset" method="post" style="display:inline;">
+                                    <input type="hidden" name="email" value="@u.Email" />
+                                    <button type="submit" class="btn btn-link p-0 align-baseline">Сброс пароля</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <p id="clientsNoResults" class="text-muted text-center py-4 mb-0 d-none">Ничего не найдено. Измените поиск или фильтры.</p>
+
+        <div id="clients-pagination-wrap" class="products-load-more-wrap mt-3 d-none text-center">
+            <div class="d-flex flex-wrap gap-2 justify-content-center mb-2">
+                <button type="button" class="btn-create categories-load-action-btn d-none" id="clients-load-more-btn">Показать ещё</button>
+                <button type="button" class="btn-create btn-create--secondary categories-load-action-btn d-none" id="clients-load-less-btn">Свернуть</button>
             </div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger clients-alert" role="alert">
-                <div>@TempData["Error"]</div>
-                <button type="button" class="btn-close js-dismiss-alert" aria-label="Close"></button>
-            </div>
-        }
-
-        @if (!hasUsers)
-        {
-            <div class="clients-empty-state">
-                <div class="clients-empty-title">Список пользователей пока пуст</div>
-                <div class="clients-empty-text">Когда в системе появятся учетные записи, они отобразятся здесь.</div>
-            </div>
-        }
-        else
-        {
-            <div class="row g-4 align-items-start">
-                <div class="col-12">
-                    <div class="clients-table-card">
-                        <div class="clients-toolbar">
-                            <div class="row g-2 align-items-end">
-                                <input id="userSearch" type="hidden" />
-                                <div class="col-12 col-md-4 col-xl-3">
-                                    <label for="roleFilter" class="form-label clients-label">Роль</label>
-                                    <select id="roleFilter" class="form-select clients-input">
-                                        <option value="">Все</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="User">User</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-4 col-xl-3">
-                                    <label for="statusFilter" class="form-label clients-label">Статус</label>
-                                    <select id="statusFilter" class="form-select clients-input">
-                                        <option value="">Все</option>
-                                        <option value="Active">Активен</option>
-                                        <option value="Blocked">Заблокирован</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-4 col-xl-2 ms-xl-auto">
-                                    <label class="form-label clients-label">Найдено</label>
-                                    <div class="clients-visible-count">
-                                        <span id="visibleUsersCount">@total</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table clients-table mb-0" id="usersTable">
-                                <thead>
-                                    <tr>
-                                        <th>Пользователь</th>
-                                        <th>Email</th>
-                                        <th>Телефон</th>
-                                        <th>Email подтверждён</th>
-                                        <th>Дата регистрации</th>
-                                        <th>Роль</th>
-                                        <th>Статус</th>
-                                        <th class="text-end">Действия</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var u in users)
-                                    {
-                                        var fullName = string.Concat(u.FirstName, " ", u.LastName).Trim();
-                                        var displayName = !string.IsNullOrWhiteSpace(fullName) ? fullName : "Без имени";
-                                        var statusKey = u.IsBlocked ? "Blocked" : "Active";
-                                        var createdAtText = u.CreatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—";
-
-                                        <tr class="client-row"
-                                            data-role="@u.Role"
-                                            data-status="@statusKey"
-                                            data-search="@($"{displayName} {u.Email} {u.Phone}")">
-                                            <td>
-                                                <div class="clients-user-name">@displayName</div>
-                                            </td>
-                                            <td class="clients-email-cell text-nowrap">@u.Email</td>
-                                            <td>@(string.IsNullOrWhiteSpace(u.Phone) ? "—" : u.Phone)</td>
-                                            <td>
-                                                <span class="clients-pill @(u.EmailConfirmed ? "clients-pill-success" : "clients-pill-muted")">
-                                                    @(u.EmailConfirmed ? "Да" : "Нет")
-                                                </span>
-                                            </td>
-                                            <td class="text-nowrap">@createdAtText</td>
-                                            <td>
-                                                <span class="clients-pill @(u.Role == "Admin" ? "clients-pill-primary" : "clients-pill-muted")">@u.Role</span>
-                                            </td>
-                                            <td>
-                                                <span class="clients-pill @(u.IsBlocked ? "clients-pill-danger" : "clients-pill-success")">
-                                                    @(u.IsBlocked ? "Заблокирован" : "Активен")
-                                                </span>
-                                            </td>
-                                            <td class="text-end">
-                                                <div class="clients-actions">
-                                                    <form asp-action="ChangeUserRole" method="post" class="d-inline">
-                                                        <input type="hidden" name="userId" value="@u.Id" />
-                                                        <input type="hidden" name="role" value="@(u.Role == "Admin" ? "User" : "Admin")" />
-                                                        <button type="submit" class="btn btn-sm btn-outline-primary">
-                                                            @(u.Role == "Admin" ? "Снять Admin" : "Сделать Admin")
-                                                        </button>
-                                                    </form>
-
-                                                    <form asp-action="ToggleUserBlocked" method="post" class="d-inline">
-                                                        <input type="hidden" name="userId" value="@u.Id" />
-                                                        <input type="hidden" name="isBlocked" value="@(u.IsBlocked ? "false" : "true")" />
-                                                        <button type="submit" class="btn btn-sm @(u.IsBlocked ? "btn-outline-success" : "btn-outline-danger")">
-                                                            @(u.IsBlocked ? "Разблокировать" : "Заблокировать")
-                                                        </button>
-                                                    </form>
-
-                                                    <form asp-action="SendPasswordReset" method="post" class="d-inline">
-                                                        <input type="hidden" name="email" value="@u.Email" />
-                                                        <button type="submit" class="btn btn-sm btn-outline-dark">
-                                                            Сброс пароля
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div id="clientsNoResults" class="clients-empty-state d-none">
-                            <div class="clients-empty-title">Ничего не найдено</div>
-                            <div class="clients-empty-text">Попробуй изменить строку поиска или фильтры роли и статуса.</div>
-                        </div>
-
-                        <div id="clients-pagination-wrap" class="products-load-more-wrap p-3 d-none text-center">
-                            <div class="d-flex flex-wrap gap-2 justify-content-center mb-2">
-                                <button type="button" class="btn-create categories-load-action-btn d-none" id="clients-load-more-btn">Показать ещё</button>
-                                <button type="button" class="btn-create btn-create--secondary categories-load-action-btn d-none" id="clients-load-less-btn">Свернуть</button>
-                            </div>
-                            <p class="text-muted small mb-0" id="clients-pagination-info"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
+            <p class="text-muted small mb-0" id="clients-pagination-info"></p>
+        </div>
+    }
 </div>
 
 <script>
     (function () {
-        const PAGE_SIZE = 4;
+        const PAGE_SIZE = 10;
         const searchInput = document.getElementById('userSearch');
         const roleFilter = document.getElementById('roleFilter');
         const statusFilter = document.getElementById('statusFilter');
+        const resetBtn = document.getElementById('admin-clients-filter-reset');
         const rows = Array.from(document.querySelectorAll('.client-row'));
-        const visibleUsersCount = document.getElementById('visibleUsersCount');
         const noResults = document.getElementById('clientsNoResults');
         const paginationWrap = document.getElementById('clients-pagination-wrap');
         const loadMoreBtn = document.getElementById('clients-load-more-btn');
         const loadLessBtn = document.getElementById('clients-load-less-btn');
         const paginationInfo = document.getElementById('clients-pagination-info');
+        const tableWrap = document.querySelector('.admin-products-table-wrap');
         let visibleLimit = PAGE_SIZE;
 
         function applyFilters(resetPage = true) {
@@ -232,13 +207,9 @@
                 if (isVisible) matchedRows.push(row);
             });
 
-            if (visibleUsersCount) {
-                visibleUsersCount.textContent = String(matchedRows.length);
-            }
-
-            if (noResults) {
-                noResults.classList.toggle('d-none', matchedRows.length !== 0);
-            }
+            const showEmpty = matchedRows.length === 0;
+            if (noResults) noResults.classList.toggle('d-none', !showEmpty);
+            if (tableWrap) tableWrap.classList.toggle('d-none', showEmpty);
 
             if (matchedRows.length === 0 || matchedRows.length <= PAGE_SIZE) {
                 matchedRows.forEach(row => row.classList.remove('d-none'));
@@ -262,7 +233,8 @@
             if (loadMoreBtn) {
                 if (remaining > 0) {
                     loadMoreBtn.classList.remove('d-none');
-                    loadMoreBtn.textContent = remaining <= PAGE_SIZE ? `Показать ещё (${remaining})` : `Показать ещё ${PAGE_SIZE}`;
+                    const nextBatch = Math.min(remaining, PAGE_SIZE);
+                    loadMoreBtn.textContent = `Показать ещё ${nextBatch}`;
                 } else {
                     loadMoreBtn.classList.add('d-none');
                 }
@@ -285,21 +257,23 @@
 
         document.querySelectorAll('.js-dismiss-alert').forEach(button => {
             button.addEventListener('click', function () {
-                const alert = this.closest('.clients-alert');
-                if (alert) {
-                    alert.remove();
-                }
+                const alert = this.closest('.alert');
+                if (alert) alert.remove();
             });
         });
 
-        if (searchInput) {
-            searchInput.addEventListener('input', applyFilters);
-        }
-        if (roleFilter) {
-            roleFilter.addEventListener('change', applyFilters);
-        }
-        if (statusFilter) {
-            statusFilter.addEventListener('change', applyFilters);
+        if (searchInput) searchInput.addEventListener('input', applyFilters);
+        if (roleFilter) roleFilter.addEventListener('change', applyFilters);
+        if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function () {
+                if (roleFilter) roleFilter.value = '';
+                if (statusFilter) statusFilter.value = '';
+                if (searchInput) searchInput.value = '';
+                const headerSearch = document.getElementById('admin-header-search');
+                if (headerSearch) headerSearch.value = '';
+                applyFilters();
+            });
         }
 
         if (loadMoreBtn) {

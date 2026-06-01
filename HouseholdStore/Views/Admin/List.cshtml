@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "Список товаров";
     Layout = "_AdminLayout";
+    var categoryNames = ViewBag.CategoryNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var categoryHidden = ViewBag.CategoryHidden as Dictionary<int, bool> ?? new Dictionary<int, bool>();
 }
 
 <link rel="stylesheet" href="~/css/site.css" />
@@ -77,7 +79,7 @@
                 <th>Название</th>
                 <th>Статус</th>
                 <th>Цена</th>
-                <th style="text-align: center;">Акция</th>
+                <th>Категория</th>
                 <th>Кол-во</th>
                 <th>Действия</th>
             </tr>
@@ -85,9 +87,11 @@
         <tbody id="products-filter-tbody">
             @foreach (var item in Model)
             {
+                var categoryName = categoryNames.TryGetValue(item.CategoryId, out var name) ? name : "—";
+                var isCategoryHidden = categoryHidden.TryGetValue(item.CategoryId, out var hidden) && hidden;
                 var productSearchBlob = string.Join(
                     ' ',
-                    new[] { item.Name?.Trim(), item.ArticleNumber?.Trim(), item.ShortDescription?.Trim() }
+                    new[] { item.Name?.Trim(), item.ArticleNumber?.Trim(), item.ShortDescription?.Trim(), categoryName }
                         .Where(x => !string.IsNullOrEmpty(x))).ToLowerInvariant();
                 <tr data-product-search="@productSearchBlob"
                     data-product-price="@item.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
@@ -103,15 +107,17 @@
                         {
                             <span class="badge bg-secondary">Скрыт</span>
                         }
+                        else if (isCategoryHidden)
+                        {
+                            <span class="badge bg-secondary">Скрыт (категория)</span>
+                        }
                         else
                         {
                             <span class="badge bg-success">На витрине</span>
                         }
                     </td>
                     <td>@item.Price.ToString("N2") <span class="nbrb-icon">&#xE901;</span></td>
-                    <td style="text-align:center;">
-                        <span class="no-discount">См. правила</span>
-                    </td>
+                    <td>@categoryName</td>
                     <td>@item.StockQuantity шт.</td>
                     <td class="action-links">
                         <a href="/Admin/Edit/@item.Id">Редактировать</a> |

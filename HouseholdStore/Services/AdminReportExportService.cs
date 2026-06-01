@@ -96,8 +96,6 @@ public class AdminReportExportService
     {
         QuestPDF.Settings.License = LicenseType.Community;
 
-        var generatedAt = DateTime.Now;
-
         return QuestPDF.Fluent.Document.Create(container =>
         {
             container.Page(page =>
@@ -113,52 +111,9 @@ public class AdminReportExportService
                 page.Background()
                     .BackgroundLinearGradient(180, new[] { PdfTheme.PageBgTop, PdfTheme.PageBgBottom });
 
-                page.Header()
-                    .Height(56)
-                    .Background(PdfTheme.CardBg)
-                    .BorderBottom(1)
-                    .BorderColor(PdfTheme.BorderLight)
-                    .Row(row =>
-                    {
-                        row.ConstantItem(5)
-                            .ExtendVertical()
-                            .Background(PdfTheme.Accent);
-
-                        row.RelativeItem()
-                            .PaddingVertical(10)
-                            .PaddingLeft(14)
-                            .PaddingRight(8)
-                            .Column(col =>
-                            {
-                                col.Item().Row(titleRow =>
-                                {
-                                    titleRow.AutoItem().Text("Toolify")
-                                        .FontSize(17)
-                                        .Bold()
-                                        .FontColor(PdfTheme.AccentDark);
-                                    titleRow.AutoItem().PaddingLeft(8).PaddingTop(4).Text("—")
-                                        .FontColor(PdfTheme.Border);
-                                    titleRow.AutoItem().PaddingLeft(8).PaddingTop(2).Text("аналитика")
-                                        .FontSize(12)
-                                        .SemiBold()
-                                        .FontColor(PdfTheme.Muted);
-                                });
-                                col.Item().PaddingTop(2).Text("Экспорт отчётов администратора")
-                                    .FontSize(8.5f)
-                                    .FontColor(PdfTheme.Muted);
-                            });
-                    });
-
                 page.Content().Column(column =>
                 {
                     column.Spacing(14);
-
-                    column.Item().Text(text =>
-                    {
-                        text.DefaultTextStyle(x => x.FontSize(8).FontColor(PdfTheme.Muted));
-                        text.Span("Сформировано: ");
-                        text.Span($"{generatedAt:dd.MM.yyyy HH:mm}").SemiBold().FontColor(PdfTheme.AccentDark);
-                    });
 
                     foreach (var table in tables)
                     {

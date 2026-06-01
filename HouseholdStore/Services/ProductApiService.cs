@@ -242,6 +242,20 @@ namespace HouseholdStore.Services
                    ?? new List<CategoryAdminItem>();
         }
 
+        public async Task<List<Category>> GetAdminCategoriesAsync()
+        {
+            var items = await GetCategoriesForAdminAsync();
+            return items
+                .Select(c => new Category
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    IconFileName = c.IconFileName,
+                    IsHiddenFromCatalog = c.IsHiddenFromCatalog
+                })
+                .ToList();
+        }
+
         public async Task<(bool ok, string? error)> DeleteCategoryAsync(int categoryId)
         {
             var response = await _http.DeleteAsync($"/api/Product/categories/{categoryId}");
@@ -267,6 +281,38 @@ namespace HouseholdStore.Services
                 $"/api/Product/categories/{categoryId}/icon",
                 new { iconFileName });
             return response.IsSuccessStatusCode;
+        }
+
+        public async Task SetCategoryCatalogVisibilityAsync(int categoryId, bool isHiddenFromCatalog)
+        {
+            var body = JsonSerializer.Serialize(new { isHiddenFromCatalog }, JsonWriteOptions);
+            var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/Product/categories/{categoryId}/catalog-visibility")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+
+            var response = await _http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+                return;
+
+            var errorBody = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(errorBody);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    var msg = msgEl.GetString();
+                    if (!string.IsNullOrWhiteSpace(msg))
+                        throw new Exception(msg);
+                }
+            }
+            catch (JsonException)
+            {
+            }
+
+            throw new Exception(string.IsNullOrWhiteSpace(errorBody)
+                ? response.ReasonPhrase ?? "Ошибка изменения видимости категории"
+                : errorBody);
         }
 
         public async Task<List<Product>> SearchProductsAsync(string query, int? userId = null)

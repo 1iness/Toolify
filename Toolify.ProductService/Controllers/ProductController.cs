@@ -82,6 +82,23 @@ namespace Toolify.ProductService.Controllers
             return Ok();
         }
 
+        [HttpPatch("categories/{id:int}/catalog-visibility")]
+        public async Task<IActionResult> SetCategoryCatalogVisibility(int id, [FromBody] CategoryCatalogVisibilityRequest request)
+        {
+            if (id < 1) return BadRequest("Некорректный идентификатор");
+            if (request == null) return BadRequest("Некорректный запрос");
+
+            var ok = await _repo.SetCategoryCatalogVisibilityAsync(id, request.IsHiddenFromCatalog);
+            if (!ok) return NotFound("Категория не найдена");
+
+            return Ok(new
+            {
+                message = request.IsHiddenFromCatalog
+                    ? "Категория скрыта из каталога"
+                    : "Категория снова показывается в каталоге"
+            });
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int? userId = null)
         {

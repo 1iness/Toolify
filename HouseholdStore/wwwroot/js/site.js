@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const finalPrice = (p.catalogSalePrice != null && p.catalogSalePrice !== undefined)
                 ? p.catalogSalePrice
-                : p.price * (1 - (p.discount || 0) / 100);
+                : p.price;
             const compareAt = p.catalogCompareAtPrice;
 
             if (compareAt != null && compareAt !== undefined && finalPrice < compareAt - 0.0001) {
@@ -234,14 +234,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         <div class="price-block">
                             <span class="current-price" style="color: #e74c3c;">${formatMoney(finalPrice)}</span>
                             <span class="old-price">${formatMoney(compareAt)}</span>
-                        </div>
-                    `;
-            } else if (p.discount > 0) {
-                let discountedPrice = p.price * (1 - p.discount / 100);
-                priceHtml = `
-                        <div class="price-block">
-                            <span class="current-price" style="color: #e74c3c;">${formatMoney(discountedPrice)}</span>
-                            <span class="old-price">${formatMoney(p.price)}</span>
                         </div>
                     `;
             } else {

@@ -25,8 +25,10 @@ public class AdminReportsViewModel
     public List<ProductPopularityReportRow> ProductPopularity { get; set; } = new();
     public List<CustomerPurchaseHistoryReportRow> CustomerPurchaseHistory { get; set; } = new();
     public string SalesPeriodTitle { get; set; } = string.Empty;
+    public string SalesCategoriesSummary { get; set; } = string.Empty;
     public string AverageCheckPeriodTitle { get; set; } = string.Empty;
     public string PopularityPeriodTitle { get; set; } = string.Empty;
+    public string PopularityCategoriesSummary { get; set; } = string.Empty;
     public string CustomerPeriodTitle { get; set; } = string.Empty;
 }
 

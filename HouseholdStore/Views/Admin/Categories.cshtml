@@ -53,6 +53,7 @@
         <thead>
             <tr>
                 <th>Название</th>
+                <th>Статус</th>
                 <th>Характеристики</th>
                 <th>Товаров</th>
                 <th>Иконка</th>
@@ -79,6 +80,16 @@
 
                 <tr data-category-search="@categorySearchBlob">
                     <td><strong>@c.Name</strong></td>
+                    <td>
+                        @if (c.IsHiddenFromCatalog)
+                        {
+                            <span class="badge bg-secondary">Скрыта</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">На витрине</span>
+                        }
+                    </td>
                     <td>
                         @if (features.Count > 0)
                         {
@@ -112,17 +123,25 @@
                         </form>
                     </td>
                     <td>
+                        <form asp-action="SetCategoryCatalogVisibility"
+                              method="post"
+                              style="display:inline;"
+                              onsubmit="return confirm('@(c.IsHiddenFromCatalog ? "Показать категорию в каталоге? Товары, скрытые отдельно, останутся скрытыми." : "Скрыть категорию и все её товары из каталога?")');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@c.Id" />
+                            <input type="hidden" name="isHiddenFromCatalog" value="@(c.IsHiddenFromCatalog ? "false" : "true")" />
+                            <button type="submit" class="btn btn-link p-0 align-baseline">
+                                @(c.IsHiddenFromCatalog ? "Показать" : "Скрыть")
+                            </button>
+                        </form>
                         @if (c.ProductCount == 0)
                         {
+                            <text> | </text>
                             <form asp-action="DeleteCategory" method="post" style="display:inline;" onsubmit="return confirm('Удалить эту категорию?');">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@c.Id" />
                                 <button type="submit" class="delete-link" style="border:none;background:none;cursor:pointer;padding:0;color:#c00;text-decoration:underline;">Удалить</button>
                             </form>
-                        }
-                        else
-                        {
-                            <span style="color:#999;">—</span>
                         }
                     </td>
                 </tr>
@@ -130,7 +149,7 @@
         }
         else
         {
-            <tr class="categories-empty-row"><td colspan="5">Категорий нет.</td></tr>
+            <tr class="categories-empty-row"><td colspan="6">Категорий нет.</td></tr>
         }
         </tbody>
     </table>
