@@ -230,7 +230,9 @@ namespace HouseholdStore.Controllers
                 products = products.Where(p =>
                     filter.SelectedFeatures.All(selected =>
                         p.Configurations != null &&
-                        p.Configurations.Any(c => c.FeatureId == selected.Key && selected.Value.Contains(c.FeatureValue))
+                        p.Configurations.Any(c =>
+                            c.FeatureId == selected.Key &&
+                            selected.Value.Any(value => SameFeatureValue(c.FeatureValue, value)))
                     )
                 ).ToList();
             }
@@ -306,7 +308,9 @@ namespace HouseholdStore.Controllers
                 products = products.Where(p =>
                     filter.SelectedFeatures.All(selected =>
                         p.Configurations != null &&
-                        p.Configurations.Any(c => c.FeatureId == selected.Key && selected.Value.Contains(c.FeatureValue))
+                        p.Configurations.Any(c =>
+                            c.FeatureId == selected.Key &&
+                            selected.Value.Any(value => SameFeatureValue(c.FeatureValue, value)))
                     )
                 ).ToList();
             }
@@ -314,8 +318,9 @@ namespace HouseholdStore.Controllers
 
             var uniqueFeatures = topProducts
                 .SelectMany(p => p.Configurations ?? new List<ProductConfiguration>())
-                .Select(c => c.FeatureName)
-                .Distinct()
+                .Select(c => NormalizeFeatureText(c.FeatureName))
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             ViewBag.UniqueFeatures = uniqueFeatures;
@@ -362,5 +367,11 @@ namespace HouseholdStore.Controllers
                 return "Цена «от» должна быть строго меньше цены «до».";
             return null;
         }
+
+        private static string NormalizeFeatureText(string? value) =>
+            string.Join(" ", (value ?? string.Empty).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+        private static bool SameFeatureValue(string? left, string? right) =>
+            string.Equals(NormalizeFeatureText(left), NormalizeFeatureText(right), StringComparison.OrdinalIgnoreCase);
     }
 }

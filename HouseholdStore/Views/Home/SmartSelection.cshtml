@@ -48,12 +48,19 @@
                     <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px;">
                         @foreach (var f in filters)
                         {
+                            var values = f.Values.Any()
+                                ? f.Values
+                                : f.AvailableValues.Select(v => new Toolify.ProductService.Models.CategoryFilterValueDto
+                                {
+                                    FeatureId = f.FeatureId,
+                                    Value = v
+                                }).ToList();
                             <div style="flex: 1; min-width: 200px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
                                 <h4 style="font-size: 15px; margin-top: 0;">@f.FeatureName</h4>
-                                @foreach (var val in f.AvailableValues)
+                                @foreach (var val in values)
                                 {
                                     <label style="display: block; margin-bottom: 5px; cursor: pointer; font-size: 14px;">
-                                        <input type="checkbox" name="SelectedFeatures[@f.FeatureId]" value="@val" /> @val
+                                        <input type="checkbox" name="SelectedFeatures[@val.FeatureId]" value="@val.Value" /> @val.Value
                                     </label>
                                 }
                             </div>

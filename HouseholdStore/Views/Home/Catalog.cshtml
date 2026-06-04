@@ -37,21 +37,28 @@
                 var filters = (List<Toolify.ProductService.Models.CategoryFilterDto>)ViewBag.CategoryFilters;
                 foreach (var f in filters)
                 {
+                    var values = f.Values.Any()
+                        ? f.Values
+                        : f.AvailableValues.Select(v => new Toolify.ProductService.Models.CategoryFilterValueDto
+                        {
+                            FeatureId = f.FeatureId,
+                            Value = v
+                        }).ToList();
                     <div class="filter-group">
                         <h3>@f.FeatureName</h3>
                         <div class="checkbox-options" style="max-height: 200px; overflow-y: auto;">
-                            @foreach (var val in f.AvailableValues)
+                            @foreach (var val in values)
                             {
                                 bool isChecked = ViewBag.SelectedFeatures != null &&
-                                ViewBag.SelectedFeatures.ContainsKey(f.FeatureId) &&
-                                ViewBag.SelectedFeatures[f.FeatureId].Contains(val);
+                                ViewBag.SelectedFeatures.ContainsKey(val.FeatureId) &&
+                                ViewBag.SelectedFeatures[val.FeatureId].Contains(val.Value);
 
                                 <label style="display: block; margin-bottom: 5px; cursor: pointer;">
                                     <input type="checkbox"
-                                           name="SelectedFeatures[@f.FeatureId]"
-                                           value="@val"
+                                           name="SelectedFeatures[@val.FeatureId]"
+                                           value="@val.Value"
                                            @(isChecked ? "checked" : "") />
-                                    @val
+                                    @val.Value
                                 </label>
                             }
                         </div>

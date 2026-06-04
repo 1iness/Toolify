@@ -16,6 +16,9 @@ namespace Toolify.ProductService.Data
         private static bool IsCatalogVisible(Product product, bool includeHidden) =>
             includeHidden || (!product.IsHiddenFromCatalog && !product.CategoryIsHiddenFromCatalog);
 
+        private static string NormalizeFeaturePart(string? value) =>
+            string.Join(" ", (value ?? string.Empty).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
         public async Task<List<Product>> GetAllAsync(bool includeHidden = true)
         {
             using var connection = _factory.CreateConnection();
@@ -175,11 +178,14 @@ namespace Toolify.ProductService.Data
             t.Columns.Add("FeatureId", typeof(int));
             t.Columns.Add("FeatureValue", typeof(string));
             if (configurations == null) return t;
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var c in configurations)
             {
                 if (c.FeatureId <= 0) continue;
-                if (string.IsNullOrWhiteSpace(c.FeatureValue)) continue;
-                t.Rows.Add(c.FeatureId, c.FeatureValue);
+                var value = NormalizeFeaturePart(c.FeatureValue);
+                if (string.IsNullOrWhiteSpace(value)) continue;
+                if (!seen.Add($"{c.FeatureId}|{value}")) continue;
+                t.Rows.Add(c.FeatureId, value);
             }
             return t;
         }
@@ -1024,18 +1030,26 @@ namespace Toolify.ProductService.Data
             while (await reader.ReadAsync())
             {
                 int featureId = Convert.ToInt32(reader["FeatureId"]);
-                string featureName = reader["FeatureName"].ToString() ?? string.Empty;
-                string featureValue = reader["FeatureValue"].ToString() ?? string.Empty;
+                string featureName = NormalizeFeaturePart(reader["FeatureName"].ToString());
+                string featureValue = NormalizeFeaturePart(reader["FeatureValue"].ToString());
+                if (string.IsNullOrWhiteSpace(featureName) || string.IsNullOrWhiteSpace(featureValue))
+                    continue;
 
-                var existingFilter = filters.FirstOrDefault(f => f.FeatureId == featureId);
+                var existingFilter = filters.FirstOrDefault(f =>
+                    string.Equals(f.FeatureName, featureName, StringComparison.OrdinalIgnoreCase));
                 if (existingFilter == null)
                 {
                     existingFilter = new CategoryFilterDto { FeatureId = featureId, FeatureName = featureName };
                     filters.Add(existingFilter);
                 }
 
-                if (!existingFilter.AvailableValues.Contains(featureValue))
+                if (!existingFilter.Values.Any(v => string.Equals(v.Value, featureValue, StringComparison.OrdinalIgnoreCase)))
                 {
+                    existingFilter.Values.Add(new CategoryFilterValueDto
+                    {
+                        FeatureId = featureId,
+                        Value = featureValue
+                    });
                     existingFilter.AvailableValues.Add(featureValue);
                 }
             }

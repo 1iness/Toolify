@@ -87,7 +87,16 @@
                                 <td style="padding: 12px 15px; border: 1px solid #dee2e6; font-weight: bold; background: #fdfdfd;">@featureName</td>
                                 @foreach (var p in Model)
                                 {
-                                    var configVal = p.Configurations?.FirstOrDefault(c => c.FeatureName == featureName)?.FeatureValue ?? "—";
+                                    var configValues = p.Configurations?
+                                        .Where(c => string.Equals(
+                                            string.Join(" ", (c.FeatureName ?? string.Empty).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)),
+                                            featureName,
+                                            StringComparison.OrdinalIgnoreCase))
+                                        .Select(c => string.Join(" ", (c.FeatureValue ?? string.Empty).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)))
+                                        .Where(v => !string.IsNullOrWhiteSpace(v))
+                                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                                        .ToList() ?? new List<string>();
+                                    var configVal = configValues.Any() ? string.Join(", ", configValues) : "—";
                                     <td style="padding: 12px 15px; border: 1px solid #dee2e6; text-align: center; color: #555;">@configVal</td>
                                 }
                             </tr>
