@@ -98,7 +98,7 @@
                         <div class="row g-3 mt-0 pt-md-1">
                             <div class="col-12 col-md-6">
                                 <label class="form-label" for="phoneInput">Телефон <span class="label-req" aria-hidden="true">*</span></label>
-                                <input asp-for="Phone" id="phoneInput" class="form-control" placeholder="+375 (XX) XXX-XX-XX" required />
+                                <input asp-for="Phone" id="phoneInput" class="form-control" placeholder="+375 (29) XXX-XX-XX" required />
                                 <span asp-validation-for="Phone" class="text-danger"></span>
                             </div>
                         </div>
@@ -234,6 +234,7 @@
                             <input type="hidden" asp-for="PromoCode" id="appliedPromoCode" />
                         </div>
                         <small id="promoStatus" class="d-block mt-1 text-muted"></small>
+                        <span asp-validation-for="PromoCode" class="text-danger small"></span>
                     </div>
 
                     <div class="summary-total">
@@ -255,26 +256,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/js/belarus-phone.js" asp-append-version="true"></script>
     <script src="~/js/checkout-address-suggest.js" asp-append-version="true"></script>
 
     <script>
 
 
-        // Маски ввода
-        // тел
+        // Маска ввода телефона (коды операторов BY: 25, 29, 33, 44)
         const phoneInput = document.getElementById('phoneInput');
         const submitBtn = document.getElementById('btnSubmitOrder');
         const statusText = document.getElementById('phoneStatus');
 
-        if (phoneInput) {
-            phoneInput.addEventListener('input', function (e) {
-                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
-                if (!e.target.value.startsWith('+375')) {
-                    e.target.value = '+375 ';
-                    return;
-                }
-                e.target.value = !x[2] ? x[1] : '+375 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
-            });
+        if (phoneInput && window.BelarusPhone) {
+            BelarusPhone.attachBelarusPhoneInput(phoneInput);
         }
 
             const BYN_HTML = '<span class="nbrb-icon">&#xE901;</span>';
@@ -377,6 +371,7 @@
                     .then(r => r.ok ? r.json() : null)
                     .then(data => {
                         if (!data || !data.success) return;
+                        cfg.dataset.promoRejectReason = data.promoRejectReason || '';
                         cfg.dataset.goods           = data.goods;
                         cfg.dataset.deliveryCourier = data.deliveryCourier;
                         cfg.dataset.deliveryPickup  = data.deliveryPickup;
@@ -519,8 +514,10 @@
 
                 if (state === 'invalid') {
                     const code = payload?.code ?? '';
+                    const reason = payload?.reason ?? '';
                     codeInput.classList.add('promo-input--invalid');
-                    statusElement.textContent = code ? `${code} — промокод отсутствует или истёк.` : 'Промокод отсутствует или истёк.';
+                    statusElement.textContent = reason
+                        || (code ? `${code} — промокод отсутствует или истёк.` : 'Промокод отсутствует или истёк.');
                     statusElement.className = 'd-block mt-1 promo-status--invalid';
                     return;
                 }
@@ -540,6 +537,8 @@
                     promoLastChecked = '';
                     clearAppliedPromo();
                     setPromoUiState('idle');
+                    const cfg = document.getElementById('checkoutPricing');
+                    if (cfg) cfg.dataset.promoRejectReason = '';
                     await requestServerPreview(null);
                     return;
                 }
@@ -550,9 +549,13 @@
                 try {
                     await requestServerPreview(code);
                     const cfg = document.getElementById('checkoutPricing');
+                    const rejectReason = cfg?.dataset.promoRejectReason || '';
                     const pct = cfg ? parseFloat(cfg.dataset.promoPercent || '0') : 0;
 
-                    if (pct > 0) {
+                    if (rejectReason) {
+                        clearAppliedPromo();
+                        setPromoUiState('invalid', { code, reason: rejectReason });
+                    } else if (pct > 0) {
                         document.getElementById('appliedPromoCode').value = code;
                         setPromoUiState('valid', { discount: pct });
                     } else {

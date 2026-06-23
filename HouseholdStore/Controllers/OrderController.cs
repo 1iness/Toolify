@@ -1,4 +1,4 @@
-﻿using HouseholdStore.Helpers;
+using HouseholdStore.Helpers;
 using HouseholdStore.Models;
 using HouseholdStore.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Security.Claims;
 using Toolify.AuthService.Services;
+using Toolify.ProductService.Helpers;
 using Toolify.ProductService.Data;
 using Toolify.ProductService.Models;
 
@@ -75,9 +76,7 @@ namespace HouseholdStore.Controllers
         public async Task<IActionResult> Preview(string? promoCode)
         {
             var (userId, guestId) = CartHelper.GetCartIdentifiers(HttpContext);
-
-            var courier = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, promoCode, "Courier");
-            var pickup  = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, promoCode, "Pickup");
+            var (courier, pickup, promoRejectReason) = await BuildCheckoutPreviewAsync(userId, guestId, promoCode);
 
             if (courier == null || pickup == null)
             {
@@ -88,6 +87,7 @@ namespace HouseholdStore.Controllers
             {
                 success = true,
                 goods = courier.NetGoodsAmount,
+                goodsBeforePromo = courier.GoodsTotalBeforePromo,
                 promoPercent = courier.PromoPercent,
                 promoAmount = courier.PromoDiscountAmount,
                 appliedFixed = courier.AppliedFixedDiscountAmount,
@@ -95,14 +95,47 @@ namespace HouseholdStore.Controllers
                 deliveryPickup = pickup.DeliveryFee,
                 grandCourier = courier.GrandTotal,
                 grandPickup = pickup.GrandTotal,
+                promoRejectReason,
                 rules = courier.AppliedRules.Select(r => new { r.Kind, r.Title, r.Amount })
             });
         }
 
+        private async Task<(CheckoutPreviewResult? courier, CheckoutPreviewResult? pickup, string? promoRejectReason)>
+            BuildCheckoutPreviewAsync(int? userId, string? guestId, string? promoCode)
+        {
+            var trimmedPromo = string.IsNullOrWhiteSpace(promoCode) ? null : promoCode.Trim();
+
+            if (trimmedPromo == null)
+            {
+                var courierOnly = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, null, "Courier");
+                var pickupOnly = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, null, "Pickup");
+                return (courierOnly, pickupOnly, null);
+            }
+
+            var baseline = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, null, "Courier");
+            if (baseline == null)
+                return (null, null, null);
+
+            var promo = await _productRepo.GetPromoCodeByCodeAsync(trimmedPromo);
+            var promoRejectReason = PromoCodeValidation.GetRejectReason(
+                promo,
+                trimmedPromo,
+                baseline.GoodsTotalBeforePromo);
+
+            if (promoRejectReason != null)
+            {
+                var pickupWithoutPromo = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, null, "Pickup");
+                return (baseline, pickupWithoutPromo, promoRejectReason);
+            }
+
+            var courier = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, trimmedPromo, "Courier");
+            var pickup = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, trimmedPromo, "Pickup");
+            return (courier, pickup, null);
+        }
+
         private async Task FillPreviewAsync(CheckoutViewModel model, int? userId, string? guestId, string? promoCode)
         {
-            var courier = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, promoCode, "Courier");
-            var pickup  = await _productRepo.PreviewCheckoutTotalsAsync(userId, guestId, promoCode, "Pickup");
+            var (courier, pickup, _) = await BuildCheckoutPreviewAsync(userId, guestId, promoCode);
 
             if (courier == null || pickup == null) return;
 
@@ -151,6 +184,25 @@ namespace HouseholdStore.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
+            if (!string.IsNullOrWhiteSpace(model.PromoCode))
+            {
+                var baseline = await _productRepo.PreviewCheckoutTotalsAsync(
+                    userId, guestId, null, model.DeliveryType ?? "Courier");
+                var promo = await _productRepo.GetPromoCodeByCodeAsync(model.PromoCode.Trim());
+                var promoRejectReason = PromoCodeValidation.GetRejectReason(
+                    promo,
+                    model.PromoCode.Trim(),
+                    baseline?.GoodsTotalBeforePromo ?? 0m);
+
+                if (promoRejectReason != null)
+                {
+                    ModelState.AddModelError(nameof(model.PromoCode), promoRejectReason);
+                    model.CartItems = cartBeforePay;
+                    await FillPreviewAsync(model, userId, guestId, null);
+                    return View("Checkout", model);
+                }
+            }
+
             var order = new Order
             {
                 UserId = userId,
@@ -170,13 +222,18 @@ namespace HouseholdStore.Controllers
                 int orderId = await _productRepo.CreateOrderAsync(order, guestId, model.PromoCode);
                 return RedirectToAction("Confirmed", new { id = orderId });
             }
-            catch (SqlException ex) when (ex.Number == 50001 || ex.Number == 50002)
+            catch (SqlException ex) when (ex.Number == 50001 || ex.Number == 50002 || ex.Number == 50003)
             {
-                TempData["ToastMessage"] = ex.Number == 50002
-                    ? "Корзина пуста. Оформление отменено."
-                    : "Нет товаров, доступных для заказа. Проверьте наличие.";
+                TempData["ToastMessage"] = ex.Number switch
+                {
+                    50002 => "Корзина пуста. Оформление отменено.",
+                    50003 => "Промокод исчерпан.",
+                    _ => "Нет товаров, доступных для заказа. Проверьте наличие."
+                };
                 TempData["ToastType"] = "error";
-                return RedirectToAction("Index", "Cart");
+                return ex.Number == 50003
+                    ? RedirectToAction("Checkout")
+                    : RedirectToAction("Index", "Cart");
             }
         }
 

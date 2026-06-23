@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Toolify.ProductService.Models;
 using Toolify.ProductService.Data;
+using Toolify.ProductService.Helpers;
+using Toolify.ProductService.Models;
 
 namespace Toolify.ProductService.Controllers
 {
@@ -73,22 +74,12 @@ namespace Toolify.ProductService.Controllers
         public async Task<IActionResult> Validate(string code, [FromQuery] decimal? goodsTotal = null)
         {
             var promo = await _repo.GetPromoCodeByCodeAsync(code);
-            if (promo != null &&
-                (!promo.Code.Equals(code, StringComparison.OrdinalIgnoreCase) ||
-                 !promo.IsActive ||
-                 promo.StartDate > DateTime.Now ||
-                 promo.EndDate < DateTime.Now ||
-                 (promo.MaxUses.HasValue && promo.UsedCount >= promo.MaxUses.Value)))
-            {
-                promo = null;
-            }
+            var rejectReason = PromoCodeValidation.GetRejectReason(promo, code, goodsTotal);
 
-            if (promo == null) return NotFound("Промокод не найден, истёк или исчерпан");
+            if (rejectReason != null)
+                return NotFound(rejectReason);
 
-            if (promo.MinGoodsAmount.HasValue && (!goodsTotal.HasValue || goodsTotal.Value < promo.MinGoodsAmount.Value))
-                return NotFound($"Промокод действует от суммы {promo.MinGoodsAmount.Value:N2}");
-
-            return Ok(new { discountPercent = promo.DiscountPercent });
+            return Ok(new { discountPercent = promo!.DiscountPercent });
         }
     }
 

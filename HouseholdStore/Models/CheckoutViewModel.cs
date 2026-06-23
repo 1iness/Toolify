@@ -31,7 +31,9 @@ namespace HouseholdStore.Models
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Введите телефон")]
-        [RegularExpression(@"^\+375\s\(\d{2}\)\s\d{3}-\d{2}-\d{2}$", ErrorMessage = "Формат: +375 (XX) XXX-XX-XX")]
+        [RegularExpression(
+            @"^\+375\s?\((25|29|33|44)\)\s?\d{3}-\d{2}-\d{2}$",
+            ErrorMessage = "Введите белорусский номер: +375 (25/29/33/44) XXX-XX-XX")]
         public string Phone { get; set; }
 
         [Required(ErrorMessage = "Введите адрес доставки")]
